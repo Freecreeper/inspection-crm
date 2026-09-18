@@ -1,0 +1,873 @@
+// Data model for the Home Inspection CRM (Version 1).
+// Mirrors the architecture proposal reviewed and approved by the business owner —
+// section references (§N) point back to that document's numbering.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  OWNER_ADMIN
+  INSPECTOR
+  OFFICE_STAFF
+  REPORTING_ANALYST
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum TransactionStatus {
+  LEAD_IN_PROGRESS
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+  CANCELLED
+}
+
+enum ParticipantRole {
+  BUYER
+  SELLER
+  BUYERS_AGENT
+  LISTING_AGENT
+  ATTORNEY
+  LENDER
+  OTHER
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// §"Inspection status for components" — distinguishes "not yet known" from
+// "genuinely not applicable" so a blank field never has to be guessed at (§6).
+enum ComponentInspectionStatus {
+  INSPECTED
+  NOT_INSPECTED
+  NOT_PRESENT
+  NOT_ACCESSIBLE
+  LIMITED_INSPECTION
+  NOT_APPLICABLE
+}
+
+enum ReportStatus {
+  DRAFT
+  IN_PROGRESS
+  REVIEW_REQUIRED
+  READY_FOR_REVIEW
+  FINALIZED
+  DELIVERED
+  AMENDED
+  ARCHIVED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  VOID
+}
+
+enum PaymentMethod {
+  CARD
+  ACH
+  CHECK
+  CASH
+  OTHER
+}
+
+enum DeliveryRecipientType {
+  CUSTOMER
+  SECONDARY_CUSTOMER
+  REALTOR
+  OTHER_AUTHORIZED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  VIEWED
+  FAILED
+}
+
+enum CustomFieldDataType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+  MULTISELECT
+}
+
+// The set of entities custom fields may attach to (§8). Kept as an enum, not a
+// free string, because it's a deliberate architectural boundary, not user data.
+enum CustomFieldEntityType {
+  REPORT
+  REPORT_SECTION
+  REPORT_COMPONENT
+  FINDING
+  PROPERTY
+  INSPECTION
+  CUSTOMER
+  TRANSACTION
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(OFFICE_STAFF)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inspectionsAsInspector  Inspection[]       @relation("InspectorUser")
+  tasksAssigned           Task[]
+  activityLogs            ActivityLog[]
+  automationEvents        AutomationEvent[]  @relation("TriggeredByUser")
+  reportDefinitions       ReportDefinition[]
+  narrativesCreated       Narrative[]
+  reportVersionsFinalized ReportVersion[]    @relation("FinalizedByUser")
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// CRM & transactions (§4 "Identity, CRM & transactions")
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id                  String     @id @default(cuid())
+  firstName           String
+  lastName             String
+  email               String?
+  phone               String?
+  status              LeadStatus @default(NEW)
+  referralSourceId    String?
+  referralSource      ReferralSource? @relation(fields: [referralSourceId], references: [id])
+  convertedCustomerId String?    @unique
+  convertedCustomer   Customer?  @relation("LeadConversion", fields: [convertedCustomerId], references: [id])
+  convertedAt         DateTime?
+  notes               String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([status])
+  @@map("leads")
+}
+
+model Customer {
+  id         String    @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  leadOrigin   Lead?         @relation("LeadConversion")
+  transactions Transaction[]
+
+  @@map("customers")
+}
+
+model Property {
+  id            String   @id @default(cuid())
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  state         String
+  zip           String
+  county        String?
+  yearBuilt     Int?
+  squareFootage Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions Transaction[]
+  inspections  Inspection[]
+
+  @@index([city])
+  @@index([zip])
+  @@map("properties")
+}
+
+model Appointment {
+  id            String       @id @default(cuid())
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  inspectionId  String?
+  inspection    Inspection?  @relation(fields: [inspectionId], references: [id])
+  title         String
+  startAt       DateTime
+  endAt         DateTime
+  location      String?
+  cancelledAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([startAt])
+  @@map("appointments")
+}
+
+model Task {
+  id            String       @id @default(cuid())
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  assigneeId    String?
+  assignee      User?        @relation(fields: [assigneeId], references: [id])
+  title         String
+  description   String?
+  dueAt         DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([assigneeId])
+  @@index([dueAt])
+  @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// Relationship network (§4 "Relationship network")
+// ---------------------------------------------------------------------------
+
+model ReferralSource {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads        Lead[]
+  transactions Transaction[]
+
+  @@map("referral_sources")
+}
+
+model Brokerage {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  addressLine1 String?
+  city         String?
+  state        String?
+  zip          String?
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  realtors Realtor[]
+  history  RealtorBrokerageHistory[]
+
+  @@map("brokerages")
+}
+
+model Realtor {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  licenseNumber String?
+  brokerageId   String?
+  brokerage     Brokerage? @relation(fields: [brokerageId], references: [id])
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  participations TransactionParticipant[]
+  history        RealtorBrokerageHistory[]
+
+  @@map("realtors")
+}
+
+// Tracks a realtor changing firms over time so a past transaction still shows
+// the brokerage that was actually current on it (§4).
+model RealtorBrokerageHistory {
+  id          String    @id @default(cuid())
+  realtorId   String
+  realtor     Realtor   @relation(fields: [realtorId], references: [id])
+  brokerageId String
+  brokerage   Brokerage @relation(fields: [brokerageId], references: [id])
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([realtorId])
+  @@map("realtor_brokerage_history")
+}
+
+model Communication {
+  id            String       @id @default(cuid())
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  channel       String
+  direction     String
+  summary       String
+  occurredAt    DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+
+  @@index([transactionId])
+  @@map("communications")
+}
+
+model Document {
+  id            String       @id @default(cuid())
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  title         String
+  storageKey    String
+  fileType      String
+  uploadedById  String?
+  createdAt     DateTime     @default(now())
+
+  @@index([transactionId])
+  @@map("documents")
+}
+
+model Transaction {
+  id               String            @id @default(cuid())
+  customerId       String
+  customer         Customer          @relation(fields: [customerId], references: [id])
+  propertyId       String?
+  property         Property?         @relation(fields: [propertyId], references: [id])
+  referralSourceId String?
+  referralSource   ReferralSource?   @relation(fields: [referralSourceId], references: [id])
+  status           TransactionStatus @default(LEAD_IN_PROGRESS)
+  closingDate      DateTime?
+  archivedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  participants   TransactionParticipant[]
+  inspections    Inspection[]
+  appointments   Appointment[]
+  tasks          Task[]
+  communications Communication[]
+  documents      Document[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+// Resolves the Realtor <-> Transaction many-to-many relationship (Fig. 2).
+model TransactionParticipant {
+  id            String          @id @default(cuid())
+  transactionId String
+  transaction   Transaction     @relation(fields: [transactionId], references: [id])
+  realtorId     String?
+  realtor       Realtor?        @relation(fields: [realtorId], references: [id])
+  role          ParticipantRole
+  createdAt     DateTime        @default(now())
+
+  @@index([transactionId])
+  @@index([realtorId])
+  @@map("transaction_participants")
+}
+
+// ---------------------------------------------------------------------------
+// Service delivery & billing (§4 "Service delivery & billing")
+// ---------------------------------------------------------------------------
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  basePrice   Decimal  @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inspectionServices InspectionService[]
+
+  @@map("services")
+}
+
+model Inspection {
+  id              String            @id @default(cuid())
+  transactionId   String
+  transaction     Transaction       @relation(fields: [transactionId], references: [id])
+  propertyId      String
+  property        Property          @relation(fields: [propertyId], references: [id])
+  inspectorId     String?
+  inspector       User?             @relation("InspectorUser", fields: [inspectorId], references: [id])
+  status          InspectionStatus  @default(SCHEDULED)
+  scheduledAt     DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  weather         String?
+  temperatureF    Int?
+  occupancyStatus String?
+  utilitiesOn     Boolean?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  inspectionServices InspectionService[]
+  reports            InspectionReport[]
+  invoice            Invoice?
+  media               Media[]
+  appointments        Appointment[]
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("inspections")
+}
+
+model InspectionService {
+  id           String     @id @default(cuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id])
+  serviceId    String
+  service      Service    @relation(fields: [serviceId], references: [id])
+  price        Decimal    @db.Decimal(10, 2)
+  createdAt    DateTime   @default(now())
+
+  @@index([inspectionId])
+  @@map("inspection_services")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  inspectionId  String        @unique
+  inspection    Inspection    @relation(fields: [inspectionId], references: [id])
+  status        InvoiceStatus @default(DRAFT)
+  invoiceNumber String        @unique
+  issuedAt      DateTime?
+  dueAt         DateTime?
+  voidedAt      DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@index([status])
+  @@map("invoices")
+}
+
+// Kept separate from InspectionService so historical pricing survives a later
+// change to the service price list (§4).
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  reference String?
+  paidAt    DateTime      @default(now())
+  createdAt DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Inspection report engine (§4 "Inspection report engine", §10)
+// ---------------------------------------------------------------------------
+
+model ReportTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sections TemplateSection[]
+  reports  InspectionReport[]
+
+  @@map("report_templates")
+}
+
+model TemplateSection {
+  id           String         @id @default(cuid())
+  templateId   String
+  template     ReportTemplate @relation(fields: [templateId], references: [id])
+  name         String
+  displayOrder Int            @default(0)
+  active       Boolean        @default(true)
+
+  components TemplateComponent[]
+
+  @@index([templateId])
+  @@map("template_sections")
+}
+
+model TemplateComponent {
+  id                String          @id @default(cuid())
+  templateSectionId String
+  templateSection   TemplateSection @relation(fields: [templateSectionId], references: [id])
+  name              String
+  displayOrder      Int             @default(0)
+  active            Boolean         @default(true)
+
+  @@index([templateSectionId])
+  @@map("template_components")
+}
+
+model InspectionReport {
+  id                  String         @id @default(cuid())
+  inspectionId        String
+  inspection          Inspection     @relation(fields: [inspectionId], references: [id])
+  templateId          String?
+  template            ReportTemplate? @relation(fields: [templateId], references: [id])
+  reportNumber        String         @unique
+  status              ReportStatus   @default(DRAFT)
+  title               String?
+  introduction        String?
+  scope               String?
+  limitations         String?
+  footer              String?
+  internalNotes       String?
+  customerFacingNotes String?
+  finalizedAt         DateTime?
+  finalizedById       String?
+  deliveredAt         DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  sections     ReportSection[]
+  summaryItems ReportSummaryItem[]
+  versions     ReportVersion[]
+  deliveries   ReportDelivery[]
+  media        Media[]
+
+  @@index([status])
+  @@map("inspection_reports")
+}
+
+model ReportSection {
+  id               String           @id @default(cuid())
+  reportId         String
+  report           InspectionReport @relation(fields: [reportId], references: [id])
+  name             String
+  description      String?
+  displayOrder     Int              @default(0)
+  notApplicable    Boolean          @default(false)
+  defaultNarrative String?
+
+  components ReportComponent[]
+
+  @@index([reportId])
+  @@map("report_sections")
+}
+
+model ReportComponent {
+  id               String                    @id @default(cuid())
+  sectionId        String
+  section          ReportSection             @relation(fields: [sectionId], references: [id])
+  name             String
+  materialType     String?
+  inspectionStatus ComponentInspectionStatus @default(NOT_INSPECTED)
+  limitationNote   String?
+  notes            String?
+  displayOrder     Int                       @default(0)
+
+  findings Finding[]
+
+  @@index([sectionId])
+  @@map("report_components")
+}
+
+// Company-configurable classification terminology (§ "Finding classification") —
+// never a hard-coded severity scale.
+model FindingCategory {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  label        String
+  description  String?
+  displayOrder Int      @default(0)
+  active       Boolean  @default(true)
+
+  findings Finding[]
+
+  @@map("finding_categories")
+}
+
+// Library entries are copied into a Finding on insert (Fig. 3) — editing a
+// finding never mutates the shared entry.
+model Narrative {
+  id                 String   @id @default(cuid())
+  title              String
+  sectionHint        String?
+  componentHint      String?
+  narrativeText      String
+  recommendationText String?
+  active             Boolean  @default(true)
+  createdById        String?
+  createdBy          User?    @relation(fields: [createdById], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("narratives")
+}
+
+model Finding {
+  id                      String    @id @default(cuid())
+  componentId             String
+  component               ReportComponent  @relation(fields: [componentId], references: [id])
+  categoryId              String?
+  category                FindingCategory? @relation(fields: [categoryId], references: [id])
+  title                   String
+  description             String
+  location                String?
+  recommendation          String?
+  recommendedProfessional String?
+  safetyRelated           Boolean   @default(false)
+  repairRecommended       Boolean   @default(false)
+  monitor                 Boolean   @default(false)
+  furtherEvaluation       Boolean   @default(false)
+  includedInSummary       Boolean   @default(false)
+  inspectorNotes          String?
+  displayOrder            Int       @default(0)
+  createdById             String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  media       Media[]
+  summaryItem ReportSummaryItem?
+
+  @@index([componentId])
+  @@index([categoryId])
+  @@map("findings")
+}
+
+// Bytes live in object storage — this table is metadata only (§11).
+model Media {
+  id               String            @id @default(cuid())
+  inspectionId     String
+  inspection       Inspection        @relation(fields: [inspectionId], references: [id])
+  reportId         String?
+  report           InspectionReport? @relation(fields: [reportId], references: [id])
+  findingId        String?
+  finding          Finding?          @relation(fields: [findingId], references: [id])
+  storageKey       String
+  derivativeKey    String?
+  fileType         String
+  originalFileName String?
+  caption          String?
+  displayOrder     Int               @default(0)
+  includeInReport  Boolean           @default(true)
+  uploadedById     String?
+  createdAt        DateTime          @default(now())
+
+  @@index([inspectionId])
+  @@index([findingId])
+  @@map("media")
+}
+
+// Derived automatically from inspector-approved findings — never AI-classified (§21).
+model ReportSummaryItem {
+  id           String           @id @default(cuid())
+  reportId     String
+  report       InspectionReport @relation(fields: [reportId], references: [id])
+  findingId    String           @unique
+  finding      Finding          @relation(fields: [findingId], references: [id])
+  groupLabel   String
+  displayOrder Int              @default(0)
+
+  @@index([reportId])
+  @@map("report_summary_items")
+}
+
+// One immutable row per finalize/amend — Version 1 is never overwritten (§10, §15).
+model ReportVersion {
+  id                String           @id @default(cuid())
+  reportId          String
+  report            InspectionReport @relation(fields: [reportId], references: [id])
+  versionNumber     Int
+  snapshot          Json
+  pdfStorageKey     String?
+  reasonForRevision String?
+  createdById       String?
+  createdBy         User?            @relation("FinalizedByUser", fields: [createdById], references: [id])
+  finalizedAt       DateTime         @default(now())
+
+  deliveries ReportDelivery[]
+
+  @@unique([reportId, versionNumber])
+  @@map("report_versions")
+}
+
+// Delivery-scoped access token, independent of staff auth (§16).
+model ReportDelivery {
+  id              String                @id @default(cuid())
+  reportId        String
+  report          InspectionReport      @relation(fields: [reportId], references: [id])
+  versionId       String
+  version         ReportVersion         @relation(fields: [versionId], references: [id])
+  recipientType   DeliveryRecipientType
+  recipientName   String
+  recipientEmail  String
+  deliveryMethod  String                @default("email")
+  status          DeliveryStatus        @default(PENDING)
+  deliveredAt     DateTime?
+  deliveredById   String?
+  accessTokenHash String                @unique
+  accessExpiresAt DateTime
+
+  @@index([reportId])
+  @@map("report_deliveries")
+}
+
+// ---------------------------------------------------------------------------
+// Platform & intelligence (§4 "Platform & intelligence", §8, §9, §20)
+// ---------------------------------------------------------------------------
+
+model CustomFieldDefinition {
+  id           String                @id @default(cuid())
+  entityType   CustomFieldEntityType
+  fieldKey     String
+  label        String
+  dataType     CustomFieldDataType
+  options      Json?
+  required     Boolean               @default(false)
+  displayOrder Int                   @default(0)
+  active       Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  values CustomFieldValue[]
+
+  @@unique([entityType, fieldKey])
+  @@map("custom_field_definitions")
+}
+
+// Polymorphic (entityType, entityId) reference (Fig. 4) — value is stored as
+// JSONB but mirrored into typed columns so reports can filter/sort on it (§8).
+model CustomFieldValue {
+  id                String                @id @default(cuid())
+  fieldDefinitionId String
+  fieldDefinition   CustomFieldDefinition @relation(fields: [fieldDefinitionId], references: [id])
+  entityType        CustomFieldEntityType
+  entityId          String
+  value             Json
+  valueText         String?
+  valueNumber       Decimal?              @db.Decimal(18, 4)
+  valueDate         DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@unique([fieldDefinitionId, entityType, entityId])
+  @@index([entityType, entityId])
+  @@map("custom_field_values")
+}
+
+model ReportDefinition {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  entity    String
+  config    Json
+  shared    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("report_definitions")
+}
+
+// The allow-list the Reporting Query Service validates every request against —
+// the boundary between the UI and raw SQL (§9).
+model ReportFieldCatalogEntry {
+  id         String  @id @default(cuid())
+  entity     String
+  fieldKey   String
+  label      String
+  dataType   String
+  aggregable Boolean @default(false)
+  joinPath   String?
+  active     Boolean @default(true)
+
+  @@unique([entity, fieldKey])
+  @@map("report_field_catalog")
+}
+
+model Automation {
+  id           String   @id @default(cuid())
+  name         String
+  triggerEvent String
+  conditions   Json?
+  actions      Json
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  events AutomationEvent[]
+
+  @@map("automations")
+}
+
+model AutomationEvent {
+  id            String     @id @default(cuid())
+  automationId  String
+  automation    Automation @relation(fields: [automationId], references: [id])
+  entityType    String
+  entityId      String
+  result        String
+  detail        Json?
+  firedAt       DateTime   @default(now())
+  triggeredById String?
+  triggeredBy   User?      @relation("TriggeredByUser", fields: [triggeredById], references: [id])
+
+  @@index([automationId])
+  @@map("automation_events")
+}
+
+// Generic audit trail, polymorphic like CustomFieldValue (§15).
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
