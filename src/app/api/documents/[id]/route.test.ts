@@ -26,7 +26,9 @@ beforeEach(() => {
 
 describe("GET /api/documents/[id]", () => {
   it("401s with no session (authentication)", async () => {
-    mockAuth.mockResolvedValue(null);
+    // See the identical cast in tasks/actions.test.ts — auth()'s overloaded
+    // type confuses vi.mocked()'s inference for a bare `null`.
+    mockAuth.mockResolvedValue(null as never);
     const res = await GET(new Request("http://localhost/api/documents/doc-1"), params("doc-1"));
     expect(res.status).toBe(401);
     expect(mockPrisma.document.findUnique).not.toHaveBeenCalled();

@@ -25,7 +25,10 @@ beforeEach(() => {
 
 describe("createTask", () => {
   it("rejects when there is no session (authentication)", async () => {
-    mockAuth.mockResolvedValue(null);
+    // auth() is overloaded (also usable as NextMiddleware in proxy.ts), which
+    // confuses vi.mocked()'s inference for a bare `null` argument — cast it
+    // like every other mockResolvedValue call in this file.
+    mockAuth.mockResolvedValue(null as never);
     const form = new FormData();
     form.set("title", "Call the customer back");
     await expect(createTask(form)).rejects.toThrow();
