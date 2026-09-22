@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
@@ -10,6 +11,7 @@ import {
 } from "../actions";
 import { createTask, completeTask } from "../../tasks/actions";
 import { createAppointment, cancelAppointment } from "../../calendar/actions";
+import { createInspection } from "../../inspections/actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +24,10 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         property: true,
         referralSource: true,
         realtors: { include: { realtor: true, brokerage: true }, orderBy: { createdAt: "asc" } },
-        inspections: true,
+        inspections: {
+          orderBy: { createdAt: "desc" },
+          include: { inspector: true, reports: { select: { id: true, status: true }, take: 1 } },
+        },
         tasks: { orderBy: [{ completedAt: "asc" }, { dueAt: "asc" }], include: { assignee: true } },
         appointments: { where: { cancelledAt: null }, orderBy: { startAt: "asc" } },
         communications: { orderBy: { occurredAt: "desc" } },
@@ -36,6 +41,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   ]);
   if (!transaction) notFound();
 
+  const inspectors = users.filter((u) => u.role === "INSPECTOR");
   const primaryCustomer = getPrimaryCustomer(transaction.customers);
   const setPropertyAction = setTransactionProperty.bind(null, transaction.id);
   const addCustomerAction = addCustomerToTransaction.bind(null, transaction.id);
@@ -43,6 +49,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const addRealtorAction = addRealtorToTransaction.bind(null, transaction.id);
   const addCommunicationAction = addCommunication.bind(null, transaction.id);
   const uploadDocumentAction = uploadDocument.bind(null, transaction.id);
+  const createInspectionAction = createInspection.bind(null, transaction.id);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -195,6 +202,49 @@ export default async function TransactionDetailPage({ params }: { params: Promis
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Inspections</h2>
+        <ul className="mt-2 space-y-1 text-sm">
+          {transaction.inspections.map((i) => {
+            const report = i.reports[0];
+            return (
+              <li key={i.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <Link href={`/inspections/${i.id}`} className="text-slate-800 hover:underline">
+                  {i.scheduledAt ? i.scheduledAt.toLocaleString() : "Not scheduled"}
+                  {i.inspector ? ` — ${i.inspector.name}` : ""}
+                </Link>
+                <span className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-slate-500">{i.status}</span>
+                  {report && (
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[11px] text-blue-700">{report.status}</span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+          {transaction.inspections.length === 0 && <p className="text-sm text-slate-400">No inspections scheduled yet.</p>}
+        </ul>
+        {transaction.property ? (
+          <form action={createInspectionAction} className="mt-3 flex flex-wrap gap-2">
+            <input type="hidden" name="propertyId" value={transaction.property.id} />
+            <select name="inspectorId" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+              <option value="">Unassigned</option>
+              {inspectors.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+            <input name="scheduledAt" type="datetime-local" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+              Schedule inspection
+            </button>
+          </form>
+        ) : (
+          <p className="mt-3 text-xs text-slate-400">Set a property above to schedule an inspection.</p>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Tasks</h2>
         <ul className="mt-2 space-y-1 text-sm">
           {transaction.tasks.map((task) => {
@@ -325,10 +375,6 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         </form>
       </section>
 
-      <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        Scheduling an Inspection and building the Inspection Report are Pillar 3 — not part of this
-        pass. This transaction record is ready for them once built.
-      </section>
     </div>
   );
 }
