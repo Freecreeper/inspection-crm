@@ -1,20 +1,24 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createTask, completeTask } from "./actions";
+import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function TasksPage() {
   const [openTasks, users, transactions] = await Promise.all([
     prisma.task.findMany({
       where: { completedAt: null },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
-      include: { assignee: true, transaction: { include: { customer: true } } },
+      include: {
+        assignee: true,
+        transaction: { include: { customers: { include: { customer: true } } } },
+      },
       take: 100,
     }),
     prisma.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     prisma.transaction.findMany({
       where: { archivedAt: null },
       orderBy: { createdAt: "desc" },
-      include: { customer: true },
+      include: { customers: { include: { customer: true } } },
       take: 50,
     }),
   ]);
@@ -43,6 +47,7 @@ export default async function TasksPage() {
                 {openTasks.map((task) => {
                   const overdue = task.dueAt ? task.dueAt < now : false;
                   const completeAction = completeTask.bind(null, task.id);
+                  const primaryCustomer = task.transaction ? getPrimaryCustomer(task.transaction.customers) : null;
                   return (
                     <tr key={task.id} className="border-t border-slate-100">
                       <td className="px-4 py-2">
@@ -52,7 +57,7 @@ export default async function TasksPage() {
                       <td className="px-4 py-2 text-slate-600">
                         {task.transaction ? (
                           <Link href={`/transactions/${task.transaction.id}`} className="hover:underline">
-                            {task.transaction.customer.firstName} {task.transaction.customer.lastName}
+                            {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                           </Link>
                         ) : (
                           <span className="text-slate-400">General</span>
@@ -102,11 +107,14 @@ export default async function TasksPage() {
             </select>
             <select name="transactionId" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700">
               <option value="">General task (no transaction)</option>
-              {transactions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.customer.firstName} {t.customer.lastName}
-                </option>
-              ))}
+              {transactions.map((t) => {
+                const primaryCustomer = getPrimaryCustomer(t.customers);
+                return (
+                  <option key={t.id} value={t.id}>
+                    {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`}
+                  </option>
+                );
+              })}
             </select>
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Add task

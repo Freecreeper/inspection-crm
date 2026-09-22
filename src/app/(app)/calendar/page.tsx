@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createAppointment, cancelAppointment } from "./actions";
+import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function CalendarPage() {
   const [appointments, transactions] = await Promise.all([
     prisma.appointment.findMany({
       where: { cancelledAt: null },
       orderBy: { startAt: "asc" },
-      include: { transaction: { include: { customer: true, property: true } } },
+      include: {
+        transaction: { include: { customers: { include: { customer: true } }, property: true } },
+      },
       take: 100,
     }),
     prisma.transaction.findMany({
       where: { archivedAt: null },
       orderBy: { createdAt: "desc" },
-      include: { customer: true },
+      include: { customers: { include: { customer: true } } },
       take: 50,
     }),
   ]);
@@ -42,6 +45,7 @@ export default async function CalendarPage() {
               <tbody>
                 {appointments.map((a) => {
                   const cancelAction = cancelAppointment.bind(null, a.id);
+                  const primaryCustomer = a.transaction ? getPrimaryCustomer(a.transaction.customers) : null;
                   return (
                     <tr key={a.id} className="border-t border-slate-100">
                       <td className="px-4 py-2 tabular-nums text-slate-700">
@@ -55,7 +59,7 @@ export default async function CalendarPage() {
                       <td className="px-4 py-2 text-slate-600">
                         {a.transaction ? (
                           <Link href={`/transactions/${a.transaction.id}`} className="hover:underline">
-                            {a.transaction.customer.firstName} {a.transaction.customer.lastName}
+                            {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                           </Link>
                         ) : (
                           <span className="text-slate-400">—</span>
@@ -101,11 +105,14 @@ export default async function CalendarPage() {
             <input name="location" placeholder="Location (optional)" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <select name="transactionId" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700">
               <option value="">No transaction</option>
-              {transactions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.customer.firstName} {t.customer.lastName}
-                </option>
-              ))}
+              {transactions.map((t) => {
+                const primaryCustomer = getPrimaryCustomer(t.customers);
+                return (
+                  <option key={t.id} value={t.id}>
+                    {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`}
+                  </option>
+                );
+              })}
             </select>
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Schedule

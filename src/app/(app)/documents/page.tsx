@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function DocumentsPage() {
   const documents = await prisma.document.findMany({
     orderBy: { createdAt: "desc" },
-    include: { transaction: { include: { customer: true } } },
+    include: { transaction: { include: { customers: { include: { customer: true } } } } },
     take: 100,
   });
 
@@ -28,13 +29,15 @@ export default async function DocumentsPage() {
             </tr>
           </thead>
           <tbody>
-            {documents.map((d) => (
+            {documents.map((d) => {
+              const primaryCustomer = d.transaction ? getPrimaryCustomer(d.transaction.customers) : null;
+              return (
               <tr key={d.id} className="border-t border-slate-100">
                 <td className="px-4 py-2 font-medium text-slate-900">{d.title}</td>
                 <td className="px-4 py-2 text-slate-600">
                   {d.transaction ? (
                     <Link href={`/transactions/${d.transaction.id}`} className="hover:underline">
-                      {d.transaction.customer.firstName} {d.transaction.customer.lastName}
+                      {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                     </Link>
                   ) : (
                     <span className="text-slate-400">—</span>
@@ -48,7 +51,8 @@ export default async function DocumentsPage() {
                   </a>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {documents.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400">

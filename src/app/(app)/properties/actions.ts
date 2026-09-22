@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { assertCan } from "@/lib/rbac";
+import type { Role } from "@prisma/client";
 
 export async function createProperty(formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
   const addressLine1 = String(formData.get("addressLine1") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const state = String(formData.get("state") ?? "").trim();

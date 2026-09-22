@@ -33,11 +33,16 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        Pillars 1 (CRM/Operations) and 2 (Relationship Management) are in place: leads, customers,
-        transactions, properties, realtors/brokerages with history, referral sources, scheduling,
-        tasks, communications, and documents. Pillar 3 (Inspection Report Builder) and Pillar 4
-        (Business Intelligence/Custom Reporting) are next — invoicing/payments are blocked on the
-        Inspection entity that Pillar 3 introduces.
+        <strong>Implemented</strong> — Pillars 1 (CRM/Operations) and 2 (Relationship Management):
+        leads, customers (multiple per transaction), transactions, properties, realtors/brokerages
+        with history, referral sources, scheduling, tasks, communications, and documents.
+        <br />
+        <strong>Partially implemented</strong> — Inspection/Service/Invoice/Payment and the
+        inspection report engine exist as schema only, no UI or logic yet.
+        <br />
+        <strong>Deferred</strong> — Pillar 3 (Inspection Report Builder), Pillar 4 (Business
+        Intelligence/Custom Reporting), invoicing/payments UI, custom fields UI, automations. See
+        the README for the full breakdown.
       </div>
     </div>
   );

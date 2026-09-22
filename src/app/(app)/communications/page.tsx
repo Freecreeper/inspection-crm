@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function CommunicationsPage() {
   const communications = await prisma.communication.findMany({
     orderBy: { occurredAt: "desc" },
-    include: { transaction: { include: { customer: true } } },
+    include: { transaction: { include: { customers: { include: { customer: true } } } } },
     take: 100,
   });
 
@@ -28,23 +29,26 @@ export default async function CommunicationsPage() {
             </tr>
           </thead>
           <tbody>
-            {communications.map((c) => (
-              <tr key={c.id} className="border-t border-slate-100">
-                <td className="px-4 py-2 tabular-nums text-slate-600">{c.occurredAt.toLocaleString()}</td>
-                <td className="px-4 py-2">
-                  {c.transaction ? (
-                    <Link href={`/transactions/${c.transaction.id}`} className="font-medium text-slate-900 hover:underline">
-                      {c.transaction.customer.firstName} {c.transaction.customer.lastName}
-                    </Link>
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-slate-600">{c.channel}</td>
-                <td className="px-4 py-2 text-slate-600">{c.direction}</td>
-                <td className="px-4 py-2 text-slate-700">{c.summary}</td>
-              </tr>
-            ))}
+            {communications.map((c) => {
+              const primaryCustomer = c.transaction ? getPrimaryCustomer(c.transaction.customers) : null;
+              return (
+                <tr key={c.id} className="border-t border-slate-100">
+                  <td className="px-4 py-2 tabular-nums text-slate-600">{c.occurredAt.toLocaleString()}</td>
+                  <td className="px-4 py-2">
+                    {c.transaction ? (
+                      <Link href={`/transactions/${c.transaction.id}`} className="font-medium text-slate-900 hover:underline">
+                        {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">{c.channel}</td>
+                  <td className="px-4 py-2 text-slate-600">{c.direction}</td>
+                  <td className="px-4 py-2 text-slate-700">{c.summary}</td>
+                </tr>
+              );
+            })}
             {communications.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400">

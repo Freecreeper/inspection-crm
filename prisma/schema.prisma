@@ -38,13 +38,27 @@ enum TransactionStatus {
   CANCELLED
 }
 
-enum ParticipantRole {
-  BUYER
-  SELLER
-  BUYERS_AGENT
+// Non-Realtor transaction contacts (attorney, lender) are deferred — V1 keeps
+// this relationship Realtor-specific rather than introducing a generic
+// polymorphic "party" abstraction the business hasn't asked for yet (PR #1
+// review item 2). Buyers/sellers are real Customer records via
+// TransactionCustomer, never a Realtor row standing in for them.
+enum RealtorParticipantRole {
+  BUYER_AGENT
   LISTING_AGENT
-  ATTORNEY
-  LENDER
+  TRANSACTION_COORDINATOR
+  OTHER
+}
+
+// Multiple independent Customers can be on one Transaction (e.g. two buyers).
+// primaryContact marks exactly one row per transaction as the primary contact
+// — enforced in application code (addCustomerToTransaction), the same way
+// RealtorBrokerageHistory enforces "one open row" in application code rather
+// than a DB constraint (PR #1 review item 1).
+enum TransactionCustomerRole {
+  PRIMARY_BUYER
+  SECONDARY_BUYER
+  SELLER
   OTHER
 }
 
@@ -189,8 +203,8 @@ model Customer {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  leadOrigin   Lead?         @relation("LeadConversion")
-  transactions Transaction[]
+  leadOrigin   Lead?                 @relation("LeadConversion")
+  transactions TransactionCustomer[]
 
   @@map("customers")
 }
@@ -283,8 +297,9 @@ model Brokerage {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  realtors Realtor[]
-  history  RealtorBrokerageHistory[]
+  realtors            Realtor[]
+  history             RealtorBrokerageHistory[]
+  transactionRealtors TransactionRealtor[]
 
   @@map("brokerages")
 }
@@ -302,8 +317,8 @@ model Realtor {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  participations TransactionParticipant[]
-  history        RealtorBrokerageHistory[]
+  transactions TransactionRealtor[]
+  history      RealtorBrokerageHistory[]
 
   @@map("realtors")
 }
@@ -352,10 +367,14 @@ model Document {
   @@map("documents")
 }
 
+// No scalar customerId/primaryCustomerId here on purpose (PR #1 review item 1):
+// a Transaction may start with zero Customers, and a second FK duplicating
+// "who's primary" would be a second source of truth alongside
+// TransactionCustomer.primaryContact that could drift from it. Callers read
+// the primary contact through the customers relation (see
+// src/lib/transactions.ts#getPrimaryCustomer) instead.
 model Transaction {
   id               String            @id @default(cuid())
-  customerId       String
-  customer         Customer          @relation(fields: [customerId], references: [id])
   propertyId       String?
   property         Property?         @relation(fields: [propertyId], references: [id])
   referralSourceId String?
@@ -366,8 +385,10 @@ model Transaction {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
-  participants   TransactionParticipant[]
+  customers      TransactionCustomer[]
+  realtors       TransactionRealtor[]
   inspections    Inspection[]
+  invoices       Invoice[]
   appointments   Appointment[]
   tasks          Task[]
   communications Communication[]
@@ -378,19 +399,56 @@ model Transaction {
   @@map("transactions")
 }
 
+// Normalized Customer <-> Transaction relationship (PR #1 review item 1) —
+// supports multiple independent Customers on one Transaction (e.g. two
+// buyers) without duplicating Customer records. Exactly one row per
+// transaction should have primaryContact = true; enforced in
+// addCustomerToTransaction, not a DB constraint (Prisma has no partial-unique-
+// index syntax, and a full unique on transactionId would defeat the point).
+model TransactionCustomer {
+  id             String                  @id @default(cuid())
+  transactionId  String
+  transaction    Transaction             @relation(fields: [transactionId], references: [id])
+  customerId     String
+  customer       Customer                @relation(fields: [customerId], references: [id])
+  role           TransactionCustomerRole @default(OTHER)
+  primaryContact Boolean                 @default(false)
+  createdAt      DateTime                @default(now())
+
+  @@unique([transactionId, customerId])
+  @@index([transactionId])
+  @@index([customerId])
+  @@map("transaction_customers")
+}
+
 // Resolves the Realtor <-> Transaction many-to-many relationship (Fig. 2).
-model TransactionParticipant {
-  id            String          @id @default(cuid())
+// Realtor-specific by design (PR #1 review item 2) — the old
+// TransactionParticipant mixed a nullable realtorId FK with a role enum that
+// also claimed BUYER/SELLER/ATTORNEY/LENDER, which meant a "BUYER" row had no
+// actual buyer behind it. Customer-side participants are TransactionCustomer
+// rows now; this table only ever points at a real Realtor.
+model TransactionRealtor {
+  id            String                 @id @default(cuid())
   transactionId String
-  transaction   Transaction     @relation(fields: [transactionId], references: [id])
-  realtorId     String?
-  realtor       Realtor?        @relation(fields: [realtorId], references: [id])
-  role          ParticipantRole
-  createdAt     DateTime        @default(now())
+  transaction   Transaction            @relation(fields: [transactionId], references: [id])
+  realtorId     String
+  realtor       Realtor                @relation(fields: [realtorId], references: [id])
+  role          RealtorParticipantRole
+  // Snapshot of the realtor's brokerage at the moment they were added to
+  // *this* transaction (PR #1 review item 5). A transaction spans weeks, so
+  // "the brokerage at the time of the transaction" has no single instant to
+  // resolve a RealtorBrokerageHistory date-range lookup against — but "the
+  // brokerage when this realtor was actually attached to this deal" is a
+  // concrete event, so we snapshot it here instead, the same pattern
+  // InvoiceItem already uses for historical pricing.
+  brokerageId   String?
+  brokerage     Brokerage?             @relation(fields: [brokerageId], references: [id])
+  brokerageName String?
+  createdAt     DateTime               @default(now())
 
   @@index([transactionId])
   @@index([realtorId])
-  @@map("transaction_participants")
+  @@map("transaction_realtors")
 }
 
 // ---------------------------------------------------------------------------
@@ -432,9 +490,9 @@ model Inspection {
 
   inspectionServices InspectionService[]
   reports            InspectionReport[]
-  invoice            Invoice?
-  media               Media[]
-  appointments        Appointment[]
+  invoices           Invoice[]
+  media              Media[]
+  appointments       Appointment[]
 
   @@index([status])
   @@index([scheduledAt])
@@ -454,10 +512,20 @@ model InspectionService {
   @@map("inspection_services")
 }
 
+// Anchored to Transaction, not Inspection (PR #1 review item 6) — the
+// approved architecture treats Transaction as the operational hub with
+// potentially multiple Inspections and services on it, so a 1:1
+// Invoice<->Inspection unique FK couldn't represent one invoice covering
+// several inspection services, an additional invoice for a reinspection, or
+// an adjustment invoice. inspectionId is now optional and non-unique: an
+// invoice may still reference the specific inspection it bills for, but
+// doesn't have to, and more than one invoice may reference the same one.
 model Invoice {
   id            String        @id @default(cuid())
-  inspectionId  String        @unique
-  inspection    Inspection    @relation(fields: [inspectionId], references: [id])
+  transactionId String
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  inspectionId  String?
+  inspection    Inspection?   @relation(fields: [inspectionId], references: [id])
   status        InvoiceStatus @default(DRAFT)
   invoiceNumber String        @unique
   issuedAt      DateTime?
@@ -470,6 +538,8 @@ model Invoice {
   payments Payment[]
 
   @@index([status])
+  @@index([transactionId])
+  @@index([inspectionId])
   @@map("invoices")
 }
 

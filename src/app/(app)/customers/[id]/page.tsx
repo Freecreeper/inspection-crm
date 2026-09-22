@@ -6,7 +6,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const customer = await prisma.customer.findUnique({
     where: { id },
-    include: { transactions: { include: { property: true }, orderBy: { createdAt: "desc" } } },
+    include: {
+      transactions: {
+        include: { transaction: { include: { property: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
   if (!customer) notFound();
 
@@ -37,16 +42,19 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </tr>
           </thead>
           <tbody>
-            {customer.transactions.map((t) => (
-              <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+            {customer.transactions.map((tc) => (
+              <tr key={tc.id} className="border-t border-slate-100 hover:bg-slate-50">
                 <td className="px-4 py-2">
-                  <Link href={`/transactions/${t.id}`} className="font-medium text-slate-900 hover:underline">
-                    {t.property ? `${t.property.addressLine1}, ${t.property.city}` : "No property yet"}
+                  <Link href={`/transactions/${tc.transaction.id}`} className="font-medium text-slate-900 hover:underline">
+                    {tc.transaction.property
+                      ? `${tc.transaction.property.addressLine1}, ${tc.transaction.property.city}`
+                      : "No property yet"}
                   </Link>
+                  <span className="ml-2 font-mono text-[11px] text-slate-400">{tc.role}</span>
                 </td>
                 <td className="px-4 py-2">
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-600">
-                    {t.status}
+                    {tc.transaction.status}
                   </span>
                 </td>
               </tr>

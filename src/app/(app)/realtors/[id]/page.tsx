@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { changeRealtorBrokerage } from "../actions";
+import { getPrimaryCustomer } from "@/lib/transactions";
 
 export default async function RealtorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,8 +12,8 @@ export default async function RealtorDetailPage({ params }: { params: Promise<{ 
       include: {
         brokerage: true,
         history: { include: { brokerage: true }, orderBy: { startDate: "desc" } },
-        participations: {
-          include: { transaction: { include: { customer: true } } },
+        transactions: {
+          include: { transaction: { include: { customers: { include: { customer: true } } } } },
           orderBy: { createdAt: "desc" },
           take: 20,
         },
@@ -80,15 +81,21 @@ export default async function RealtorDetailPage({ params }: { params: Promise<{ 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Transactions</h2>
         <ul className="mt-2 space-y-1 text-sm">
-          {realtor.participations.map((p) => (
-            <li key={p.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
-              <Link href={`/transactions/${p.transaction.id}`} className="text-slate-800 hover:underline">
-                {p.transaction.customer.firstName} {p.transaction.customer.lastName}
-              </Link>
-              <span className="font-mono text-[11px] text-slate-500">{p.role}</span>
-            </li>
-          ))}
-          {realtor.participations.length === 0 && <p className="text-sm text-slate-400">No transactions yet.</p>}
+          {realtor.transactions.map((tr) => {
+            const primaryCustomer = getPrimaryCustomer(tr.transaction.customers);
+            return (
+              <li key={tr.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <Link href={`/transactions/${tr.transaction.id}`} className="text-slate-800 hover:underline">
+                  {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
+                </Link>
+                <span className="text-right">
+                  <span className="font-mono text-[11px] text-slate-500">{tr.role}</span>
+                  {tr.brokerageName && <span className="ml-2 text-xs text-slate-400">via {tr.brokerageName}</span>}
+                </span>
+              </li>
+            );
+          })}
+          {realtor.transactions.length === 0 && <p className="text-sm text-slate-400">No transactions yet.</p>}
         </ul>
       </section>
     </div>

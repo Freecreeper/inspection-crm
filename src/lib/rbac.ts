@@ -14,6 +14,11 @@ export const PERMISSIONS = {
   "report-builder:use": ["OWNER_ADMIN", "OFFICE_STAFF", "REPORTING_ANALYST"],
   "crm:write": ["OWNER_ADMIN", "OFFICE_STAFF"],
   "inspection:conduct": ["OWNER_ADMIN", "INSPECTOR"],
+  // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
+  // here rather than a bare "is there a session" check in the download route,
+  // so a future per-transaction assignment restriction is a one-line change
+  // in this table instead of a hunt through route handlers.
+  "document:read": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

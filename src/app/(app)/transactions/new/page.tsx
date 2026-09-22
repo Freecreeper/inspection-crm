@@ -18,16 +18,13 @@ export default async function NewTransactionPage({
       <h1 className="text-xl font-semibold text-slate-900">New transaction</h1>
       <form action={createTransaction} className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-5">
         <div>
-          <label className="block text-sm font-medium text-slate-700">Customer</label>
+          <label className="block text-sm font-medium text-slate-700">Primary customer (optional)</label>
           <select
             name="customerId"
-            required
             defaultValue={customerId ?? ""}
             className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="" disabled>
-              Select a customer
-            </option>
+            <option value="">Not set yet — add customers from the transaction</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.firstName} {c.lastName}
