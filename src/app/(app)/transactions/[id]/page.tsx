@@ -98,6 +98,11 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           Multiple independent customers can be on one transaction (e.g. two buyers) — each stays its
           own Customer record.
         </p>
+        {transaction.customers.length > 0 && !transaction.customers.some((tc) => tc.primaryContact) && (
+          <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            No primary contact selected yet — a data-quality warning, not a blocker. Pick one below.
+          </p>
+        )}
         <ul className="mt-2 space-y-1 text-sm">
           {transaction.customers.map((tc) => (
             <li key={tc.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">

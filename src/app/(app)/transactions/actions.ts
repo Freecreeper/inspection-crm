@@ -14,7 +14,6 @@ import type { Role } from "@prisma/client";
 const UPLOAD_ROOT = path.join(process.cwd(), "storage", "uploads");
 
 if (process.env.NODE_ENV === "production") {
-  // eslint-disable-next-line no-console
   console.warn(
     "[documents] Storing uploads on local disk in production — this is a dev-only stand-in for object storage (§11, §17)."
   );

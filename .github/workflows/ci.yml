@@ -40,12 +40,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      # package-lock.json couldn't be regenerated in the sandbox this PR was
-      # built in (no local Node/npm) — `npm install` instead of `npm ci` here
-      # until someone runs `npm install` in a real environment once and
-      # commits the refreshed lockfile.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Validate Prisma schema
         run: npx prisma validate

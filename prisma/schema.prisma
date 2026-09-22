@@ -50,11 +50,13 @@ enum RealtorParticipantRole {
   OTHER
 }
 
-// Multiple independent Customers can be on one Transaction (e.g. two buyers).
-// primaryContact marks exactly one row per transaction as the primary contact
-// — enforced in application code (addCustomerToTransaction), the same way
+// Multiple independent Customers can be on one Transaction (e.g. two buyers),
+// or zero. Among whichever Customers are on a transaction, at most one may
+// have primaryContact = true — enforced in application code
+// (addCustomerToTransaction, setPrimaryCustomer), the same way
 // RealtorBrokerageHistory enforces "one open row" in application code rather
-// than a DB constraint (PR #1 review item 1).
+// than a DB constraint. See the fuller invariant note on TransactionCustomer
+// itself (PR #1 review item 1; re-clarified in re-review item 1).
 enum TransactionCustomerRole {
   PRIMARY_BUYER
   SECONDARY_BUYER
@@ -401,10 +403,32 @@ model Transaction {
 
 // Normalized Customer <-> Transaction relationship (PR #1 review item 1) —
 // supports multiple independent Customers on one Transaction (e.g. two
-// buyers) without duplicating Customer records. Exactly one row per
-// transaction should have primaryContact = true; enforced in
-// addCustomerToTransaction, not a DB constraint (Prisma has no partial-unique-
-// index syntax, and a full unique on transactionId would defeat the point).
+// buyers) without duplicating Customer records.
+//
+// Primary-contact invariant: a Transaction may have zero Customers (the
+// non-blocking, incomplete-data philosophy applies here too — see §7 and
+// createTransaction). Among whichever Customers *are* associated with a
+// Transaction, at most one may be designated primaryContact. Customers with
+// no primary contact selected yet are valid and expected; the UI may surface
+// that as a data-quality warning, but it never blocks the rest of the
+// transaction workflow.
+//
+// This uniqueness rule (at most one primaryContact per transactionId) is
+// currently enforced only in application logic (addCustomerToTransaction,
+// setPrimaryCustomer), not by the database — Prisma's schema language has no
+// partial-unique-index syntax, and a plain @@unique on transactionId would
+// defeat the point (it would cap every transaction at one customer, full
+// stop). Technical note: if this invariant needs DB-level enforcement later,
+// a PostgreSQL partial unique index is the right tool —
+//   CREATE UNIQUE INDEX transaction_customers_one_primary_idx
+//     ON transaction_customers (transaction_id) WHERE primary_contact = true;
+// — added by hand to a migration, since Prisma can't express it declaratively
+// in schema.prisma; the schema and the migration would then intentionally
+// diverge on this one index, which is worth a comment at the point it's added.
+//
+// Deliberately not solved by adding a primaryCustomerId scalar to
+// Transaction: a second FK duplicating "who's primary" would be a second
+// source of truth alongside primaryContact that could drift from it.
 model TransactionCustomer {
   id             String                  @id @default(cuid())
   transactionId  String

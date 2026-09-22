@@ -8,7 +8,9 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
 
 **IMPLEMENTED**
 - Leads → Customers → Transactions, with multiple independent Customers per Transaction
-  (`TransactionCustomer`, one marked primary contact)
+  (`TransactionCustomer`). A Transaction may have zero Customers; among whichever it has, at most
+  one may be the primary contact — see the invariant note on `TransactionCustomer` in
+  `schema.prisma`
 - Properties
 - Realtors/Brokerages, including brokerage-change history (`RealtorBrokerageHistory`), seeded on
   Realtor creation and updated on every brokerage change
@@ -68,10 +70,8 @@ npm run build
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above against an ephemeral Postgres service
-container on every push/PR, plus `prisma validate`, `prisma migrate deploy`, and a seed smoke test.
-It currently runs `npm install` rather than `npm ci` — `package-lock.json` couldn't be regenerated
-in the sandbox this was built in (no local Node available there); run `npm install` once in a real
-environment and commit the refreshed lockfile, then switch CI to `npm ci`.
+container on every push/PR, using `npm ci` against the committed `package-lock.json`, plus
+`prisma validate`, `prisma migrate deploy`, and a seed smoke test.
 
 ## Project layout
 
