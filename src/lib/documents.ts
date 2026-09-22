@@ -60,7 +60,9 @@ export function contentDispositionHeader(title: string): string {
 
 // No scanner is wired up yet — this is the integration point for one
 // (ClamAV, a cloud provider's file-scanning API, etc.) once the business
-// picks one. Never presented as having actually screened anything.
-export async function scanForMalware(_buffer: Buffer): Promise<{ clean: true }> {
+// picks one. Takes the buffer a real scanner would need, even though this
+// stub doesn't touch it. Never presented as having actually screened anything.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function scanForMalware(buffer: Buffer): Promise<{ clean: true }> {
   return { clean: true };
 }
