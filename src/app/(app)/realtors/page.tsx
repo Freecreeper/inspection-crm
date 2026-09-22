@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createRealtor } from "./actions";
 
@@ -29,7 +30,9 @@ export default async function RealtorsPage() {
                 {realtors.map((r) => (
                   <tr key={r.id} className="border-t border-slate-100">
                     <td className="px-4 py-2 font-medium text-slate-900">
-                      {r.firstName} {r.lastName}
+                      <Link href={`/realtors/${r.id}`} className="hover:underline">
+                        {r.firstName} {r.lastName}
+                      </Link>
                     </td>
                     <td className="px-4 py-2 text-slate-600">
                       {r.brokerage?.name || <span className="text-slate-400">Not provided</span>}

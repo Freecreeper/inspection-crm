@@ -33,9 +33,16 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        Phase 1 foundation: leads, customers, transactions, properties, and the realtor/brokerage
-        network. The inspection report builder, billing, and reporting engine land in later phases —
-        see the architecture proposal, §26.
+        <strong>Implemented</strong> — Pillars 1 (CRM/Operations) and 2 (Relationship Management):
+        leads, customers (multiple per transaction), transactions, properties, realtors/brokerages
+        with history, referral sources, scheduling, tasks, communications, and documents.
+        <br />
+        <strong>Partially implemented</strong> — Inspection/Service/Invoice/Payment and the
+        inspection report engine exist as schema only, no UI or logic yet.
+        <br />
+        <strong>Deferred</strong> — Pillar 3 (Inspection Report Builder), Pillar 4 (Business
+        Intelligence/Custom Reporting), invoicing/payments UI, custom fields UI, automations. See
+        the README for the full breakdown.
       </div>
     </div>
   );

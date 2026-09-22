@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { assertCan } from "@/lib/rbac";
+import type { Role } from "@prisma/client";
 
 export async function createLead(formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim() || null;
@@ -23,6 +29,9 @@ export async function createLead(formData: FormData) {
 // Converting a lead never requires anything beyond the lead itself — property,
 // realtor, and referral source can all be filled in later on the transaction (§7).
 export async function convertLead(leadId: string) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: leadId } });
 
   const result = await prisma.$transaction(async (tx) => {
@@ -41,10 +50,18 @@ export async function convertLead(leadId: string) {
     });
 
     const transaction = await tx.transaction.create({
+      data: { referralSourceId: lead.referralSourceId, status: "LEAD_IN_PROGRESS" },
+    });
+
+    // The converted lead becomes the primary contact — a lead only ever
+    // represents one person, so PRIMARY_BUYER is the only sensible default;
+    // staff can add a second customer (e.g. a co-buyer) from the transaction.
+    await tx.transactionCustomer.create({
       data: {
+        transactionId: transaction.id,
         customerId: customer.id,
-        referralSourceId: lead.referralSourceId,
-        status: "LEAD_IN_PROGRESS",
+        role: "PRIMARY_BUYER",
+        primaryContact: true,
       },
     });
 
