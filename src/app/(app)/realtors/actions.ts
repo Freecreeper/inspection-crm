@@ -15,3 +15,27 @@ export async function createRealtor(formData: FormData) {
   await prisma.realtor.create({ data: { firstName, lastName, email, phone, brokerageId } });
   revalidatePath("/realtors");
 }
+
+// Moving a realtor to a new brokerage closes out the open history row rather
+// than overwriting it, so a transaction from six months ago still shows the
+// brokerage that was actually current at the time (§4, RealtorBrokerageHistory).
+export async function changeRealtorBrokerage(realtorId: string, formData: FormData) {
+  const brokerageId = String(formData.get("brokerageId") ?? "").trim();
+  if (!brokerageId) throw new Error("A brokerage is required.");
+
+  const startDate = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.realtorBrokerageHistory.updateMany({
+      where: { realtorId, endDate: null },
+      data: { endDate: startDate },
+    });
+    await tx.realtorBrokerageHistory.create({
+      data: { realtorId, brokerageId, startDate },
+    });
+    await tx.realtor.update({ where: { id: realtorId }, data: { brokerageId } });
+  });
+
+  revalidatePath(`/realtors/${realtorId}`);
+  revalidatePath("/realtors");
+}

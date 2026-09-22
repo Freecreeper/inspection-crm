@@ -1,8 +1,16 @@
 # Inspection CRM
 
-Home inspection CRM — Version 1 foundation. Implements the architecture proposal's data model
-and Phase 1 (core CRM: leads, customers, transactions, properties, realtors, brokerages).
-Inspection Report Builder, billing, and business reporting are later phases (see the proposal, §26).
+Home inspection CRM. The product has four equally-important pillars sharing one relational data
+model: (1) CRM/operations, (2) relationship management, (3) inspection report generation, and
+(4) business intelligence/custom reporting.
+
+Pillars 1 and 2 are built: leads, customers, transactions, properties, realtors/brokerages (with
+brokerage-change history), referral sources, scheduling (appointments), tasks, communications, and
+documents (session-gated download, local-disk storage as a dev-only stand-in for object storage).
+
+Pillars 3 (Inspection Report Builder) and 4 (Business Intelligence) are not built yet. Invoicing
+and payments are part of Pillar 1 but are blocked on the Inspection entity, which Pillar 3
+introduces — see "What's not built yet" below.
 
 ## Stack
 
@@ -34,6 +42,6 @@ Open http://localhost:3000 and sign in with the seeded admin account.
 
 ## What's not built yet
 
-Inspection scheduling, the Inspection Report Builder, media/PDF pipeline, invoicing/payments,
-custom fields, the business reporting engine, and automations — see the architecture proposal's
-milestones (§26) for the planned phase order.
+The Inspection entity itself (and thus inspection scheduling), the Inspection Report Builder,
+media/PDF pipeline, invoicing/payments, custom fields, the business reporting engine, and
+automations — see the architecture proposal's milestones (§26) for the planned order.

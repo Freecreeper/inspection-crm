@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local document uploads — dev-only stand-in for object storage (§11, §17)
+/storage
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

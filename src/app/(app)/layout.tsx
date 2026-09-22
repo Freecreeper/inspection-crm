@@ -6,10 +6,15 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/leads", label: "Leads" },
   { href: "/transactions", label: "Transactions" },
+  { href: "/calendar", label: "Calendar" },
   { href: "/customers", label: "Customers" },
   { href: "/realtors", label: "Realtors" },
   { href: "/brokerages", label: "Brokerages" },
   { href: "/properties", label: "Properties" },
+  { href: "/tasks", label: "Tasks" },
+  { href: "/communications", label: "Communications" },
+  { href: "/documents", label: "Documents" },
+  { href: "/referral-sources", label: "Referral sources" },
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
