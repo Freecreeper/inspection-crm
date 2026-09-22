@@ -19,6 +19,11 @@ export const PERMISSIONS = {
   // so a future per-transaction assignment restriction is a one-line change
   // in this table instead of a hunt through route handlers.
   "document:read": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  // Same rationale, for inspection/finding photos (Pillar 3). Kept as its own
+  // key rather than reusing document:read since the two resources are
+  // unrelated — a future restriction on one shouldn't accidentally apply to
+  // the other.
+  "media:read": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
