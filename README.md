@@ -47,8 +47,58 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
 - Custom fields UI
 - Automations engine
 - Actual email delivery (SMTP/Postmark integration) for report delivery
-- Object storage (S3/R2) — uploads (documents, media, report PDFs) are local-disk only, explicitly
-  flagged dev-only in this codebase
+- Object storage (S3/R2) — see "Local filesystem storage is a production blocker" below
+
+## Known limitations & production readiness
+
+**Local filesystem storage is a production blocker, not a dev convenience.** Documents, media
+(finding photos), and generated report PDFs are all written to `storage/` on local disk
+(`src/lib/documents.ts`, `src/lib/media.ts`, `finalizeReport` in
+`src/app/(app)/inspections/report-actions.ts`). This is fine for local dev and CI, but it does
+**not** survive redeployment on ephemeral/stateless hosting (containers, serverless, most PaaS
+targets redeploy onto a fresh filesystem) and is not itself a durable, backed-up store. Do not
+deploy this application to production without first replacing it with durable private object
+storage (e.g. S3/R2). The replacement needs to support everything the current local-disk
+implementation already provides, so none of it can be dropped in the migration:
+- private storage for media and finalized PDFs (never a public bucket — everything here is
+  gated by session/RBAC or a signed delivery token)
+- secure access to each object (signed URLs or an equivalent proxy, not direct public links)
+- expiring access where the current code already expires it (the 30-day `ReportDelivery` access
+  token in `src/lib/delivery.ts` must still gate PDF access the same way after migration)
+- the file validation already in place (`validateUpload`/`validateMediaUpload`'s MIME/extension
+  allow-lists and size caps) applied before any object is written, not after
+- object deletion/retention policies (`deleteMedia` currently unlinks the local file directly —
+  its replacement needs the equivalent object-store delete, plus a real retention policy for
+  everything that isn't explicitly deleted)
+- a migration path for whatever is already sitting in `storage/` in any environment that has to
+  move off local disk
+
+**Custom reporting cannot currently group or aggregate across a relation.** The Reporting Query
+Service (`src/lib/reporting.ts`) restricts `groupBy`/aggregation to fields that belong directly to
+the report's primary entity (see the `ReportValidationError("Grouping is only supported on the
+entity's own fields.")` check). Related-entity fields (anything with a `joinPath` in
+`ReportFieldCatalogEntry`) can be displayed and filtered on, but never used as a group/aggregation
+dimension, because Prisma's `groupBy` cannot aggregate across a relation without dropping to raw
+SQL — and this service's entire security model is "every field is allow-listed before it reaches
+a typed Prisma call," which raw, string-built SQL would undermine. This is a real, currently-open
+gap: it blocks cross-entity business questions the product should eventually answer, such as
+revenue by Realtor, revenue by Brokerage, revenue by Referral Source, inspections by Realtor or
+Brokerage, conversion by Referral Source, or anything aggregating Transaction-relationship data
+(Service/Invoice/Payment) across a related entity. Do not close this gap by hand-building dynamic
+SQL from user-controlled field names. The safe path is one of:
+- a small set of **purpose-built, hand-written cross-entity queries** (the same pattern already
+  used for `inspections-by-city`, which groups by a joined field outside the generic service
+  because the generic service deliberately disallows it) for the specific cross-entity questions
+  the product actually needs, each reviewed and parameterized individually; or
+- a **materialized/denormalized reporting table** (e.g. a nightly or triggered rollup that flattens
+  Transaction → Realtor/Brokerage/ReferralSource/Invoice into one row per fact), queried by the
+  existing allow-listed service against that flat table instead of joining live relations; or
+- extending `ReportFieldCatalogEntry` with an explicit, curated list of safe cross-entity
+  group keys (not arbitrary joins) once the specific relations to support are chosen, each backed
+  by a hand-reviewed Prisma query rather than dynamic SQL.
+
+Whichever of these is chosen should be proposed and reviewed before implementation — this section
+exists so the limitation isn't silently rediscovered later, not to prescribe the final design.
 
 ## Stack
 

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { resolveDeliveryByToken, markDeliveryViewed } from "@/lib/delivery";
 import { contentDispositionHeader } from "@/lib/documents";
+import type { ReportSnapshot } from "@/lib/reportEngine";
 
 const UPLOAD_ROOT = path.join(process.cwd(), "storage", "uploads");
 
@@ -22,10 +23,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
 
   await markDeliveryViewed(delivery.id);
 
+  // File name from the version's own snapshot, not the live report record —
+  // consistent with the rest of this public path (see resolveDeliveryByToken).
+  const snapshot = delivery.version.snapshot as unknown as ReportSnapshot;
+
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": contentDispositionHeader(`${delivery.report.reportNumber}.pdf`),
+      "Content-Disposition": contentDispositionHeader(`${snapshot.reportNumber}.pdf`),
       "X-Content-Type-Options": "nosniff",
     },
   });
