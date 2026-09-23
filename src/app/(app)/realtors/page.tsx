@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Building2, MoreHorizontal, Search } from "lucide-react";
+import { Building2, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { RealtorActionsMenu } from "./RealtorActionsMenu";
 
 const AVATAR_PALETTE = [
   { bg: "bg-emerald-100", text: "text-emerald-800" },
@@ -107,12 +108,8 @@ export default async function RealtorsPage({
       {/*
         table-fixed + explicit column widths + truncation keeps every row
         within the container's own w-full — the table can never grow wider
-        than its box. That matters here specifically because the actions
-        "..." menu is an absolutely-positioned overflow of its row: any
-        ancestor with overflow-x-auto (the usual fix for a too-wide table)
-        forces overflow-y to clip too, which would cut the menu off. Fitting
-        the table instead of scrolling it sidesteps that entirely, so this
-        div deliberately has no overflow handling.
+        than its box, so this wrapper doesn't need overflow-x-auto (which
+        would clip the actions menu's vertical overflow along with it).
       */}
       <div className="mt-6 rounded-lg border border-slate-200 bg-white">
         <table className="w-full table-fixed text-sm">
@@ -128,10 +125,6 @@ export default async function RealtorsPage({
           <tbody>
             {realtors.map((r, index) => {
               const palette = AVATAR_PALETTE[index % AVATAR_PALETTE.length];
-              // The last row opens its menu upward instead of downward, so
-              // it isn't clipped by the table's own bottom edge when there's
-              // no row below it to render into.
-              const openUpward = index === realtors.length - 1;
               return (
                 <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
@@ -168,30 +161,7 @@ export default async function RealtorsPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <details className="group relative inline-block text-left">
-                      <summary className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 [&::-webkit-details-marker]:hidden">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </summary>
-                      <div
-                        className={`absolute right-0 z-10 w-44 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg ${
-                          openUpward ? "bottom-full mb-1" : "mt-1"
-                        }`}
-                      >
-                        <Link href={`/realtors/${r.id}`} className="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
-                          View profile
-                        </Link>
-                        {r.email && (
-                          <a href={`mailto:${r.email}`} className="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
-                            Email
-                          </a>
-                        )}
-                        {r.phone && (
-                          <a href={`tel:${r.phone}`} className="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
-                            Call
-                          </a>
-                        )}
-                      </div>
-                    </details>
+                    <RealtorActionsMenu realtorId={r.id} email={r.email} phone={r.phone} />
                   </td>
                 </tr>
               );
