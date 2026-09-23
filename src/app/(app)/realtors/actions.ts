@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
@@ -33,6 +34,7 @@ export async function createRealtor(formData: FormData) {
   });
 
   revalidatePath("/realtors");
+  redirect("/realtors");
 }
 
 // Moving a realtor to a new brokerage closes out the open history row rather
