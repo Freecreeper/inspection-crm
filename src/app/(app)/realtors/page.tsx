@@ -104,25 +104,34 @@ export default async function RealtorsPage({
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full min-w-[720px] text-sm">
+      {/*
+        table-fixed + explicit column widths + truncation keeps every row
+        within the container's own w-full — the table can never grow wider
+        than its box. That matters here specifically because the actions
+        "..." menu is an absolutely-positioned overflow of its row: any
+        ancestor with overflow-x-auto (the usual fix for a too-wide table)
+        forces overflow-y to clip too, which would cut the menu off. Fitting
+        the table instead of scrolling it sidesteps that entirely, so this
+        div deliberately has no overflow handling.
+      */}
+      <div className="mt-6 rounded-lg border border-slate-200 bg-white">
+        <table className="w-full table-fixed text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="rounded-tl-lg px-4 py-3 font-medium">Realtor</th>
-              <th className="px-4 py-3 font-medium">Brokerage</th>
-              <th className="px-4 py-3 font-medium">Contact</th>
-              <th className="px-4 py-3 font-medium">Transactions</th>
-              <th className="rounded-tr-lg px-4 py-3 font-medium text-right">Actions</th>
+              <th className="w-[30%] rounded-tl-lg px-4 py-3 font-medium">Realtor</th>
+              <th className="w-[24%] px-4 py-3 font-medium">Brokerage</th>
+              <th className="w-[20%] px-4 py-3 font-medium">Contact</th>
+              <th className="w-[13%] px-4 py-3 font-medium">Transactions</th>
+              <th className="w-[13%] rounded-tr-lg px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {realtors.map((r, index) => {
               const palette = AVATAR_PALETTE[index % AVATAR_PALETTE.length];
-              // The last couple of rows open their menu upward instead of
-              // downward, so it isn't clipped by the table's own scroll
-              // container (needed for horizontal overflow safety — see the
-              // wrapping div) when there's no room below the last row.
-              const openUpward = index >= realtors.length - 2;
+              // The last row opens its menu upward instead of downward, so
+              // it isn't clipped by the table's own bottom edge when there's
+              // no row below it to render into.
+              const openUpward = index === realtors.length - 1;
               return (
                 <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3">
@@ -142,17 +151,17 @@ export default async function RealtorsPage({
                   </td>
                   <td className="px-4 py-3">
                     {r.brokerage ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
                           <Building2 className="h-3.5 w-3.5 text-slate-500" />
                         </div>
-                        <span className="text-slate-700">{r.brokerage.name}</span>
+                        <span className="truncate text-slate-700">{r.brokerage.name}</span>
                       </div>
                     ) : (
                       <span className="text-slate-400">Not provided</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{r.phone || "Not provided"}</td>
+                  <td className="truncate px-4 py-3 text-slate-600">{r.phone || "Not provided"}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       {r._count.transactions}
