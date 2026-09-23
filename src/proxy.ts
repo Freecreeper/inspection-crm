@@ -18,6 +18,13 @@ export default auth((req) => {
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
+
+  // Forwarded so the (app) layout's Server Component sidebar can highlight
+  // the active nav item from `headers()` — no client-side JS (no
+  // usePathname()) needed just for that.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {

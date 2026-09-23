@@ -6,6 +6,7 @@ vi.mock("@/lib/prisma", async () => {
 });
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
