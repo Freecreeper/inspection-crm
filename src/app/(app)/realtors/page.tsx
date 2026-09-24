@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Building2, Search } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { RealtorActionsMenu } from "./RealtorActionsMenu";
+import { RealtorSearchTypeahead } from "./RealtorSearchTypeahead";
 import { formatPhone } from "@/lib/phone";
 
 const AVATAR_PALETTE = [
@@ -44,7 +45,7 @@ export default async function RealtorsPage({
         ? { brokerage: { name: "asc" } }
         : { lastName: "asc" };
 
-  const [realtors, totalCount, brokerages] = await Promise.all([
+  const [realtors, totalCount, brokerages, allRealtors] = await Promise.all([
     prisma.realtor.findMany({
       where,
       orderBy,
@@ -52,6 +53,14 @@ export default async function RealtorsPage({
     }),
     prisma.realtor.count({ where: { archivedAt: null } }),
     prisma.brokerage.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" } }),
+    // Unfiltered, for the search box's typeahead suggestions — it needs
+    // the full universe of realtors to search across, independent of
+    // whatever `q`/`brokerageId` currently narrows the table to.
+    prisma.realtor.findMany({
+      where: { archivedAt: null },
+      select: { id: true, firstName: true, lastName: true, email: true, brokerage: { select: { name: true } } },
+      orderBy: { lastName: "asc" },
+    }),
   ]);
 
   return (
@@ -70,16 +79,14 @@ export default async function RealtorsPage({
       </div>
 
       <form method="get" className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Search realtors by name, email, or brokerage..."
-            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          />
-        </div>
+        <RealtorSearchTypeahead
+          defaultValue={query}
+          suggestions={allRealtors.map((r) => ({
+            id: r.id,
+            label: `${r.firstName} ${r.lastName}`,
+            sublabel: r.email ?? r.brokerage?.name ?? undefined,
+          }))}
+        />
         <select
           name="brokerageId"
           defaultValue={brokerageId}
