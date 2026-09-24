@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createRealtor } from "../actions";
-import { BrokerageSelect } from "../BrokerageSelect";
+import { BrokerageCombobox } from "../BrokerageCombobox";
 import { PhoneInput } from "../PhoneInput";
 import { isValidPhoneInput } from "@/lib/phone";
 
@@ -37,7 +37,12 @@ export function NewRealtorForm({ brokerages }: { brokerages: { id: string; name:
         <input name="email" type="email" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
       </div>
       <PhoneInput name="phone" forceShowError={phoneForceShowError} />
-      <BrokerageSelect name="brokerageId" initialBrokerages={brokerages} />
+      <div>
+        <label className="block text-sm font-medium text-slate-700">Brokerage (optional)</label>
+        <div className="mt-1">
+          <BrokerageCombobox name="brokerageId" options={brokerages.map((b) => ({ id: b.id, label: b.name }))} />
+        </div>
+      </div>
       <button type="submit" className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">
         Add realtor
       </button>

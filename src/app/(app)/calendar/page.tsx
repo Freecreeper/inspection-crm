@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createAppointment, cancelAppointment } from "./actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
+import { Combobox } from "@/components/Combobox";
 
 export default async function CalendarPage() {
   const [appointments, transactions] = await Promise.all([
@@ -103,17 +104,17 @@ export default async function CalendarPage() {
               </div>
             </div>
             <input name="location" placeholder="Location (optional)" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <select name="transactionId" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700">
-              <option value="">No transaction</option>
-              {transactions.map((t) => {
+            <Combobox
+              name="transactionId"
+              placeholder="No transaction"
+              options={transactions.map((t) => {
                 const primaryCustomer = getPrimaryCustomer(t.customers);
-                return (
-                  <option key={t.id} value={t.id}>
-                    {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`}
-                  </option>
-                );
+                return {
+                  id: t.id,
+                  label: primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`,
+                };
               })}
-            </select>
+            />
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Schedule
             </button>

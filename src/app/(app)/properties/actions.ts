@@ -33,3 +33,22 @@ export async function createProperty(formData: FormData) {
   });
   revalidatePath("/properties");
 }
+
+// Called directly from client code (not a <form action>) by a property
+// Combobox's "+ Add new property" popup, so it takes a plain object and
+// hands back the created row's id/label to select immediately — see
+// createBrokerageInline for the same pattern.
+export async function createPropertyInline(data: { addressLine1: string; city: string; state: string; zip: string }) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  const addressLine1 = data.addressLine1.trim();
+  const city = data.city.trim();
+  const state = data.state.trim();
+  const zip = data.zip.trim();
+  if (!addressLine1 || !city || !state || !zip) throw new Error("Address, city, state, and zip are required.");
+
+  const property = await prisma.property.create({ data: { addressLine1, city, state, zip } });
+  revalidatePath("/properties");
+  return { id: property.id, label: `${property.addressLine1}, ${property.city}` };
+}
