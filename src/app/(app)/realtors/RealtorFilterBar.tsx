@@ -21,13 +21,18 @@ export type BrokerageOption = { id: string; name: string };
 export function RealtorFilterBar({
   initialQuery,
   initialBrokerageId,
-  initialSort,
+  initialSortBy,
+  initialSortDir,
   suggestions,
   brokerages,
 }: {
   initialQuery: string;
   initialBrokerageId: string;
-  initialSort: string;
+  // Sorting itself is done by clicking a column header (SortableColumnHeader)
+  // — these two are only carried through here so that changing the search
+  // text or brokerage filter doesn't reset whatever sort was already applied.
+  initialSortBy: string;
+  initialSortDir: string;
   suggestions: RealtorSuggestion[];
   brokerages: BrokerageOption[];
 }) {
@@ -57,14 +62,14 @@ export function RealtorFilterBar({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [open]);
 
-  function navigate(overrides: { q?: string; brokerageId?: string; sort?: string }) {
+  function navigate(overrides: { q?: string; brokerageId?: string }) {
     const params = new URLSearchParams();
     const nextQ = overrides.q ?? query;
     const nextBrokerageId = overrides.brokerageId ?? initialBrokerageId;
-    const nextSort = overrides.sort ?? initialSort;
     if (nextQ.trim()) params.set("q", nextQ.trim());
     if (nextBrokerageId) params.set("brokerageId", nextBrokerageId);
-    if (nextSort && nextSort !== "name") params.set("sort", nextSort);
+    if (initialSortBy && initialSortBy !== "name") params.set("sortBy", initialSortBy);
+    if (initialSortDir && initialSortDir !== "asc") params.set("sortDir", initialSortDir);
     const qs = params.toString();
     router.push(qs ? `/realtors?${qs}` : "/realtors");
   }
@@ -152,16 +157,6 @@ export function RealtorFilterBar({
             {b.name}
           </option>
         ))}
-      </select>
-
-      <select
-        defaultValue={initialSort}
-        onChange={(e) => navigate({ sort: e.target.value })}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-      >
-        <option value="name">Sort by name</option>
-        <option value="transactions">Sort by transactions</option>
-        <option value="brokerage">Sort by brokerage</option>
       </select>
 
       <button
