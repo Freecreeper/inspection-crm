@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { CellActionsMenu, type CellAction } from "@/components/CellActionsMenu";
 
 // Edits firstName/lastName together as one "Full Name" text field, split
 // on the first run of whitespace — firstName is everything before it,
 // lastName is everything after. A single combined field reads naturally
 // in a narrow table cell; two side-by-side inputs would fight the
-// column's width.
+// column's width. Clicking the displayed name opens a stacked-actions
+// popup (Profile plus "Edit") rather than editing directly.
 export function EditableRealtorName({
   firstName,
   lastName,
   onSave,
+  actions,
 }: {
   firstName: string;
   lastName: string;
@@ -19,6 +22,7 @@ export function EditableRealtorName({
   // through as a prop — a plain wrapper closure isn't a valid server
   // action reference and can't cross the server/client boundary.
   onSave: (data: { firstName: string; lastName: string }) => Promise<void>;
+  actions: CellAction[];
 }) {
   const fullName = `${firstName} ${lastName}`;
   const [editing, setEditing] = useState(false);
@@ -72,20 +76,27 @@ export function EditableRealtorName({
 
   if (!editing) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(fullName);
-          setEditing(true);
-        }}
-        className="block w-full rounded px-1 py-0.5 text-left font-medium text-slate-900 hover:bg-slate-100"
-      >
-        {/* Stacked rather than one truncated "First Last" line — the
-            column is narrow enough that a long name would otherwise get
-            cut off; the row just grows to fit both lines instead. */}
-        <span className="block truncate">{firstName}</span>
-        <span className="block truncate">{lastName}</span>
-      </button>
+      <CellActionsMenu
+        trigger={
+          // Stacked rather than one truncated "First Last" line — the
+          // column is narrow enough that a long name would otherwise get
+          // cut off; the row just grows to fit both lines instead.
+          <div className="font-medium text-slate-900">
+            <span className="block truncate">{firstName}</span>
+            <span className="block truncate">{lastName}</span>
+          </div>
+        }
+        actions={[
+          ...actions,
+          {
+            label: "Edit",
+            onClick: () => {
+              setDraft(fullName);
+              setEditing(true);
+            },
+          },
+        ]}
+      />
     );
   }
 

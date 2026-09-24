@@ -4,19 +4,25 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Building2 } from "lucide-react";
 import { BrokerageCombobox } from "./BrokerageCombobox";
 import type { ComboboxOption } from "@/components/Combobox";
+import { CellActionsMenu, type CellAction } from "@/components/CellActionsMenu";
 
 // changeRealtorBrokerage requires a non-empty brokerageId (it's "move to
 // a new brokerage", not "unset" — see src/app/(app)/realtors/actions.ts),
 // so clearing the combobox without picking a replacement just cancels
 // back to display mode rather than attempting to save an empty value.
+// Clicking the displayed brokerage opens a stacked-actions popup
+// (Call/Text/Email/Template Email plus "Edit") rather than editing
+// directly.
 export function EditableBrokerageCell({
   currentName,
   options,
   onSelectBrokerage,
+  actions,
 }: {
   currentName: string | null;
   options: ComboboxOption[];
   onSelectBrokerage: (brokerageId: string) => Promise<void>;
+  actions: CellAction[];
 }) {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,18 +44,21 @@ export function EditableBrokerageCell({
 
   if (!editing) {
     return (
-      <button type="button" onClick={() => setEditing(true)} className="block w-full rounded px-1 py-0.5 text-left hover:bg-slate-100">
-        {currentName ? (
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
-              <Building2 className="h-3.5 w-3.5 text-slate-500" />
+      <CellActionsMenu
+        trigger={
+          currentName ? (
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
+                <Building2 className="h-3.5 w-3.5 text-slate-500" />
+              </div>
+              <span className="truncate text-slate-700">{currentName}</span>
             </div>
-            <span className="truncate text-slate-700">{currentName}</span>
-          </div>
-        ) : (
-          <span className="text-slate-400">Not provided</span>
-        )}
-      </button>
+          ) : (
+            <span className="text-slate-400">Not provided</span>
+          )
+        }
+        actions={[...actions, { label: "Edit", onClick: () => setEditing(true) }]}
+      />
     );
   }
 
