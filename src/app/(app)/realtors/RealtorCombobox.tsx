@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Combobox, type ComboboxOption } from "@/components/Combobox";
 import { PhoneField } from "@/components/PhoneField";
 import { isValidPhoneInput } from "@/lib/phone";
+import { sortAlphabetically } from "@/lib/sort";
 import { createRealtorInline } from "./actions";
 
 export function RealtorCombobox({
@@ -15,10 +16,11 @@ export function RealtorCombobox({
   options: ComboboxOption[];
   defaultValue?: string;
 }) {
+  const sortedOptions = useMemo(() => sortAlphabetically(options, (o) => o.label), [options]);
   return (
     <Combobox
       name={name}
-      options={options}
+      options={sortedOptions}
       defaultValue={defaultValue}
       placeholder="Search realtors…"
       createNewLabel="+ Add new realtor"

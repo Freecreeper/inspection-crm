@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Combobox, type ComboboxOption } from "@/components/Combobox";
+import { sortAlphabetically } from "@/lib/sort";
 import { createReferralSourceInline } from "./actions";
 
 export function ReferralSourceCombobox({
@@ -13,10 +14,11 @@ export function ReferralSourceCombobox({
   options: ComboboxOption[];
   defaultValue?: string;
 }) {
+  const sortedOptions = useMemo(() => sortAlphabetically(options, (o) => o.label), [options]);
   return (
     <Combobox
       name={name}
-      options={options}
+      options={sortedOptions}
       defaultValue={defaultValue}
       placeholder="Search referral sources…"
       createNewLabel="+ Add new referral source"

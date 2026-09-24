@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Combobox, type ComboboxOption } from "@/components/Combobox";
+import { sortAlphabetically } from "@/lib/sort";
 import { createPropertyInline } from "./actions";
 
 export function PropertyCombobox({
@@ -13,10 +14,11 @@ export function PropertyCombobox({
   options: ComboboxOption[];
   defaultValue?: string;
 }) {
+  const sortedOptions = useMemo(() => sortAlphabetically(options, (o) => o.label), [options]);
   return (
     <Combobox
       name={name}
-      options={options}
+      options={sortedOptions}
       defaultValue={defaultValue}
       placeholder="Search properties…"
       createNewLabel="+ Add new property"

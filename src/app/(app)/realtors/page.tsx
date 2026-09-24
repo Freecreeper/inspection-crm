@@ -3,7 +3,7 @@ import { Building2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { RealtorActionsMenu } from "./RealtorActionsMenu";
-import { RealtorSearchTypeahead } from "./RealtorSearchTypeahead";
+import { RealtorFilterBar } from "./RealtorFilterBar";
 import { formatPhone } from "@/lib/phone";
 
 const AVATAR_PALETTE = [
@@ -78,40 +78,17 @@ export default async function RealtorsPage({
         </Link>
       </div>
 
-      <form method="get" className="mt-6 flex flex-wrap items-center gap-3">
-        <RealtorSearchTypeahead
-          defaultValue={query}
-          suggestions={allRealtors.map((r) => ({
-            id: r.id,
-            label: `${r.firstName} ${r.lastName}`,
-            sublabel: r.email ?? r.brokerage?.name ?? undefined,
-          }))}
-        />
-        <select
-          name="brokerageId"
-          defaultValue={brokerageId}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        >
-          <option value="">All brokerages</option>
-          {brokerages.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="sort"
-          defaultValue={sort}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        >
-          <option value="name">Sort by name</option>
-          <option value="transactions">Sort by transactions</option>
-          <option value="brokerage">Sort by brokerage</option>
-        </select>
-        <button type="submit" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-          Search
-        </button>
-      </form>
+      <RealtorFilterBar
+        initialQuery={query}
+        initialBrokerageId={brokerageId}
+        initialSort={sort}
+        brokerages={brokerages}
+        suggestions={allRealtors.map((r) => ({
+          id: r.id,
+          label: `${r.firstName} ${r.lastName}`,
+          sublabel: r.email ?? r.brokerage?.name ?? undefined,
+        }))}
+      />
 
       {/*
         table-fixed + explicit column widths + truncation keeps every row

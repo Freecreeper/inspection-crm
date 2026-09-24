@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { Combobox, type ComboboxOption } from "@/components/Combobox";
+import { sortAlphabetically } from "@/lib/sort";
 
 // No "create new" here on purpose — this app only ever creates a Customer
 // by converting a Lead (see src/app/(app)/customers/page.tsx: "No
@@ -16,5 +18,6 @@ export function CustomerCombobox({
   options: ComboboxOption[];
   defaultValue?: string;
 }) {
-  return <Combobox name={name} options={options} defaultValue={defaultValue} placeholder="Search customers…" />;
+  const sortedOptions = useMemo(() => sortAlphabetically(options, (o) => o.label), [options]);
+  return <Combobox name={name} options={sortedOptions} defaultValue={defaultValue} placeholder="Search customers…" />;
 }
