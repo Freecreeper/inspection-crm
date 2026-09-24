@@ -9,19 +9,6 @@ import { EditableBrokerageCell } from "./EditableBrokerageCell";
 import { EditableCell } from "@/components/EditableCell";
 import { updateRealtorNameInline, updateRealtorEmailInline, updateRealtorPhoneInline, changeRealtorBrokerageInline } from "./actions";
 
-const AVATAR_PALETTE = [
-  { bg: "bg-emerald-100", text: "text-emerald-800" },
-  { bg: "bg-indigo-100", text: "text-indigo-800" },
-  { bg: "bg-teal-100", text: "text-teal-800" },
-  { bg: "bg-amber-100", text: "text-amber-800" },
-  { bg: "bg-sky-100", text: "text-sky-800" },
-  { bg: "bg-rose-100", text: "text-rose-800" },
-];
-
-function initialsOf(firstName: string, lastName: string): string {
-  return `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
-}
-
 export default async function RealtorsPage({
   searchParams,
 }: {
@@ -103,64 +90,50 @@ export default async function RealtorsPage({
         <table className="w-full table-fixed text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="w-[30%] rounded-tl-lg px-4 py-3 font-medium">Realtor</th>
-              <th className="w-[24%] px-4 py-3 font-medium">Brokerage</th>
-              <th className="w-[20%] px-4 py-3 font-medium">Contact</th>
-              <th className="w-[13%] px-4 py-3 font-medium">Transactions</th>
-              <th className="w-[13%] rounded-tr-lg px-4 py-3 font-medium text-right">Actions</th>
+              <th className="w-[15%] rounded-tl-lg px-4 py-3 font-medium">Name</th>
+              <th className="w-[25%] px-4 py-3 font-medium">Email</th>
+              <th className="w-[20%] px-4 py-3 font-medium">Brokerage</th>
+              <th className="w-[16%] px-4 py-3 font-medium">Contact</th>
+              <th className="w-[12%] px-4 py-3 font-medium">Transactions</th>
+              <th className="w-[12%] rounded-tr-lg px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {realtors.map((r, index) => {
-              const palette = AVATAR_PALETTE[index % AVATAR_PALETTE.length];
-              return (
-                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${palette.bg} ${palette.text}`}
-                      >
-                        {initialsOf(r.firstName, r.lastName)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <EditableRealtorName
-                          firstName={r.firstName}
-                          lastName={r.lastName}
-                          onSave={updateRealtorNameInline.bind(null, r.id)}
-                        />
-                        <EditableCell
-                          value={r.email ?? ""}
-                          type="email"
-                          onSave={updateRealtorEmailInline.bind(null, r.id)}
-                          className="text-xs text-slate-500"
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <EditableBrokerageCell
-                      currentName={r.brokerage?.name ?? null}
-                      options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
-                      onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <EditablePhoneCell phone={r.phone} onSave={updateRealtorPhoneInline.bind(null, r.id)} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                      {r._count.transactions}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <RealtorActionsMenu realtorId={r.id} email={r.email} phone={r.phone} />
-                  </td>
-                </tr>
-              );
-            })}
+            {realtors.map((r) => (
+              <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  <EditableRealtorName
+                    firstName={r.firstName}
+                    lastName={r.lastName}
+                    onSave={updateRealtorNameInline.bind(null, r.id)}
+                  />
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  <EditableCell value={r.email ?? ""} type="email" onSave={updateRealtorEmailInline.bind(null, r.id)} />
+                </td>
+                <td className="px-4 py-3">
+                  <EditableBrokerageCell
+                    currentName={r.brokerage?.name ?? null}
+                    options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
+                    onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
+                  />
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  <EditablePhoneCell phone={r.phone} onSave={updateRealtorPhoneInline.bind(null, r.id)} />
+                </td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    {r._count.transactions}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <RealtorActionsMenu realtorId={r.id} email={r.email} phone={r.phone} />
+                </td>
+              </tr>
+            ))}
             {realtors.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                   No realtors match your search.
                 </td>
               </tr>
