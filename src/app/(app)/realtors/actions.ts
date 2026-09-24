@@ -63,16 +63,49 @@ export async function createRealtorInline(data: { firstName: string; lastName: s
   return { id: realtor.id, label: `${realtor.firstName} ${realtor.lastName}` };
 }
 
-// Moving a realtor to a new brokerage closes out the open history row rather
-// than overwriting it, so a transaction from six months ago still shows the
-// brokerage that was actually current at the time (§4, RealtorBrokerageHistory).
-export async function changeRealtorBrokerage(realtorId: string, formData: FormData) {
+// The next three are called directly from client code (not a <form
+// action>) by the Realtors table's inline, click-to-edit cells — same
+// "plain args in, plain object/void out" shape as createRealtorInline.
+// Kept as three narrow actions rather than one generic "updateRealtorField"
+// because each cell has different validation (name can't be blank, phone
+// must be 10 digits or empty) that's clearer spelled out per-field than
+// looked up by a field-name string.
+export async function updateRealtorNameInline(realtorId: string, data: { firstName: string; lastName: string }) {
   const session = await auth();
   assertCan(session?.user?.role as Role | undefined, "crm:write");
 
-  const brokerageId = String(formData.get("brokerageId") ?? "").trim();
-  if (!brokerageId) throw new Error("A brokerage is required.");
+  const firstName = data.firstName.trim();
+  const lastName = data.lastName.trim();
+  if (!firstName || !lastName) throw new Error("First and last name are required.");
 
+  await prisma.realtor.update({ where: { id: realtorId }, data: { firstName, lastName } });
+  revalidatePath("/realtors");
+  revalidatePath(`/realtors/${realtorId}`);
+}
+
+export async function updateRealtorEmailInline(realtorId: string, email: string) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  await prisma.realtor.update({ where: { id: realtorId }, data: { email: email.trim() || null } });
+  revalidatePath("/realtors");
+  revalidatePath(`/realtors/${realtorId}`);
+}
+
+export async function updateRealtorPhoneInline(realtorId: string, phone: string) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  if (!isValidPhoneInput(phone)) throw new Error("Phone number must have 10 digits.");
+
+  await prisma.realtor.update({ where: { id: realtorId }, data: { phone: phone ? digitsOnly(phone) : null } });
+  revalidatePath("/realtors");
+  revalidatePath(`/realtors/${realtorId}`);
+}
+
+// Moving a realtor to a new brokerage closes out the open history row rather
+// than overwriting it, so a transaction from six months ago still shows the
+// brokerage that was actually current at the time (§4, RealtorBrokerageHistory).
+async function moveRealtorToBrokerage(realtorId: string, brokerageId: string) {
   const startDate = new Date();
 
   await prisma.$transaction(async (tx) => {
@@ -88,4 +121,26 @@ export async function changeRealtorBrokerage(realtorId: string, formData: FormDa
 
   revalidatePath(`/realtors/${realtorId}`);
   revalidatePath("/realtors");
+}
+
+export async function changeRealtorBrokerage(realtorId: string, formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  const brokerageId = String(formData.get("brokerageId") ?? "").trim();
+  if (!brokerageId) throw new Error("A brokerage is required.");
+
+  await moveRealtorToBrokerage(realtorId, brokerageId);
+}
+
+// Same as changeRealtorBrokerage but for the Realtors table's inline
+// editable cell, which calls this directly (not through a <form>) via the
+// Combobox's onSelect — see updateRealtorNameInline etc. for the same
+// plain-args shape.
+export async function changeRealtorBrokerageInline(realtorId: string, brokerageId: string) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  if (!brokerageId) throw new Error("A brokerage is required.");
+
+  await moveRealtorToBrokerage(realtorId, brokerageId);
 }

@@ -27,6 +27,7 @@ export function Combobox({
   required = false,
   createNewLabel = "+ Add new",
   renderCreateNew,
+  onSelect,
 }: {
   name: string;
   options: ComboboxOption[];
@@ -36,6 +37,10 @@ export function Combobox({
   required?: boolean;
   createNewLabel?: string;
   renderCreateNew?: (props: { onCreated: (option: ComboboxOption) => void; onCancel: () => void }) => React.ReactNode;
+  // Fired whenever the selection changes (pick, clear, or a freshly
+  // created record) — for a caller that wants to react immediately
+  // instead of waiting for a surrounding <form> to submit.
+  onSelect?: (option: ComboboxOption | null) => void;
 }) {
   const [allOptions, setAllOptions] = useState(options);
   const [selectedId, setSelectedId] = useState(defaultValue);
@@ -82,6 +87,7 @@ export function Combobox({
     setSelectedId(option.id);
     setQuery(option.label);
     setOpen(false);
+    onSelect?.(option);
   }
 
   function clearSelection() {
@@ -89,6 +95,7 @@ export function Combobox({
     setQuery("");
     inputRef.current?.focus();
     setOpen(true);
+    onSelect?.(null);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
