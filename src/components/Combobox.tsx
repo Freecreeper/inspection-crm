@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
+import { sortAlphabetically } from "@/lib/sort";
 
 export type ComboboxOption = { id: string; label: string; sublabel?: string };
 
@@ -200,7 +201,7 @@ export function Combobox({
           <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl">
             {renderCreateNew({
               onCreated: (option) => {
-                setAllOptions((prev) => [...prev, option].sort((a, b) => a.label.localeCompare(b.label)));
+                setAllOptions((prev) => sortAlphabetically([...prev, option], (o) => o.label));
                 selectOption(option);
                 setCreating(false);
               },
