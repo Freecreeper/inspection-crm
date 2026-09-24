@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 
-// The menu height is fixed-ish (up to 3 items) — used only to decide
+// The menu height is fixed-ish (up to 4 items) — used only to decide
 // open-up-vs-down against the viewport, not to size anything.
-const ESTIMATED_MENU_HEIGHT = 130;
+const ESTIMATED_MENU_HEIGHT = 165;
 
 export function RealtorActionsMenu({
   realtorId,
@@ -82,6 +82,11 @@ export function RealtorActionsMenu({
           {phone && (
             <a href={`tel:${phone}`} role="menuitem" className="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
               Call
+            </a>
+          )}
+          {phone && (
+            <a href={`sms:${phone}`} role="menuitem" className="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+              Text
             </a>
           )}
         </div>

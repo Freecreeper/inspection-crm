@@ -3,6 +3,7 @@ import { Building2, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { RealtorActionsMenu } from "./RealtorActionsMenu";
+import { formatPhone } from "@/lib/phone";
 
 const AVATAR_PALETTE = [
   { bg: "bg-emerald-100", text: "text-emerald-800" },
@@ -154,7 +155,7 @@ export default async function RealtorsPage({
                       <span className="text-slate-400">Not provided</span>
                     )}
                   </td>
-                  <td className="truncate px-4 py-3 text-slate-600">{r.phone || "Not provided"}</td>
+                  <td className="truncate px-4 py-3 text-slate-600">{formatPhone(r.phone) || "Not provided"}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       {r._count.transactions}

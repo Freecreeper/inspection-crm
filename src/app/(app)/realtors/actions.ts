@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
+import { digitsOnly, isValidPhoneInput } from "@/lib/phone";
 import type { Role } from "@prisma/client";
 
 // Creating a Realtor with an initial Brokerage opens a history row for it
@@ -19,10 +20,15 @@ export async function createRealtor(formData: FormData) {
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim() || null;
-  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const rawPhone = String(formData.get("phone") ?? "").trim();
   const brokerageId = String(formData.get("brokerageId") ?? "").trim() || null;
 
   if (!firstName || !lastName) throw new Error("First and last name are required.");
+  // Client-side already enforces this (formatted as you type, blocked on
+  // submit), but the server is the real gate — a phone number is stored as
+  // exactly 10 digits or not at all, never a partial/malformed value.
+  if (!isValidPhoneInput(rawPhone)) throw new Error("Phone number must have 10 digits.");
+  const phone = rawPhone ? digitsOnly(rawPhone) : null;
 
   await prisma.$transaction(async (tx) => {
     const realtor = await tx.realtor.create({ data: { firstName, lastName, email, phone, brokerageId } });

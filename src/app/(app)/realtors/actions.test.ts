@@ -57,6 +57,28 @@ describe("createRealtor", () => {
       data: { realtorId: "r1", brokerageId: "brok-1", startDate: createdAt },
     });
   });
+
+  it("rejects a phone number that isn't exactly 10 digits", async () => {
+    const form = new FormData();
+    form.set("firstName", "Jamie");
+    form.set("lastName", "Rivera");
+    form.set("phone", "555-0101");
+    await expect(createRealtor(form)).rejects.toThrow(/10 digits/i);
+    expect(mockPrisma.realtor.create).not.toHaveBeenCalled();
+  });
+
+  it("normalizes a formatted 10-digit phone number to digits-only before storing", async () => {
+    mockPrisma.realtor.create.mockResolvedValue({ id: "r1", createdAt: new Date() });
+    const form = new FormData();
+    form.set("firstName", "Jamie");
+    form.set("lastName", "Rivera");
+    form.set("phone", "(828) 555-0101");
+    await createRealtor(form);
+
+    expect(mockPrisma.realtor.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ phone: "8285550101" }) })
+    );
+  });
 });
 
 describe("changeRealtorBrokerage", () => {
