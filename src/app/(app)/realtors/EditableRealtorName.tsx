@@ -78,9 +78,13 @@ export function EditableRealtorName({
           setDraft(fullName);
           setEditing(true);
         }}
-        className="block w-full truncate rounded px-1 py-0.5 text-left font-medium text-slate-900 hover:bg-slate-100"
+        className="block w-full rounded px-1 py-0.5 text-left font-medium text-slate-900 hover:bg-slate-100"
       >
-        {fullName}
+        {/* Stacked rather than one truncated "First Last" line — the
+            column is narrow enough that a long name would otherwise get
+            cut off; the row just grows to fit both lines instead. */}
+        <span className="block truncate">{firstName}</span>
+        <span className="block truncate">{lastName}</span>
       </button>
     );
   }

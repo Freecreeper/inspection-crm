@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { RealtorActionsMenu } from "./RealtorActionsMenu";
 import { RealtorFilterBar } from "./RealtorFilterBar";
+import { SortableColumnHeader } from "./SortableColumnHeader";
 import { EditableRealtorName } from "./EditableRealtorName";
 import { EditablePhoneCell } from "./EditablePhoneCell";
 import { EditableBrokerageCell } from "./EditableBrokerageCell";
@@ -12,10 +13,11 @@ import { updateRealtorNameInline, updateRealtorEmailInline, updateRealtorPhoneIn
 export default async function RealtorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; brokerageId?: string; sort?: string }>;
+  searchParams: Promise<{ q?: string; brokerageId?: string; sortBy?: string; sortDir?: string }>;
 }) {
-  const { q = "", brokerageId = "", sort = "name" } = await searchParams;
+  const { q = "", brokerageId = "", sortBy = "name", sortDir: sortDirParam } = await searchParams;
   const query = q.trim();
+  const sortDir: "asc" | "desc" = sortDirParam === "desc" ? "desc" : "asc";
 
   const where: Prisma.RealtorWhereInput = { archivedAt: null };
   if (brokerageId) where.brokerageId = brokerageId;
@@ -29,11 +31,20 @@ export default async function RealtorsPage({
   }
 
   const orderBy: Prisma.RealtorOrderByWithRelationInput =
-    sort === "transactions"
-      ? { transactions: { _count: "desc" } }
-      : sort === "brokerage"
-        ? { brokerage: { name: "asc" } }
-        : { lastName: "asc" };
+    sortBy === "email"
+      ? { email: sortDir }
+      : sortBy === "phone"
+        ? { phone: sortDir }
+        : sortBy === "brokerage"
+          ? { brokerage: { name: sortDir } }
+          : sortBy === "transactions"
+            ? { transactions: { _count: sortDir } }
+            : { lastName: sortDir };
+
+  function ariaSortFor(key: string): "ascending" | "descending" | "none" {
+    if (sortBy !== key) return "none";
+    return sortDir === "asc" ? "ascending" : "descending";
+  }
 
   const [realtors, totalCount, brokerages, allRealtors] = await Promise.all([
     prisma.realtor.findMany({
@@ -71,7 +82,8 @@ export default async function RealtorsPage({
       <RealtorFilterBar
         initialQuery={query}
         initialBrokerageId={brokerageId}
-        initialSort={sort}
+        initialSortBy={sortBy}
+        initialSortDir={sortDir}
         brokerages={brokerages}
         suggestions={allRealtors.map((r) => ({
           id: r.id,
@@ -90,11 +102,21 @@ export default async function RealtorsPage({
         <table className="w-full table-fixed text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="w-[15%] rounded-tl-lg px-4 py-3 font-medium">Name</th>
-              <th className="w-[25%] px-4 py-3 font-medium">Email</th>
-              <th className="w-[20%] px-4 py-3 font-medium">Brokerage</th>
-              <th className="w-[16%] px-4 py-3 font-medium">Contact</th>
-              <th className="w-[12%] px-4 py-3 font-medium">Transactions</th>
+              <th className="w-[15%] rounded-tl-lg px-4 py-3 font-medium" aria-sort={ariaSortFor("name")}>
+                <SortableColumnHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
+              <th className="w-[25%] px-4 py-3 font-medium" aria-sort={ariaSortFor("email")}>
+                <SortableColumnHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
+              <th className="w-[20%] px-4 py-3 font-medium" aria-sort={ariaSortFor("brokerage")}>
+                <SortableColumnHeader label="Brokerage" sortKey="brokerage" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
+              <th className="w-[16%] px-4 py-3 font-medium" aria-sort={ariaSortFor("phone")}>
+                <SortableColumnHeader label="Contact" sortKey="phone" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
+              <th className="w-[12%] px-4 py-3 font-medium" aria-sort={ariaSortFor("transactions")}>
+                <SortableColumnHeader label="Transactions" sortKey="transactions" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
               <th className="w-[12%] rounded-tr-lg px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
