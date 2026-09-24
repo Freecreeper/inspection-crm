@@ -110,16 +110,17 @@ export function AppSidebar({
     }
   }, []);
 
+  function setCollapsedPersisted(next: boolean) {
+    setCollapsed(next);
+    try {
+      localStorage.setItem(COLLAPSE_STORAGE_KEY, String(next));
+    } catch {
+      // Ignore — collapse still works for this session, just won't persist.
+    }
+  }
+
   function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(COLLAPSE_STORAGE_KEY, String(next));
-      } catch {
-        // Ignore — collapse still works for this session, just won't persist.
-      }
-      return next;
-    });
+    setCollapsedPersisted(!collapsed);
   }
 
   return (
@@ -154,6 +155,7 @@ export function AppSidebar({
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={() => setCollapsedPersisted(true)}
                         className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium ${
                           active
                             ? "bg-emerald-50 text-emerald-800"

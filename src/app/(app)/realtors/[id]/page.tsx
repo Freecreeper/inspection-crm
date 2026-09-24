@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { changeRealtorBrokerage } from "../actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
+import { formatPhone } from "@/lib/phone";
 
 export default async function RealtorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,7 +34,7 @@ export default async function RealtorDetailPage({ params }: { params: Promise<{ 
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           {realtor.email || <span className="text-slate-400">No email</span>} ·{" "}
-          {realtor.phone || <span className="text-slate-400">No phone</span>}
+          {formatPhone(realtor.phone) || <span className="text-slate-400">No phone</span>}
         </p>
       </div>
 
