@@ -30,7 +30,10 @@ export default async function RealtorDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">
+        <Link href="/realtors" className="text-xs text-slate-500 hover:underline">
+          ← Back to realtors
+        </Link>
+        <h1 className="mt-2 text-xl font-semibold text-slate-900">
           {realtor.firstName} {realtor.lastName}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
