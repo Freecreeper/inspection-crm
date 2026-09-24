@@ -13,6 +13,10 @@ import { createTask, completeTask } from "../../tasks/actions";
 import { createAppointment, cancelAppointment } from "../../calendar/actions";
 import { createInspection } from "../../inspections/actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
+import { PropertyCombobox } from "../../properties/PropertyCombobox";
+import { CustomerCombobox } from "../../customers/CustomerCombobox";
+import { RealtorCombobox } from "../../realtors/RealtorCombobox";
+import { Combobox } from "@/components/Combobox";
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -74,16 +78,12 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           <>
             <p className="mt-1 text-sm text-slate-400">Not set — this never blocks other work on the transaction (§7).</p>
             <form action={setPropertyAction} className="mt-3 flex gap-2">
-              <select name="propertyId" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-                <option value="" disabled selected>
-                  Select a property
-                </option>
-                {properties.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.addressLine1}, {p.city}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-1">
+                <PropertyCombobox
+                  name="propertyId"
+                  options={properties.map((p) => ({ id: p.id, label: `${p.addressLine1}, ${p.city}` }))}
+                />
+              </div>
               <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
                 Set
               </button>
@@ -138,16 +138,12 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           )}
         </ul>
         <form action={addCustomerAction} className="mt-3 flex flex-wrap gap-2">
-          <select name="customerId" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="" disabled selected>
-              Select a customer
-            </option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[200px] flex-1">
+            <CustomerCombobox
+              name="customerId"
+              options={customers.map((c) => ({ id: c.id, label: `${c.firstName} ${c.lastName}`, sublabel: c.email ?? undefined }))}
+            />
+          </div>
           <select name="role" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
             <option value="PRIMARY_BUYER">Primary buyer</option>
             <option value="SECONDARY_BUYER">Secondary buyer</option>
@@ -179,16 +175,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           {transaction.realtors.length === 0 && <p className="text-sm text-slate-400">None associated yet.</p>}
         </ul>
         <form action={addRealtorAction} className="mt-3 flex gap-2">
-          <select name="realtorId" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="" disabled selected>
-              Select a realtor
-            </option>
-            {realtors.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.firstName} {r.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <RealtorCombobox name="realtorId" options={realtors.map((r) => ({ id: r.id, label: `${r.firstName} ${r.lastName}` }))} />
+          </div>
           <select name="role" required className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
             <option value="BUYER_AGENT">Buyer&apos;s agent</option>
             <option value="LISTING_AGENT">Listing agent</option>
@@ -226,14 +215,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         {transaction.property ? (
           <form action={createInspectionAction} className="mt-3 flex flex-wrap gap-2">
             <input type="hidden" name="propertyId" value={transaction.property.id} />
-            <select name="inspectorId" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-              <option value="">Unassigned</option>
-              {inspectors.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-56">
+              <Combobox name="inspectorId" placeholder="Unassigned" options={inspectors.map((u) => ({ id: u.id, label: u.name }))} />
+            </div>
             <input name="scheduledAt" type="datetime-local" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Schedule inspection
@@ -276,14 +260,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         <form action={createTask} className="mt-3 flex gap-2">
           <input type="hidden" name="transactionId" value={transaction.id} />
           <input name="title" placeholder="New task" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-          <select name="assigneeId" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="">Unassigned</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          <div className="w-48">
+            <Combobox name="assigneeId" placeholder="Unassigned" options={users.map((u) => ({ id: u.id, label: u.name }))} />
+          </div>
           <input name="dueAt" type="date" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
           <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Add

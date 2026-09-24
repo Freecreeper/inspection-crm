@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { changeRealtorBrokerage } from "../actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
 import { formatPhone } from "@/lib/phone";
+import { BrokerageCombobox } from "../BrokerageCombobox";
 
 export default async function RealtorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -44,16 +45,9 @@ export default async function RealtorDetailPage({ params }: { params: Promise<{ 
           {realtor.brokerage?.name || <span className="text-slate-400">Not set</span>}
         </p>
         <form action={changeBrokerageAction} className="mt-3 flex gap-2">
-          <select name="brokerageId" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="" disabled selected>
-              Select a brokerage
-            </option>
-            {brokerages.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <BrokerageCombobox name="brokerageId" options={brokerages.map((b) => ({ id: b.id, label: b.name }))} />
+          </div>
           <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             {realtor.brokerage ? "Move" : "Set"}
           </button>

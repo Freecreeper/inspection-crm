@@ -43,6 +43,26 @@ export async function createRealtor(formData: FormData) {
   redirect("/realtors");
 }
 
+// Called directly from client code (not a <form action>) by a realtor
+// Combobox's "+ Add new realtor" popup (e.g. while adding a realtor to a
+// transaction) — see createBrokerageInline for the same pattern. Kept
+// minimal (no brokerage picked here) so the popup stays quick; a brokerage
+// can be set afterward from the realtor's own page.
+export async function createRealtorInline(data: { firstName: string; lastName: string; phone: string }) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  const firstName = data.firstName.trim();
+  const lastName = data.lastName.trim();
+  if (!firstName || !lastName) throw new Error("First and last name are required.");
+  if (!isValidPhoneInput(data.phone)) throw new Error("Phone number must have 10 digits.");
+  const phone = data.phone ? digitsOnly(data.phone) : null;
+
+  const realtor = await prisma.realtor.create({ data: { firstName, lastName, phone } });
+  revalidatePath("/realtors");
+  return { id: realtor.id, label: `${realtor.firstName} ${realtor.lastName}` };
+}
+
 // Moving a realtor to a new brokerage closes out the open history row rather
 // than overwriting it, so a transaction from six months ago still shows the
 // brokerage that was actually current at the time (§4, RealtorBrokerageHistory).

@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { createTransaction } from "../actions";
+import { CustomerCombobox } from "../../customers/CustomerCombobox";
+import { PropertyCombobox } from "../../properties/PropertyCombobox";
+import { ReferralSourceCombobox } from "../../referral-sources/ReferralSourceCombobox";
 
 export default async function NewTransactionPage({
   searchParams,
@@ -19,40 +22,31 @@ export default async function NewTransactionPage({
       <form action={createTransaction} className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-5">
         <div>
           <label className="block text-sm font-medium text-slate-700">Primary customer (optional)</label>
-          <select
-            name="customerId"
-            defaultValue={customerId ?? ""}
-            className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-          >
-            <option value="">Not set yet — add customers from the transaction</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1">
+            <CustomerCombobox
+              name="customerId"
+              defaultValue={customerId ?? ""}
+              options={customers.map((c) => ({ id: c.id, label: `${c.firstName} ${c.lastName}`, sublabel: c.email ?? undefined }))}
+            />
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Property (optional)</label>
-          <select name="propertyId" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="">Not set yet</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.addressLine1}, {p.city}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1">
+            <PropertyCombobox
+              name="propertyId"
+              options={properties.map((p) => ({ id: p.id, label: `${p.addressLine1}, ${p.city}` }))}
+            />
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Referral source (optional)</label>
-          <select name="referralSourceId" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="">Unknown</option>
-            {referralSources.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1">
+            <ReferralSourceCombobox
+              name="referralSourceId"
+              options={referralSources.map((r) => ({ id: r.id, label: r.name, sublabel: r.type }))}
+            />
+          </div>
         </div>
         <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
           Create transaction

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createTask, completeTask } from "./actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
+import { Combobox } from "@/components/Combobox";
 
 export default async function TasksPage() {
   const [openTasks, users, transactions] = await Promise.all([
@@ -97,25 +98,18 @@ export default async function TasksPage() {
             <input name="title" placeholder="Title" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <textarea name="description" placeholder="Description (optional)" rows={2} className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <input name="dueAt" type="date" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700" />
-            <select name="assigneeId" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700">
-              <option value="">Unassigned</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-            <select name="transactionId" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700">
-              <option value="">General task (no transaction)</option>
-              {transactions.map((t) => {
+            <Combobox name="assigneeId" placeholder="Unassigned" options={users.map((u) => ({ id: u.id, label: u.name }))} />
+            <Combobox
+              name="transactionId"
+              placeholder="General task (no transaction)"
+              options={transactions.map((t) => {
                 const primaryCustomer = getPrimaryCustomer(t.customers);
-                return (
-                  <option key={t.id} value={t.id}>
-                    {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`}
-                  </option>
-                );
+                return {
+                  id: t.id,
+                  label: primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : `Transaction ${t.id.slice(-6)}`,
+                };
               })}
-            </select>
+            />
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Add task
             </button>

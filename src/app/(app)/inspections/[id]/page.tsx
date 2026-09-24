@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPrimaryCustomer } from "@/lib/transactions";
 import { updateInspectionStatus, updateInspectionConditions, assignInspector } from "../actions";
 import { createReportFromTemplate } from "../report-actions";
+import { Combobox } from "@/components/Combobox";
 
 export default async function InspectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,14 +65,14 @@ export default async function InspectionDetailPage({ params }: { params: Promise
         <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Inspector</h3>
         <p className="mt-1 text-sm text-slate-700">{inspection.inspector?.name || "Unassigned"}</p>
         <form action={assignAction} className="mt-2 flex gap-2">
-          <select name="inspectorId" defaultValue={inspection.inspectorId ?? ""} className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
-            <option value="">Unassigned</option>
-            {inspectors.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <Combobox
+              name="inspectorId"
+              placeholder="Unassigned"
+              defaultValue={inspection.inspectorId ?? ""}
+              options={inspectors.map((u) => ({ id: u.id, label: u.name }))}
+            />
+          </div>
           <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Assign
           </button>
