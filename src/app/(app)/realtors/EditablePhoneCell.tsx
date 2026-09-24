@@ -2,19 +2,23 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { formatPhone, isValidPhoneInput } from "@/lib/phone";
+import { CellActionsMenu, type CellAction } from "@/components/CellActionsMenu";
 
-// Same click-to-edit shell as EditableCell, but with the live
-// as-you-type formatting and 10-digit validation already used by
-// PhoneInput (the New Realtor form) and PhoneField (the quick-create
-// popups) — kept as its own component rather than a prop on the generic
-// EditableCell since the formatting-on-every-keystroke behavior is
-// specific to phone numbers.
+// Same edit shell as EditableCell, but with the live as-you-type
+// formatting and 10-digit validation already used by PhoneInput (the New
+// Realtor form) and PhoneField (the quick-create popups) — kept as its
+// own component rather than a prop on the generic EditableCell since the
+// formatting-on-every-keystroke behavior is specific to phone numbers.
+// Clicking the displayed value opens a stacked-actions popup (Call/Text
+// plus "Edit") rather than editing directly.
 export function EditablePhoneCell({
   phone,
   onSave,
+  actions,
 }: {
   phone: string | null;
   onSave: (phone: string) => Promise<void>;
+  actions: CellAction[];
 }) {
   const displayValue = formatPhone(phone);
   const [editing, setEditing] = useState(false);
@@ -64,16 +68,23 @@ export function EditablePhoneCell({
 
   if (!editing) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(displayValue);
-          setEditing(true);
-        }}
-        className="block w-full truncate rounded px-1 py-0.5 text-left hover:bg-slate-100"
-      >
-        {displayValue || <span className="text-slate-400">Not provided</span>}
-      </button>
+      <CellActionsMenu
+        trigger={
+          <span className="block w-full truncate">
+            {displayValue || <span className="text-slate-400">Not provided</span>}
+          </span>
+        }
+        actions={[
+          ...actions,
+          {
+            label: "Edit",
+            onClick: () => {
+              setDraft(displayValue);
+              setEditing(true);
+            },
+          },
+        ]}
+      />
     );
   }
 
