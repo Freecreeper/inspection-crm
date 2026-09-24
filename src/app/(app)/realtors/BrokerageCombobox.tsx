@@ -11,10 +11,12 @@ export function BrokerageCombobox({
   name,
   options,
   defaultValue,
+  onSelect,
 }: {
   name: string;
   options: ComboboxOption[];
   defaultValue?: string;
+  onSelect?: (option: ComboboxOption | null) => void;
 }) {
   const sortedOptions = useMemo(() => sortAlphabetically(options, (o) => o.label), [options]);
   return (
@@ -24,6 +26,7 @@ export function BrokerageCombobox({
       defaultValue={defaultValue}
       placeholder="Search brokerages…"
       createNewLabel="+ Add new brokerage"
+      onSelect={onSelect}
       renderCreateNew={({ onCreated, onCancel }) => <CreateBrokerageForm onCreated={onCreated} onCancel={onCancel} />}
     />
   );

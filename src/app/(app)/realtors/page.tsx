@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { Building2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { RealtorActionsMenu } from "./RealtorActionsMenu";
 import { RealtorFilterBar } from "./RealtorFilterBar";
-import { formatPhone } from "@/lib/phone";
+import { EditableRealtorName } from "./EditableRealtorName";
+import { EditablePhoneCell } from "./EditablePhoneCell";
+import { EditableBrokerageCell } from "./EditableBrokerageCell";
+import { EditableCell } from "@/components/EditableCell";
+import { updateRealtorNameInline, updateRealtorEmailInline, updateRealtorPhoneInline, changeRealtorBrokerageInline } from "./actions";
 
 const AVATAR_PALETTE = [
   { bg: "bg-emerald-100", text: "text-emerald-800" },
@@ -119,27 +122,31 @@ export default async function RealtorsPage({
                       >
                         {initialsOf(r.firstName, r.lastName)}
                       </div>
-                      <div className="min-w-0">
-                        <Link href={`/realtors/${r.id}`} className="block truncate font-medium text-slate-900 hover:underline">
-                          {r.firstName} {r.lastName}
-                        </Link>
-                        <p className="truncate text-xs text-slate-500">{r.email || "Not provided"}</p>
+                      <div className="min-w-0 flex-1">
+                        <EditableRealtorName
+                          firstName={r.firstName}
+                          lastName={r.lastName}
+                          onSave={updateRealtorNameInline.bind(null, r.id)}
+                        />
+                        <EditableCell
+                          value={r.email ?? ""}
+                          type="email"
+                          onSave={updateRealtorEmailInline.bind(null, r.id)}
+                          className="text-xs text-slate-500"
+                        />
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {r.brokerage ? (
-                      <div className="flex min-w-0 items-center gap-2">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100">
-                          <Building2 className="h-3.5 w-3.5 text-slate-500" />
-                        </div>
-                        <span className="truncate text-slate-700">{r.brokerage.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400">Not provided</span>
-                    )}
+                    <EditableBrokerageCell
+                      currentName={r.brokerage?.name ?? null}
+                      options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
+                      onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
+                    />
                   </td>
-                  <td className="truncate px-4 py-3 text-slate-600">{formatPhone(r.phone) || "Not provided"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    <EditablePhoneCell phone={r.phone} onSave={updateRealtorPhoneInline.bind(null, r.id)} />
+                  </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       {r._count.transactions}
