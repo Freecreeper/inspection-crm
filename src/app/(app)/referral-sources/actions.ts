@@ -12,10 +12,14 @@ export async function createReferralSource(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "").trim();
+  // Optional: set when this source is a specific Realtor, which is what
+  // attributes its referrals to that Realtor's record.
+  const realtorId = String(formData.get("realtorId") ?? "").trim() || null;
   if (!name || !type) throw new Error("Name and type are required.");
 
-  await prisma.referralSource.create({ data: { name, type } });
+  await prisma.referralSource.create({ data: { name, type, realtorId } });
   revalidatePath("/referral-sources");
+  if (realtorId) revalidatePath(`/realtors/${realtorId}`);
 }
 
 // Called directly from client code (not a <form action>) by a referral

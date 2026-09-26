@@ -9,7 +9,14 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
 import { validateUpload, safeFileName, scanForMalware } from "@/lib/documents";
-import type { Role } from "@prisma/client";
+import { logActivity } from "@/lib/activity";
+import type { RealtorParticipantRole, Role } from "@prisma/client";
+
+const REALTOR_ROLES: RealtorParticipantRole[] = ["BUYER_AGENT", "LISTING_AGENT", "TRANSACTION_COORDINATOR", "OTHER"];
+
+function isRealtorRole(value: string): value is RealtorParticipantRole {
+  return (REALTOR_ROLES as string[]).includes(value);
+}
 
 const UPLOAD_ROOT = path.join(process.cwd(), "storage", "uploads");
 
@@ -31,6 +38,13 @@ export async function createTransaction(formData: FormData) {
   const propertyId = String(formData.get("propertyId") ?? "").trim() || null;
   const referralSourceId = String(formData.get("referralSourceId") ?? "").trim() || null;
   const customerId = String(formData.get("customerId") ?? "").trim() || null;
+  const realtorId = String(formData.get("realtorId") ?? "").trim() || null;
+  const realtorRole = String(formData.get("realtorRole") ?? "").trim();
+  if (realtorId && !isRealtorRole(realtorRole)) throw new Error("Pick the realtor's role on this transaction.");
+
+  const realtor = realtorId
+    ? await prisma.realtor.findUniqueOrThrow({ where: { id: realtorId }, include: { brokerage: true } })
+    : null;
 
   const transaction = await prisma.$transaction(async (tx) => {
     const created = await tx.transaction.create({
@@ -44,8 +58,30 @@ export async function createTransaction(formData: FormData) {
         data: { transactionId: created.id, customerId, role: "PRIMARY_BUYER", primaryContact: true },
       });
     }
+    // Started from a Realtor's record ("+ Transaction") — attaches them in
+    // the chosen role with the same brokerage snapshot addRealtorToTransaction
+    // takes. This is association only; it never sets a referral source.
+    if (realtor) {
+      await tx.transactionRealtor.create({
+        data: {
+          transactionId: created.id,
+          realtorId: realtor.id,
+          role: realtorRole as RealtorParticipantRole,
+          brokerageId: realtor.brokerageId,
+          brokerageName: realtor.brokerage?.name ?? null,
+        },
+      });
+      await logActivity(tx, {
+        actorId: session?.user?.id,
+        action: "realtor.added_to_transaction",
+        entityType: "Realtor",
+        entityId: realtor.id,
+        after: { transactionId: created.id, role: realtorRole },
+      });
+    }
     return created;
   });
+  if (realtor) revalidatePath(`/realtors/${realtor.id}`);
 
   revalidatePath("/transactions");
   redirect(`/transactions/${transaction.id}`);
@@ -124,20 +160,30 @@ export async function addRealtorToTransaction(transactionId: string, formData: F
     include: { brokerage: true },
   });
 
-  await prisma.transactionRealtor.create({
-    data: {
-      transactionId,
-      realtorId,
-      role: role as never,
-      // Snapshot, not a live lookup (§ schema comment on TransactionRealtor) —
-      // "the brokerage at the time of the transaction" has no single instant
-      // to resolve against; "the brokerage when this realtor was actually
-      // attached to this deal" does.
-      brokerageId: realtor.brokerageId,
-      brokerageName: realtor.brokerage?.name ?? null,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.transactionRealtor.create({
+      data: {
+        transactionId,
+        realtorId,
+        role: role as never,
+        // Snapshot, not a live lookup (§ schema comment on TransactionRealtor) —
+        // "the brokerage at the time of the transaction" has no single instant
+        // to resolve against; "the brokerage when this realtor was actually
+        // attached to this deal" does.
+        brokerageId: realtor.brokerageId,
+        brokerageName: realtor.brokerage?.name ?? null,
+      },
+    });
+    await logActivity(tx, {
+      actorId: session?.user?.id,
+      action: "realtor.added_to_transaction",
+      entityType: "Realtor",
+      entityId: realtorId,
+      after: { transactionId, role },
+    });
   });
   revalidatePath(`/transactions/${transactionId}`);
+  revalidatePath(`/realtors/${realtorId}`);
 }
 
 export async function setTransactionProperty(transactionId: string, formData: FormData) {
