@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createBrokerage } from "./actions";
 
@@ -25,7 +26,11 @@ export default async function BrokeragesPage() {
               <tbody>
                 {brokerages.map((b) => (
                   <tr key={b.id} className="border-t border-slate-100">
-                    <td className="px-4 py-2 font-medium text-slate-900">{b.name}</td>
+                    <td className="px-4 py-2 font-medium text-slate-900">
+                      <Link href={`/brokerages/${b.id}`} className="hover:underline">
+                        {b.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-2 text-slate-600">
                       {b.phone || b.email || <span className="text-slate-400">Not provided</span>}
                     </td>
