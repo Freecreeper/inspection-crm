@@ -12,9 +12,11 @@ vi.mock("next/navigation", () => ({
 
 const getRealtorPreview = vi.fn();
 const saveRealtorPreviewSections = vi.fn();
+const saveRealtorDirectoryLayout = vi.fn();
 vi.mock("../actions", () => ({
   getRealtorPreview: (id: string) => getRealtorPreview(id),
   saveRealtorPreviewSections: (sections: string[]) => saveRealtorPreviewSections(sections),
+  saveRealtorDirectoryLayout: (layout: unknown) => saveRealtorDirectoryLayout(layout),
   createRealtorTask: vi.fn(),
   logRealtorCommunication: vi.fn(),
   updateRealtorProfile: vi.fn(),
@@ -31,6 +33,8 @@ import { DirectoryToolbar, SEARCH_DEBOUNCE_MS } from "./DirectoryToolbar";
 import { DirectoryView, type DirectoryRowView } from "./DirectoryView";
 import { RealtorsHeader } from "./RealtorsHeader";
 import { QuickActions } from "./QuickActions";
+import { DirectoryLayoutProvider } from "./DirectoryLayoutContext";
+import { DEFAULT_DIRECTORY_LAYOUT } from "@/lib/realtors/directoryLayout";
 
 const row = (id: string, firstName: string, extra: Partial<DirectoryRowView> = {}): DirectoryRowView => ({
   id,
@@ -276,5 +280,70 @@ describe("preview card", () => {
     render(<QuickActions realtorId="r1" phone={null} email={null} canWrite onChanged={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "More actions" }));
     expect(screen.queryByRole("menuitem", { name: "Customize card" })).toBeNull();
+  });
+});
+
+describe("customize directory layout", () => {
+  function renderDirectory(initial = DEFAULT_DIRECTORY_LAYOUT) {
+    return render(
+      <DirectoryLayoutProvider initial={initial}>
+        <DirectoryToolbar params={parseDirectoryParams({})} brokerages={[]} />
+        <DirectoryView rows={[row("r1", "Ann")]} total={1} params={parseDirectoryParams({})} initialSelectedId={null} />
+      </DirectoryLayoutProvider>
+    );
+  }
+  const columnNames = () => screen.getAllByRole("columnheader").map((th) => th.textContent);
+
+  it("opens from the ••• button at the end of the toolbar and hides a column immediately", async () => {
+    saveRealtorDirectoryLayout.mockResolvedValue({ ok: true, data: {} });
+    const user = userEvent.setup();
+    renderDirectory();
+    expect(columnNames()).toContain("Phone");
+
+    await user.click(screen.getByRole("button", { name: "More directory options" }));
+    await user.click(screen.getByRole("menuitem", { name: "Customize layout" }));
+    const panel = screen.getByRole("dialog", { name: "Customize layout" });
+    await user.click(within(panel).getByRole("checkbox", { name: "Phone" }));
+
+    expect(columnNames()).not.toContain("Phone");
+    expect(saveRealtorDirectoryLayout).toHaveBeenCalledWith({
+      columns: ["brokerage", "email", "transactions", "referrals", "lastActivity", "nextAction"],
+      density: "comfortable",
+    });
+  });
+
+  it("switches row density and keeps the Realtor column no matter what", async () => {
+    saveRealtorDirectoryLayout.mockResolvedValue({ ok: true, data: {} });
+    const user = userEvent.setup();
+    renderDirectory({ columns: [], density: "comfortable" });
+    expect(columnNames()).toEqual([expect.stringContaining("Realtor")]);
+
+    await user.click(screen.getByRole("button", { name: "More directory options" }));
+    await user.click(screen.getByRole("menuitem", { name: "Customize layout" }));
+    await user.click(screen.getByRole("radio", { name: "Compact" }));
+    expect(saveRealtorDirectoryLayout).toHaveBeenLastCalledWith({ columns: [], density: "compact" });
+    expect(screen.getByRole("checkbox", { name: /Realtor/ })).toHaveProperty("disabled", true);
+  });
+
+  it("rolls back if saving fails", async () => {
+    saveRealtorDirectoryLayout.mockRejectedValue(new Error("down"));
+    const user = userEvent.setup();
+    renderDirectory();
+    await user.click(screen.getByRole("button", { name: "More directory options" }));
+    await user.click(screen.getByRole("menuitem", { name: "Customize layout" }));
+    await user.click(screen.getByRole("checkbox", { name: "Phone" }));
+
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(columnNames()).toContain("Phone");
+  });
+
+  it("closes with Escape and returns focus to the ••• button", async () => {
+    const user = userEvent.setup();
+    renderDirectory();
+    await user.click(screen.getByRole("button", { name: "More directory options" }));
+    await user.click(screen.getByRole("menuitem", { name: "Customize layout" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Customize layout" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "More directory options" }));
   });
 });

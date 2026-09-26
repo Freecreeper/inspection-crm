@@ -13,6 +13,8 @@ import {
   type DirectorySort,
 } from "@/lib/realtors/directoryParams";
 import { directoryHref } from "@/lib/realtors/urls";
+import { MoreMenu } from "./MoreMenu";
+import { CustomizeLayoutPanel } from "./CustomizeLayoutPanel";
 
 export const SEARCH_DEBOUNCE_MS = 250;
 
@@ -42,6 +44,8 @@ export function DirectoryToolbar({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(params.q);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [customizing, setCustomizing] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
   const filtersButtonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -221,6 +225,22 @@ export function DirectoryToolbar({
             )}
           </select>
         </label>
+
+        <div ref={moreRef} className="relative">
+          <MoreMenu
+            label="More directory options"
+            buttonClassName="flex h-[38px] items-center rounded-md border border-slate-300 bg-white px-3 text-slate-700 hover:bg-slate-50"
+            items={[{ label: "Customize layout", onSelect: () => setCustomizing(true) }]}
+          />
+          {customizing && (
+            <CustomizeLayoutPanel
+              onClose={() => {
+                setCustomizing(false);
+                moreRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {chips.length > 0 && (

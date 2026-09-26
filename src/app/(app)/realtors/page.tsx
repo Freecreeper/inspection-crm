@@ -10,6 +10,8 @@ import { RealtorsHeader } from "./_components/RealtorsHeader";
 import { DirectoryToolbar } from "./_components/DirectoryToolbar";
 import { DirectoryView } from "./_components/DirectoryView";
 import { FollowUpView } from "./_components/FollowUpView";
+import { DirectoryLayoutProvider } from "./_components/DirectoryLayoutContext";
+import { normalizeDirectoryLayout } from "@/lib/realtors/directoryLayout";
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -39,32 +41,37 @@ export default async function RealtorsPage({ searchParams }: { searchParams: Pro
   }
 
   const params = parseDirectoryParams(raw);
-  const { rows, total } = await fetchDirectoryPage(params);
+  const [{ rows, total }, user] = await Promise.all([
+    fetchDirectoryPage(params),
+    session?.user?.id ? prisma.user.findUnique({ where: { id: session.user.id }, select: { realtorDirectoryLayout: true } }) : null,
+  ]);
 
   return (
     <div>
       {header}
-      <DirectoryToolbar params={params} brokerages={brokerages} />
-      <DirectoryView
-        params={params}
-        total={total}
-        initialSelectedId={first(raw.selected) ?? null}
-        rows={rows.map((r) => ({
-          id: r.id,
-          firstName: r.firstName,
-          lastName: r.lastName,
-          preferredName: r.preferredName,
-          email: r.email,
-          phone: r.phone,
-          brokerageId: r.brokerageId,
-          brokerageName: r.brokerageName,
-          transactionCount: r.transactionCount,
-          referralCount: r.referralCount,
-          lastActivityAt: r.lastActivityAt?.toISOString() ?? null,
-          nextFollowUpAt: r.nextFollowUpAt?.toISOString() ?? null,
-          openTaskCount: r.openTaskCount,
-        }))}
-      />
+      <DirectoryLayoutProvider initial={normalizeDirectoryLayout(user?.realtorDirectoryLayout)}>
+        <DirectoryToolbar params={params} brokerages={brokerages} />
+        <DirectoryView
+          params={params}
+          total={total}
+          initialSelectedId={first(raw.selected) ?? null}
+          rows={rows.map((r) => ({
+            id: r.id,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            preferredName: r.preferredName,
+            email: r.email,
+            phone: r.phone,
+            brokerageId: r.brokerageId,
+            brokerageName: r.brokerageName,
+            transactionCount: r.transactionCount,
+            referralCount: r.referralCount,
+            lastActivityAt: r.lastActivityAt?.toISOString() ?? null,
+            nextFollowUpAt: r.nextFollowUpAt?.toISOString() ?? null,
+            openTaskCount: r.openTaskCount,
+          }))}
+        />
+      </DirectoryLayoutProvider>
     </div>
   );
 }

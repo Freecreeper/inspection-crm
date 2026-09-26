@@ -10,6 +10,7 @@ import { DIRECTORY_PAGE_SIZE, type DirectoryParams, type DirectorySort } from "@
 import { directoryHref, nextSortChange } from "@/lib/realtors/urls";
 import { realtorDisplayName } from "@/lib/realtors/display";
 import { NextActionLabel } from "./NextActionLabel";
+import { useDirectoryLayout } from "./DirectoryLayoutContext";
 import { RealtorPreviewDrawer } from "./RealtorPreviewDrawer";
 
 export interface DirectoryRowView {
@@ -92,6 +93,10 @@ export function DirectoryView({
     buttons[target].focus();
   }
 
+  const { layout, show } = useDirectoryLayout();
+  const compact = layout.density === "compact";
+  const cell = `px-3 ${compact ? "py-1.5" : "py-2.5"}`;
+
   const start = total === 0 ? 0 : (params.page - 1) * DIRECTORY_PAGE_SIZE + 1;
   const end = Math.min(params.page * DIRECTORY_PAGE_SIZE, total);
   const hasPrev = params.page > 1;
@@ -110,13 +115,13 @@ export function DirectoryView({
           <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <SortTh label="Realtor" sort="name" params={params} className="w-[20%]" />
-              <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[16%]" />
-              <th scope="col" className="w-[13%] px-3 py-2.5 font-medium">Phone</th>
-              <th scope="col" className="hidden w-[18%] px-3 py-2.5 font-medium xl:table-cell">Email</th>
-              <SortTh label="Transactions" shortLabel="Trans." sort="transactions" params={params} className="w-[9%]" numeric />
-              <SortTh label="Referrals" shortLabel="Refs" sort="referrals" params={params} className="w-[8%]" numeric />
-              <SortTh label="Last activity" sort="lastActivity" params={params} className="w-[11%]" />
-              <SortTh label="Next action" sort="nextAction" params={params} className="w-[12%]" />
+              {show("brokerage") && <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[16%]" />}
+              {show("phone") && <th scope="col" className="w-[13%] px-3 py-2.5 font-medium">Phone</th>}
+              {show("email") && <th scope="col" className="hidden w-[18%] px-3 py-2.5 font-medium xl:table-cell">Email</th>}
+              {show("transactions") && <SortTh label="Transactions" shortLabel="Trans." sort="transactions" params={params} className="w-[9%]" numeric />}
+              {show("referrals") && <SortTh label="Referrals" shortLabel="Refs" sort="referrals" params={params} className="w-[8%]" numeric />}
+              {show("lastActivity") && <SortTh label="Last activity" sort="lastActivity" params={params} className="w-[11%]" />}
+              {show("nextAction") && <SortTh label="Next action" sort="nextAction" params={params} className="w-[12%]" />}
             </tr>
           </thead>
           <tbody ref={tableRef}>
@@ -133,7 +138,7 @@ export function DirectoryView({
                     selected ? "bg-emerald-50/70 shadow-[inset_3px_0_0_0_var(--color-emerald-600)]" : "hover:bg-slate-50"
                   }`}
                 >
-                  <td className="px-3 py-2.5">
+                  <td className={cell}>
                     <button
                       type="button"
                       data-row-index={index}
@@ -150,31 +155,41 @@ export function DirectoryView({
                       {realtorDisplayName(r)}
                     </button>
                   </td>
-                  <td className="truncate px-3 py-2.5 text-slate-600">
-                    {r.brokerageId ? (
-                      <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-slate-900 hover:underline">
-                        {r.brokerageName}
-                      </Link>
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </td>
-                  <td className="truncate px-3 py-2.5 tabular-nums text-slate-600">{r.phone ? formatPhone(r.phone) : <span className="text-slate-400">—</span>}</td>
-                  <td className="hidden truncate px-3 py-2.5 text-slate-600 xl:table-cell">{r.email ?? <span className="text-slate-400">—</span>}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{r.transactionCount}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{r.referralCount}</td>
-                  <td className="truncate px-3 py-2.5 tabular-nums text-slate-600">
-                    {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-slate-400">None</span>}
-                  </td>
-                  <td className="truncate px-3 py-2.5 tabular-nums">
-                    <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
-                  </td>
+                  {show("brokerage") && (
+                    <td className={`truncate text-slate-600 ${cell}`}>
+                      {r.brokerageId ? (
+                        <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-slate-900 hover:underline">
+                          {r.brokerageName}
+                        </Link>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
+                  {show("phone") && (
+                    <td className={`truncate tabular-nums text-slate-600 ${cell}`}>{r.phone ? formatPhone(r.phone) : <span className="text-slate-400">—</span>}</td>
+                  )}
+                  {show("email") && (
+                    <td className={`hidden truncate text-slate-600 xl:table-cell ${cell}`}>{r.email ?? <span className="text-slate-400">—</span>}</td>
+                  )}
+                  {show("transactions") && <td className={`text-right tabular-nums text-slate-700 ${cell}`}>{r.transactionCount}</td>}
+                  {show("referrals") && <td className={`text-right tabular-nums text-slate-700 ${cell}`}>{r.referralCount}</td>}
+                  {show("lastActivity") && (
+                    <td className={`truncate tabular-nums text-slate-600 ${cell}`}>
+                      {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-slate-400">None</span>}
+                    </td>
+                  )}
+                  {show("nextAction") && (
+                    <td className={`truncate tabular-nums ${cell}`}>
+                      <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
+                    </td>
+                  )}
                 </tr>
               );
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-12 text-center text-slate-500">
+                <td colSpan={1 + layout.columns.length} className="px-3 py-12 text-center text-slate-500">
                   <EmptyState page={params.page} />
                 </td>
               </tr>
@@ -183,10 +198,19 @@ export function DirectoryView({
         </table>
       </div>
 
-      {/* Phones: cards */}
-      <ul className="mt-4 space-y-2 md:hidden" aria-label="Realtors">
+      {/* Phones: cards, showing the same choices as the table */}
+      <ul className={`mt-4 md:hidden ${compact ? "space-y-1.5" : "space-y-2"}`} aria-label="Realtors">
         {rows.map((r) => {
           const selected = r.id === selectedId;
+          const details = [
+            show("phone") && r.phone ? formatPhone(r.phone) : null,
+            show("email") && r.email ? r.email : null,
+          ].filter(Boolean);
+          const stats = [
+            show("transactions") ? `${r.transactionCount} transactions` : null,
+            show("referrals") ? `${r.referralCount} referrals` : null,
+            show("lastActivity") ? (r.lastActivityAt ? `Last activity ${formatShortDate(r.lastActivityAt)}` : "No activity yet") : null,
+          ].filter(Boolean);
           return (
             <li key={r.id}>
               <button
@@ -195,22 +219,22 @@ export function DirectoryView({
                 aria-haspopup="dialog"
                 aria-current={selected ? "true" : undefined}
                 onClick={() => select(r.id)}
-                className={`w-full rounded-lg border bg-white p-4 text-left ${selected ? "border-emerald-500" : "border-slate-200"}`}
+                className={`w-full rounded-lg border bg-white text-left ${compact ? "px-4 py-2.5" : "p-4"} ${selected ? "border-emerald-500" : "border-slate-200"}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-slate-900">{realtorDisplayName(r)}</p>
-                    <p className="truncate text-sm text-slate-500">{r.brokerageName ?? "No brokerage"}</p>
+                    {show("brokerage") && <p className="truncate text-sm text-slate-500">{r.brokerageName ?? "No brokerage"}</p>}
+                    {details.length > 0 && <p className="truncate text-sm text-slate-500">{details.join(" · ")}</p>}
                   </div>
-                  <span className="shrink-0 text-xs">
-                    <span className="sr-only">Next action: </span>
-                    <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
-                  </span>
+                  {show("nextAction") && (
+                    <span className="shrink-0 text-xs">
+                      <span className="sr-only">Next action: </span>
+                      <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
+                    </span>
+                  )}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  {r.transactionCount} transactions · {r.referralCount} referrals ·{" "}
-                  {r.lastActivityAt ? `Last activity ${formatShortDate(r.lastActivityAt)}` : "No activity yet"}
-                </p>
+                {stats.length > 0 && <p className={`text-xs text-slate-500 ${compact ? "mt-1" : "mt-2"}`}>{stats.join(" · ")}</p>}
               </button>
             </li>
           );
