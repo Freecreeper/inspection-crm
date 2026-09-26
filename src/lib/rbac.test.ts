@@ -28,6 +28,14 @@ describe("can", () => {
     expect(can(role("INSPECTOR"), "document:read")).toBe(true);
     expect(can(role("INSPECTOR"), "crm:write")).toBe(false);
   });
+
+  it("limits relationship revenue (financial:read) to owner, office staff, and analysts", () => {
+    expect(can(role("OWNER_ADMIN"), "financial:read")).toBe(true);
+    expect(can(role("OFFICE_STAFF"), "financial:read")).toBe(true);
+    expect(can(role("REPORTING_ANALYST"), "financial:read")).toBe(true);
+    expect(can(role("INSPECTOR"), "financial:read")).toBe(false);
+    expect(can(undefined, "financial:read")).toBe(false);
+  });
 });
 
 describe("assertCan", () => {

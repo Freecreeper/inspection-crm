@@ -13,6 +13,10 @@ export const PERMISSIONS = {
   "automation:manage": ["OWNER_ADMIN"],
   "report-builder:use": ["OWNER_ADMIN", "OFFICE_STAFF", "REPORTING_ANALYST"],
   "crm:write": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  // Revenue figures on relationship screens (Realtor associated/referral
+  // revenue, per-transaction revenue). Inspectors see the relationship but
+  // not the money — pending business-owner confirmation of that split.
+  "financial:read": ["OWNER_ADMIN", "OFFICE_STAFF", "REPORTING_ANALYST"],
   "inspection:conduct": ["OWNER_ADMIN", "INSPECTOR"],
   // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
   // here rather than a bare "is there a session" check in the download route,
