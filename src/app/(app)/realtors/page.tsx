@@ -12,14 +12,13 @@ import { updateRealtorNameInline, updateRealtorEmailInline, updateRealtorPhoneIn
 export default async function RealtorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; brokerageId?: string; sortBy?: string; sortDir?: string }>;
+  searchParams: Promise<{ q?: string; sortBy?: string; sortDir?: string }>;
 }) {
-  const { q = "", brokerageId = "", sortBy = "name", sortDir: sortDirParam } = await searchParams;
+  const { q = "", sortBy = "name", sortDir: sortDirParam } = await searchParams;
   const query = q.trim();
   const sortDir: "asc" | "desc" = sortDirParam === "desc" ? "desc" : "asc";
 
   const where: Prisma.RealtorWhereInput = { archivedAt: null };
-  if (brokerageId) where.brokerageId = brokerageId;
   if (query) {
     where.OR = [
       { firstName: { contains: query, mode: "insensitive" } },
@@ -62,12 +61,12 @@ export default async function RealtorsPage({
     }),
     prisma.realtor.count({ where: { archivedAt: null } }),
     prisma.brokerage.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" } }),
-    // Unfiltered, for the search box's typeahead suggestions — it needs
-    // the full universe of realtors to search across, independent of
-    // whatever `q`/`brokerageId` currently narrows the table to.
+    // Unfiltered, for the search box's suggestions — it needs the full
+    // universe of realtors to search across, independent of whatever `q`
+    // currently narrows the table to.
     prisma.realtor.findMany({
       where: { archivedAt: null },
-      select: { id: true, firstName: true, lastName: true, email: true, brokerage: { select: { name: true } } },
+      select: { id: true, firstName: true, lastName: true, email: true, brokerageId: true, brokerage: { select: { name: true } } },
       orderBy: { lastName: "asc" },
     }),
   ]);
@@ -89,22 +88,26 @@ export default async function RealtorsPage({
 
       <RealtorFilterBar
         initialQuery={query}
-        initialBrokerageId={brokerageId}
-        initialSortBy={sortBy}
-        initialSortDir={sortDir}
-        brokerages={brokerages}
-        suggestions={allRealtors.map((r) => ({
-          id: r.id,
-          label: `${r.firstName} ${r.lastName}`,
-          sublabel: r.email ?? r.brokerage?.name ?? undefined,
-        }))}
+        suggestions={[
+          ...allRealtors.map((r) => ({
+            id: r.id,
+            label: `${r.firstName} ${r.lastName}`,
+            sublabel: r.brokerage?.name ?? r.email ?? undefined,
+            kind: "realtor" as const,
+          })),
+          // Only brokerages someone actually belongs to — suggesting an
+          // empty one would just lead to a "no realtors match" table.
+          ...brokerages
+            .filter((b) => allRealtors.some((r) => r.brokerageId === b.id))
+            .map((b) => ({ id: b.id, label: b.name, sublabel: "Brokerage", kind: "brokerage" as const })),
+        ]}
       />
 
       {/*
         table-fixed + explicit column widths + truncation keeps every row
         within the container's own w-full — the table can never grow wider
         than its box, so this wrapper doesn't need overflow-x-auto (which
-        would clip the actions menu's vertical overflow along with it).
+        would clip the cell popups' vertical overflow along with it).
       */}
       <div className="mt-6 rounded-lg border border-slate-200 bg-white">
         <table className="w-full table-fixed text-sm">
@@ -113,14 +116,14 @@ export default async function RealtorsPage({
               <th className="w-[20%] rounded-tl-lg px-4 py-3 font-medium" aria-sort={ariaSortFor("name")}>
                 <SortableColumnHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortDir={sortDir} />
               </th>
+              <th className="w-[16%] px-4 py-3 font-medium" aria-sort={ariaSortFor("phone")}>
+                <SortableColumnHeader label="Phone" sortKey="phone" currentSortBy={sortBy} currentSortDir={sortDir} />
+              </th>
               <th className="w-[28%] px-4 py-3 font-medium" aria-sort={ariaSortFor("email")}>
                 <SortableColumnHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortDir={sortDir} />
               </th>
               <th className="w-[22%] px-4 py-3 font-medium" aria-sort={ariaSortFor("brokerage")}>
                 <SortableColumnHeader label="Brokerage" sortKey="brokerage" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-              <th className="w-[16%] px-4 py-3 font-medium" aria-sort={ariaSortFor("phone")}>
-                <SortableColumnHeader label="Contact" sortKey="phone" currentSortBy={sortBy} currentSortDir={sortDir} />
               </th>
               <th className="w-[14%] rounded-tr-lg px-4 py-3 font-medium" aria-sort={ariaSortFor("transactions")}>
                 <SortableColumnHeader label="Transactions" sortKey="transactions" currentSortBy={sortBy} currentSortDir={sortDir} />
@@ -128,75 +131,73 @@ export default async function RealtorsPage({
             </tr>
           </thead>
           <tbody>
-            {realtors.map((r) => {
-              return (
-                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <EditableRealtorName
-                      firstName={r.firstName}
-                      lastName={r.lastName}
-                      onSave={updateRealtorNameInline.bind(null, r.id)}
-                      actions={[{ label: "Profile", href: `/realtors/${r.id}` }]}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <EditableCell
-                      value={r.email ?? ""}
-                      type="email"
-                      onSave={updateRealtorEmailInline.bind(null, r.id)}
-                      actions={
-                        r.email
-                          ? [
-                              { label: "Email", href: `mailto:${r.email}` },
-                              { label: "Template Email", href: templateMailto(r.email, r.firstName) },
-                            ]
-                          : []
-                      }
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <EditableBrokerageCell
-                      currentName={r.brokerage?.name ?? null}
-                      options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
-                      onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
-                      actions={[
-                        ...(r.brokerage?.phone
-                          ? [
-                              { label: "Call", href: `tel:${r.brokerage.phone}` },
-                              { label: "Text", href: `sms:${r.brokerage.phone}` },
-                            ]
-                          : []),
-                        ...(r.brokerage?.email
-                          ? [
-                              { label: "Email", href: `mailto:${r.brokerage.email}` },
-                              { label: "Template Email", href: templateMailto(r.brokerage.email, r.brokerage.name) },
-                            ]
-                          : []),
-                      ]}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <EditablePhoneCell
-                      phone={r.phone}
-                      onSave={updateRealtorPhoneInline.bind(null, r.id)}
-                      actions={
-                        r.phone
-                          ? [
-                              { label: "Call", href: `tel:${r.phone}` },
-                              { label: "Text", href: `sms:${r.phone}` },
-                            ]
-                          : []
-                      }
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                      {r._count.transactions}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+            {realtors.map((r) => (
+              <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  <EditableRealtorName
+                    firstName={r.firstName}
+                    lastName={r.lastName}
+                    onSave={updateRealtorNameInline.bind(null, r.id)}
+                    actions={[{ label: "Profile", href: `/realtors/${r.id}` }]}
+                  />
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  <EditablePhoneCell
+                    phone={r.phone}
+                    onSave={updateRealtorPhoneInline.bind(null, r.id)}
+                    actions={
+                      r.phone
+                        ? [
+                            { label: "Call", href: `tel:${r.phone}` },
+                            { label: "Text", href: `sms:${r.phone}` },
+                          ]
+                        : []
+                    }
+                  />
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  <EditableCell
+                    value={r.email ?? ""}
+                    type="email"
+                    onSave={updateRealtorEmailInline.bind(null, r.id)}
+                    actions={
+                      r.email
+                        ? [
+                            { label: "Email", href: `mailto:${r.email}` },
+                            { label: "Template Email", href: templateMailto(r.email, r.firstName) },
+                          ]
+                        : []
+                    }
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <EditableBrokerageCell
+                    currentName={r.brokerage?.name ?? null}
+                    options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
+                    onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
+                    actions={[
+                      ...(r.brokerage?.phone
+                        ? [
+                            { label: "Call", href: `tel:${r.brokerage.phone}` },
+                            { label: "Text", href: `sms:${r.brokerage.phone}` },
+                          ]
+                        : []),
+                      ...(r.brokerage?.email
+                        ? [
+                            { label: "Email", href: `mailto:${r.brokerage.email}` },
+                            { label: "Template Email", href: templateMailto(r.brokerage.email, r.brokerage.name) },
+                          ]
+                        : []),
+                    ]}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    {r._count.transactions}
+                  </span>
+                </td>
+              </tr>
+            ))}
             {realtors.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
