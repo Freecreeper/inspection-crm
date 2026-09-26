@@ -7,7 +7,6 @@ import { can } from "@/lib/rbac";
 import { formatPhone } from "@/lib/phone";
 import { brokerageLabel, realtorDisplayName, realtorLegalNameIfDifferent } from "@/lib/realtors/display";
 import { parseTimelineFilter } from "@/lib/realtors/timeline";
-import { StatusBadge } from "../_components/StatusBadge";
 import { RecordQuickActions } from "./_components/RecordClient";
 import { OverviewTab } from "./_components/OverviewTab";
 import { TransactionsTab } from "./_components/TransactionsTab";
@@ -70,7 +69,6 @@ export default async function RealtorRecordPage({
             )}
           </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-            <StatusBadge active={realtor.active} />
             {/* Missing values are already called out on the action buttons. */}
             {realtor.phone && <span className="tabular-nums">{formatPhone(realtor.phone)}</span>}
             {realtor.email && <span>{realtor.email}</span>}

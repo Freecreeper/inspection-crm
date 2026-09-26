@@ -11,13 +11,13 @@ export interface DirectoryRow {
   preferredName: string | null;
   email: string | null;
   phone: string | null;
-  active: boolean;
   brokerageId: string | null;
   brokerageName: string | null;
   transactionCount: number;
   referralCount: number;
   lastActivityAt: Date | null;
   nextFollowUpAt: Date | null;
+  openTaskCount: number;
   totalCount: number;
 }
 
@@ -55,6 +55,10 @@ function orderByClause(sort: DirectorySort, dir: "asc" | "desc"): Prisma.Sql {
       return Prisma.sql`LOWER(b."name") ${d} NULLS LAST, ${tieBreak}`;
     case "lastActivity":
       return Prisma.sql`la."at" ${d} NULLS LAST, ${tieBreak}`;
+    case "nextAction":
+      // Realtors with an open but undated task sort after dated ones and
+      // before realtors with nothing scheduled at all.
+      return Prisma.sql`nf."due" ${d} NULLS LAST, (nf."open" > 0) DESC, ${tieBreak}`;
     case "transactions":
       return Prisma.sql`tx."cnt" ${d}, ${tieBreak}`;
     case "referrals":
@@ -77,8 +81,6 @@ export function buildDirectoryQuery(params: DirectoryParams, now: Date): Prisma.
 
   const search = searchCondition(params.q);
   if (search) conditions.push(search);
-  if (params.status === "active") conditions.push(Prisma.sql`r."active" = true`);
-  if (params.status === "inactive") conditions.push(Prisma.sql`r."active" = false`);
   if (params.brokerageId) conditions.push(Prisma.sql`r."brokerageId" = ${params.brokerageId}`);
   if (params.flags.missingBrokerage) conditions.push(Prisma.sql`r."brokerageId" IS NULL`);
   if (params.flags.missingContact) conditions.push(Prisma.sql`(r."phone" IS NULL OR r."email" IS NULL)`);
@@ -99,12 +101,13 @@ export function buildDirectoryQuery(params: DirectoryParams, now: Date): Prisma.
 
   return Prisma.sql`
     SELECT
-      r."id", r."firstName", r."lastName", r."preferredName", r."email", r."phone", r."active",
+      r."id", r."firstName", r."lastName", r."preferredName", r."email", r."phone",
       r."brokerageId", b."name" AS "brokerageName",
       tx."cnt" AS "transactionCount",
       rf."cnt" AS "referralCount",
       la."at" AS "lastActivityAt",
       nf."due" AS "nextFollowUpAt",
+      nf."open" AS "openTaskCount",
       (COUNT(*) OVER())::int AS "totalCount"
     FROM "realtors" r
     LEFT JOIN "brokerages" b ON b."id" = r."brokerageId"
@@ -134,7 +137,7 @@ export function buildDirectoryQuery(params: DirectoryParams, now: Date): Prisma.
       ) AS "at"
     ) la
     CROSS JOIN LATERAL (
-      SELECT MIN(tk."dueAt") AS "due"
+      SELECT MIN(tk."dueAt") AS "due", COUNT(*)::int AS "open"
       FROM "tasks" tk
       WHERE tk."realtorId" = r."id" AND tk."completedAt" IS NULL
     ) nf

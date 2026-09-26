@@ -2,7 +2,7 @@
 // allow-lists and parsing the server uses.
 export const DIRECTORY_PAGE_SIZE = 25;
 
-export const DIRECTORY_SORTS = ["name", "brokerage", "lastActivity", "transactions", "referrals"] as const;
+export const DIRECTORY_SORTS = ["name", "brokerage", "nextAction", "lastActivity", "transactions", "referrals"] as const;
 export type DirectorySort = (typeof DIRECTORY_SORTS)[number];
 
 export const ACTIVITY_RANGES = ["30d", "90d", "stale90"] as const;
@@ -13,9 +13,6 @@ export const ACTIVITY_RANGE_LABELS: Record<ActivityRange, string> = {
   "90d": "Active in last 90 days",
   stale90: "No activity in 90+ days",
 };
-
-export const STATUS_FILTERS = ["all", "active", "inactive"] as const;
-export type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 // Boolean filters, keyed by their URL param. One list so the parser, the
 // SQL builder, the filter panel, and the chips can't drift apart.
@@ -31,7 +28,6 @@ export const FLAG_FILTER_KEYS = Object.keys(FLAG_FILTERS) as FlagFilter[];
 
 export interface DirectoryParams {
   q: string;
-  status: StatusFilter;
   brokerageId: string | null;
   flags: Record<FlagFilter, boolean>;
   activity: ActivityRange | null;
@@ -51,7 +47,8 @@ function oneOf<T extends string>(allowed: readonly T[], raw: string | undefined)
 }
 
 export function defaultDirFor(sort: DirectorySort): "asc" | "desc" {
-  return sort === "name" || sort === "brokerage" ? "asc" : "desc";
+  // Soonest follow-up first; alphabetical ascending; counts/recency descending.
+  return sort === "name" || sort === "brokerage" || sort === "nextAction" ? "asc" : "desc";
 }
 
 // Everything from the URL goes through an allow-list here — nothing a
@@ -62,7 +59,6 @@ export function parseDirectoryParams(raw: RawSearchParams): DirectoryParams {
   const page = Number.parseInt(first(raw.page) ?? "1", 10);
   return {
     q: (first(raw.q) ?? "").trim().slice(0, 100),
-    status: oneOf(STATUS_FILTERS, first(raw.status)) ?? "all",
     brokerageId: first(raw.brokerageId)?.trim() || null,
     flags,
     activity: oneOf(ACTIVITY_RANGES, first(raw.activity)),
@@ -74,7 +70,6 @@ export function parseDirectoryParams(raw: RawSearchParams): DirectoryParams {
 
 export function activeFilterCount(params: DirectoryParams): number {
   return (
-    (params.status !== "all" ? 1 : 0) +
     (params.brokerageId ? 1 : 0) +
     (params.activity ? 1 : 0) +
     FLAG_FILTER_KEYS.filter((key) => params.flags[key]).length

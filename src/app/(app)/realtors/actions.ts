@@ -12,6 +12,7 @@ import { logActivity } from "@/lib/activity";
 import { isCommunicationChannel, isCommunicationDirection } from "@/lib/communications";
 import { findRealtorDuplicates, type DuplicateCandidate } from "@/lib/realtors/duplicates";
 import { loadRealtorPreview, type RealtorPreview } from "@/lib/realtors/preview";
+import { normalizePreviewSections, type PreviewSection } from "@/lib/realtors/previewLayout";
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -138,7 +139,6 @@ export interface RealtorProfilePatch {
   phone?: string | null;
   preferredContactMethod?: string | null;
   notes?: string | null;
-  active?: boolean;
 }
 
 const nullableText = (max: number) =>
@@ -161,7 +161,6 @@ const profilePatchSchema = z
       .transform((v) => (v && digitsOnly(v) ? digitsOnly(v) : null)),
     preferredContactMethod: z.enum(["PHONE", "TEXT", "EMAIL"]).nullable(),
     notes: nullableText(5000),
-    active: z.boolean(),
   })
   .partial();
 
@@ -200,8 +199,6 @@ export async function updateRealtorProfile(realtorId: string, patch: RealtorProf
     if (contact) await logActivity(tx, { actorId: userId, action: "realtor.contact_updated", entityType: "Realtor", entityId: realtorId, ...contact });
     const notes = diff(["notes"]);
     if (notes) await logActivity(tx, { actorId: userId, action: "realtor.notes_updated", entityType: "Realtor", entityId: realtorId, ...notes });
-    const status = diff(["active"]);
-    if (status) await logActivity(tx, { actorId: userId, action: "realtor.status_changed", entityType: "Realtor", entityId: realtorId, ...status });
   });
 
   revalidateRealtor(realtorId);
@@ -258,8 +255,19 @@ export async function changeRealtorBrokerageInline(realtorId: string, brokerageI
 // ---------------------------------------------------------------------------
 
 export async function getRealtorPreview(realtorId: string): Promise<RealtorPreview | null> {
-  const { role } = await requireSession();
-  return loadRealtorPreview(realtorId, role);
+  const { role, userId } = await requireSession();
+  return loadRealtorPreview(realtorId, role, userId);
+}
+
+// A personal display preference, not CRM data — any signed-in user may set
+// their own, and only their own (the target is always the session user).
+export async function saveRealtorPreviewSections(sections: string[]): Promise<ActionResult<PreviewSection[]>> {
+  const { userId } = await requireSession();
+  if (!userId) return { ok: false, error: "Not signed in." };
+  if (!Array.isArray(sections)) return { ok: false, error: "Invalid layout." };
+  const normalized = normalizePreviewSections(sections);
+  await prisma.user.update({ where: { id: userId }, data: { realtorPreviewSections: normalized } });
+  return { ok: true, data: normalized };
 }
 
 // Realtor follow-ups are ordinary Tasks (with realtorId set), so they show

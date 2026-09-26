@@ -56,13 +56,13 @@ export default async function RealtorsPage({ searchParams }: { searchParams: Pro
           preferredName: r.preferredName,
           email: r.email,
           phone: r.phone,
-          active: r.active,
           brokerageId: r.brokerageId,
           brokerageName: r.brokerageName,
           transactionCount: r.transactionCount,
           referralCount: r.referralCount,
           lastActivityAt: r.lastActivityAt?.toISOString() ?? null,
           nextFollowUpAt: r.nextFollowUpAt?.toISOString() ?? null,
+          openTaskCount: r.openTaskCount,
         }))}
       />
     </div>

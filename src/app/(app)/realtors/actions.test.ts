@@ -20,6 +20,7 @@ import {
   linkReferralSourceToRealtor,
   createReferralSourceForRealtor,
   getRealtorPreview,
+  saveRealtorPreviewSections,
 } from "./actions";
 
 type Fn = ReturnType<typeof vi.fn>;
@@ -38,7 +39,6 @@ const existingRealtor = {
   phone: "8285550101",
   preferredContactMethod: null,
   notes: null,
-  active: true,
   brokerageId: "brok-1",
   archivedAt: null,
 };
@@ -155,11 +155,17 @@ describe("updateRealtorProfile", () => {
     });
   });
 
-  it("logs notes and status changes under their own audit actions", async () => {
+  it("logs notes changes under their own audit action", async () => {
     db.realtor.findUnique.mockResolvedValue(existingRealtor);
-    await updateRealtorProfile("r1", { notes: "Prefers mornings", active: false });
+    await updateRealtorProfile("r1", { notes: "Prefers mornings", phone: "8285550199" });
     const actions = db.activityLog.create.mock.calls.map((c) => c[0].data.action);
-    expect(actions).toEqual(expect.arrayContaining(["realtor.notes_updated", "realtor.status_changed"]));
+    expect(actions).toEqual(expect.arrayContaining(["realtor.notes_updated", "realtor.contact_updated"]));
+  });
+
+  it("no longer accepts an active/inactive status", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    expect(await updateRealtorProfile("r1", { active: false } as never)).toMatchObject({ ok: false });
+    expect(db.realtor.update).not.toHaveBeenCalled();
   });
 
   it("refuses fields outside the allow-list", async () => {
@@ -289,5 +295,20 @@ describe("getRealtorPreview", () => {
     mockAuth.mockResolvedValue(null as never);
     await expect(getRealtorPreview("r1")).rejects.toThrow();
     expect(db.realtor.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveRealtorPreviewSections", () => {
+  it("saves a normalized layout to the signed-in user's own record", async () => {
+    mockAuth.mockResolvedValue(inspector as never);
+    const result = await saveRealtorPreviewSections(["activity", "hacked", "nextAction"]);
+    expect(result).toEqual({ ok: true, data: ["nextAction", "activity"] });
+    expect(db.user.update).toHaveBeenCalledWith({ where: { id: "user-2" }, data: { realtorPreviewSections: ["nextAction", "activity"] } });
+  });
+
+  it("requires a session", async () => {
+    mockAuth.mockResolvedValue(null as never);
+    await expect(saveRealtorPreviewSections(["contact"])).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
   });
 });

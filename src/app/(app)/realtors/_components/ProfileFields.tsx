@@ -13,10 +13,9 @@ export interface ProfileValues {
   phone: string | null;
   preferredContactMethod: string | null;
   notes: string | null;
-  active: boolean;
 }
 
-type FieldKey = "firstName" | "lastName" | "preferredName" | "phone" | "email" | "preferredContactMethod" | "notes" | "active";
+type FieldKey = "firstName" | "lastName" | "preferredName" | "phone" | "email" | "preferredContactMethod" | "notes";
 
 const CONTACT_METHOD_OPTIONS = [
   { value: "", label: "No preference" },
@@ -92,21 +91,6 @@ export function ProfileFields({
         emptyText="No notes yet"
         canEdit={canEdit}
         onSave={saver((v) => ({ notes: v }))}
-      />
-    ),
-    active: (
-      <InlineField
-        key="active"
-        label="Status"
-        editor="select"
-        options={[
-          { value: "true", label: "Active" },
-          { value: "false", label: "Inactive" },
-        ]}
-        value={String(values.active)}
-        display={values.active ? "Active" : "Inactive"}
-        canEdit={canEdit}
-        onSave={saver((v) => ({ active: v === "true" }))}
       />
     ),
   };

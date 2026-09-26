@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { formatPhone } from "@/lib/phone";
-import { formatShortDate, startOfDay } from "@/lib/dates";
+import { formatShortDate } from "@/lib/dates";
 import { DIRECTORY_PAGE_SIZE, type DirectoryParams, type DirectorySort } from "@/lib/realtors/directoryParams";
 import { directoryHref, nextSortChange } from "@/lib/realtors/urls";
 import { realtorDisplayName } from "@/lib/realtors/display";
-import { StatusBadge } from "./StatusBadge";
+import { NextActionLabel } from "./NextActionLabel";
 import { RealtorPreviewDrawer } from "./RealtorPreviewDrawer";
 
 export interface DirectoryRowView {
@@ -19,13 +19,13 @@ export interface DirectoryRowView {
   preferredName: string | null;
   email: string | null;
   phone: string | null;
-  active: boolean;
   brokerageId: string | null;
   brokerageName: string | null;
   transactionCount: number;
   referralCount: number;
   lastActivityAt: string | null;
   nextFollowUpAt: string | null;
+  openTaskCount: number;
 }
 
 // Keeps the ?selected= param in sync without a server round trip — the
@@ -61,7 +61,6 @@ export function DirectoryView({
     if (initialSelectedId) setSelectedId(initialSelectedId);
   }
   const tableRef = useRef<HTMLTableSectionElement>(null);
-  const todayStart = startOfDay(new Date());
 
   const select = useCallback((id: string | null) => {
     setSelectedId(id);
@@ -110,20 +109,19 @@ export function DirectoryView({
           <caption className="sr-only">Realtors. Select a realtor to open their preview.</caption>
           <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <SortTh label="Realtor" sort="name" params={params} className="w-[21%]" />
-              <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[17%]" />
+              <SortTh label="Realtor" sort="name" params={params} className="w-[20%]" />
+              <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[16%]" />
               <th scope="col" className="w-[13%] px-3 py-2.5 font-medium">Phone</th>
               <th scope="col" className="hidden w-[18%] px-3 py-2.5 font-medium xl:table-cell">Email</th>
               <SortTh label="Transactions" shortLabel="Trans." sort="transactions" params={params} className="w-[9%]" numeric />
               <SortTh label="Referrals" shortLabel="Refs" sort="referrals" params={params} className="w-[8%]" numeric />
               <SortTh label="Last activity" sort="lastActivity" params={params} className="w-[11%]" />
-              <th scope="col" className="w-[10%] px-3 py-2.5 font-medium">Status</th>
+              <SortTh label="Next action" sort="nextAction" params={params} className="w-[12%]" />
             </tr>
           </thead>
           <tbody ref={tableRef}>
             {rows.map((r, index) => {
               const selected = r.id === selectedId;
-              const overdue = r.nextFollowUpAt ? new Date(r.nextFollowUpAt) < todayStart : false;
               return (
                 <tr
                   key={r.id}
@@ -168,8 +166,8 @@ export function DirectoryView({
                   <td className="truncate px-3 py-2.5 tabular-nums text-slate-600">
                     {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-slate-400">None</span>}
                   </td>
-                  <td className="px-3 py-2.5">
-                    <StatusBadge active={r.active} followUpOverdue={overdue} />
+                  <td className="truncate px-3 py-2.5 tabular-nums">
+                    <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
                   </td>
                 </tr>
               );
@@ -189,7 +187,6 @@ export function DirectoryView({
       <ul className="mt-4 space-y-2 md:hidden" aria-label="Realtors">
         {rows.map((r) => {
           const selected = r.id === selectedId;
-          const overdue = r.nextFollowUpAt ? new Date(r.nextFollowUpAt) < todayStart : false;
           return (
             <li key={r.id}>
               <button
@@ -205,7 +202,10 @@ export function DirectoryView({
                     <p className="truncate font-medium text-slate-900">{realtorDisplayName(r)}</p>
                     <p className="truncate text-sm text-slate-500">{r.brokerageName ?? "No brokerage"}</p>
                   </div>
-                  <StatusBadge active={r.active} followUpOverdue={overdue} />
+                  <span className="shrink-0 text-xs">
+                    <span className="sr-only">Next action: </span>
+                    <NextActionLabel dueAt={r.nextFollowUpAt} hasOpenTask={r.openTaskCount > 0} />
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
                   {r.transactionCount} transactions · {r.referralCount} referrals ·{" "}

@@ -157,14 +157,18 @@ enum CustomFieldEntityType {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String
-  passwordHash String
-  role         Role     @default(OFFICE_STAFF)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  name                   String
+  passwordHash           String
+  role                   Role     @default(OFFICE_STAFF)
+  active                 Boolean  @default(true)
+  // Which sections this user wants on the Realtor preview drawer, as an
+  // allow-listed array of section keys (src/lib/realtors/previewLayout.ts).
+  // NULL means "use the defaults".
+  realtorPreviewSections Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   inspectionsAsInspector  Inspection[]       @relation("InspectorUser")
   tasksAssigned           Task[]
@@ -182,20 +186,20 @@ model User {
 // ---------------------------------------------------------------------------
 
 model Lead {
-  id                  String     @id @default(cuid())
+  id                  String          @id @default(cuid())
   firstName           String
-  lastName             String
+  lastName            String
   email               String?
   phone               String?
-  status              LeadStatus @default(NEW)
+  status              LeadStatus      @default(NEW)
   referralSourceId    String?
   referralSource      ReferralSource? @relation(fields: [referralSourceId], references: [id])
-  convertedCustomerId String?    @unique
-  convertedCustomer   Customer?  @relation("LeadConversion", fields: [convertedCustomerId], references: [id])
+  convertedCustomerId String?         @unique
+  convertedCustomer   Customer?       @relation("LeadConversion", fields: [convertedCustomerId], references: [id])
   convertedAt         DateTime?
   notes               String?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   @@index([status])
   @@map("leads")
@@ -337,10 +341,6 @@ model Realtor {
   notes                  String?
   brokerageId            String?
   brokerage              Brokerage?              @relation(fields: [brokerageId], references: [id])
-  // Relationship status, set by staff — an inactive realtor stays visible
-  // and reportable. Distinct from archivedAt, which removes the record from
-  // everyday lists entirely.
-  active                 Boolean                 @default(true)
   archivedAt             DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -532,14 +532,14 @@ model Service {
 }
 
 model Inspection {
-  id              String            @id @default(cuid())
+  id              String           @id @default(cuid())
   transactionId   String
-  transaction     Transaction       @relation(fields: [transactionId], references: [id])
+  transaction     Transaction      @relation(fields: [transactionId], references: [id])
   propertyId      String
-  property        Property          @relation(fields: [propertyId], references: [id])
+  property        Property         @relation(fields: [propertyId], references: [id])
   inspectorId     String?
-  inspector       User?             @relation("InspectorUser", fields: [inspectorId], references: [id])
-  status          InspectionStatus  @default(SCHEDULED)
+  inspector       User?            @relation("InspectorUser", fields: [inspectorId], references: [id])
+  status          InspectionStatus @default(SCHEDULED)
   scheduledAt     DateTime?
   startedAt       DateTime?
   completedAt     DateTime?
@@ -547,8 +547,8 @@ model Inspection {
   temperatureF    Int?
   occupancyStatus String?
   utilitiesOn     Boolean?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   inspectionServices InspectionService[]
   reports            InspectionReport[]
@@ -678,13 +678,13 @@ model TemplateComponent {
 }
 
 model InspectionReport {
-  id                  String         @id @default(cuid())
+  id                  String          @id @default(cuid())
   inspectionId        String
-  inspection          Inspection     @relation(fields: [inspectionId], references: [id])
+  inspection          Inspection      @relation(fields: [inspectionId], references: [id])
   templateId          String?
   template            ReportTemplate? @relation(fields: [templateId], references: [id])
-  reportNumber        String         @unique
-  status              ReportStatus   @default(DRAFT)
+  reportNumber        String          @unique
+  status              ReportStatus    @default(DRAFT)
   title               String?
   introduction        String?
   scope               String?
@@ -695,8 +695,8 @@ model InspectionReport {
   finalizedAt         DateTime?
   finalizedById       String?
   deliveredAt         DateTime?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   sections     ReportSection[]
   summaryItems ReportSummaryItem[]
@@ -744,12 +744,12 @@ model ReportComponent {
 // Company-configurable classification terminology (§ "Finding classification") —
 // never a hard-coded severity scale.
 model FindingCategory {
-  id           String   @id @default(cuid())
-  key          String   @unique
+  id           String  @id @default(cuid())
+  key          String  @unique
   label        String
   description  String?
-  displayOrder Int      @default(0)
-  active       Boolean  @default(true)
+  displayOrder Int     @default(0)
+  active       Boolean @default(true)
 
   findings Finding[]
 
@@ -775,7 +775,7 @@ model Narrative {
 }
 
 model Finding {
-  id                      String    @id @default(cuid())
+  id                      String           @id @default(cuid())
   componentId             String
   component               ReportComponent  @relation(fields: [componentId], references: [id])
   categoryId              String?
@@ -785,16 +785,16 @@ model Finding {
   location                String?
   recommendation          String?
   recommendedProfessional String?
-  safetyRelated           Boolean   @default(false)
-  repairRecommended       Boolean   @default(false)
-  monitor                 Boolean   @default(false)
-  furtherEvaluation       Boolean   @default(false)
-  includedInSummary       Boolean   @default(false)
+  safetyRelated           Boolean          @default(false)
+  repairRecommended       Boolean          @default(false)
+  monitor                 Boolean          @default(false)
+  furtherEvaluation       Boolean          @default(false)
+  includedInSummary       Boolean          @default(false)
   inspectorNotes          String?
-  displayOrder            Int       @default(0)
+  displayOrder            Int              @default(0)
   createdById             String?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
 
   media       Media[]
   summaryItem ReportSummaryItem?

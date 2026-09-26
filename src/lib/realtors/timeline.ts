@@ -74,7 +74,6 @@ const PROFILE_ACTIONS: Record<string, { kind: TimelineKind; title: string }> = {
   "realtor.created": { kind: "profile", title: "Realtor record created" },
   "realtor.notes_updated": { kind: "note", title: "Notes updated" },
   "realtor.contact_updated": { kind: "profile", title: "Contact information updated" },
-  "realtor.status_changed": { kind: "profile", title: "Status changed" },
   "realtor.referral_source_linked": { kind: "referral", title: "Linked as a referral source" },
 };
 

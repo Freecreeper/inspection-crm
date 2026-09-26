@@ -19,6 +19,7 @@ export function QuickActions({
   canWrite,
   showOpenRecord = false,
   onChanged,
+  onCustomize,
 }: {
   realtorId: string;
   phone: string | null;
@@ -26,6 +27,8 @@ export function QuickActions({
   canWrite: boolean;
   showOpenRecord?: boolean;
   onChanged: () => void;
+  // Present only where the card is customizable (the preview drawer).
+  onCustomize?: () => void;
 }) {
   const [panel, setPanel] = useState<"task" | "log" | null>(null);
 
@@ -66,6 +69,7 @@ export function QuickActions({
             ...(canWrite ? [{ label: "New transaction", href: `/transactions/new?realtorId=${realtorId}` }] : []),
             ...(showOpenRecord ? [{ label: "Open full record", href: `/realtors/${realtorId}` }] : []),
             { label: "Relationship analytics", href: `/realtors/${realtorId}/analytics` },
+            ...(onCustomize ? [{ label: "Customize card", onSelect: onCustomize }] : []),
           ]}
         />
       </div>
