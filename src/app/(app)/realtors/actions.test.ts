@@ -21,6 +21,7 @@ import {
   createReferralSourceForRealtor,
   getRealtorPreview,
   saveRealtorPreviewSections,
+  saveRealtorDirectoryLayout,
 } from "./actions";
 
 type Fn = ReturnType<typeof vi.fn>;
@@ -309,6 +310,23 @@ describe("saveRealtorPreviewSections", () => {
   it("requires a session", async () => {
     mockAuth.mockResolvedValue(null as never);
     await expect(saveRealtorPreviewSections(["contact"])).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveRealtorDirectoryLayout", () => {
+  it("saves a normalized layout to the signed-in user's own record", async () => {
+    const result = await saveRealtorDirectoryLayout({ columns: ["email", "nope", "brokerage"], density: "compact", extra: 1 });
+    expect(result).toEqual({ ok: true, data: { columns: ["brokerage", "email"], density: "compact" } });
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { realtorDirectoryLayout: { columns: ["brokerage", "email"], density: "compact" } },
+    });
+  });
+
+  it("requires a session", async () => {
+    mockAuth.mockResolvedValue(null as never);
+    await expect(saveRealtorDirectoryLayout({})).rejects.toThrow();
     expect(db.user.update).not.toHaveBeenCalled();
   });
 });

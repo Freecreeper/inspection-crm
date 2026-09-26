@@ -167,6 +167,9 @@ model User {
   // allow-listed array of section keys (src/lib/realtors/previewLayout.ts).
   // NULL means "use the defaults".
   realtorPreviewSections Json?
+  // This user's Realtor directory layout: visible columns and row density
+  // (src/lib/realtors/directoryLayout.ts). NULL means "use the defaults".
+  realtorDirectoryLayout Json?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 

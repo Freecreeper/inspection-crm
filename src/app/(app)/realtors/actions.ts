@@ -13,6 +13,7 @@ import { isCommunicationChannel, isCommunicationDirection } from "@/lib/communic
 import { findRealtorDuplicates, type DuplicateCandidate } from "@/lib/realtors/duplicates";
 import { loadRealtorPreview, type RealtorPreview } from "@/lib/realtors/preview";
 import { normalizePreviewSections, type PreviewSection } from "@/lib/realtors/previewLayout";
+import { normalizeDirectoryLayout, type DirectoryLayout } from "@/lib/realtors/directoryLayout";
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -267,6 +268,15 @@ export async function saveRealtorPreviewSections(sections: string[]): Promise<Ac
   if (!Array.isArray(sections)) return { ok: false, error: "Invalid layout." };
   const normalized = normalizePreviewSections(sections);
   await prisma.user.update({ where: { id: userId }, data: { realtorPreviewSections: normalized } });
+  return { ok: true, data: normalized };
+}
+
+// Same kind of personal preference, for the directory's columns and density.
+export async function saveRealtorDirectoryLayout(layout: unknown): Promise<ActionResult<DirectoryLayout>> {
+  const { userId } = await requireSession();
+  if (!userId) return { ok: false, error: "Not signed in." };
+  const normalized = normalizeDirectoryLayout(layout);
+  await prisma.user.update({ where: { id: userId }, data: { realtorDirectoryLayout: { ...normalized } } });
   return { ok: true, data: normalized };
 }
 
