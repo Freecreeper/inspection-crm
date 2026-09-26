@@ -1,11 +1,23 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createReferralSource, toggleReferralSourceActive } from "./actions";
+import { RealtorCombobox } from "../realtors/RealtorCombobox";
 
 export default async function ReferralSourcesPage() {
-  const sources = await prisma.referralSource.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { leads: true, transactions: true } } },
-  });
+  const [sources, realtors] = await Promise.all([
+    prisma.referralSource.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        _count: { select: { leads: true, transactions: true } },
+        realtor: { select: { id: true, firstName: true, lastName: true } },
+      },
+    }),
+    prisma.realtor.findMany({
+      where: { archivedAt: null, referralSources: { none: {} } },
+      select: { id: true, firstName: true, lastName: true },
+      orderBy: { lastName: "asc" },
+    }),
+  ]);
 
   return (
     <div>
@@ -23,6 +35,7 @@ export default async function ReferralSourcesPage() {
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Type</th>
+                  <th className="px-4 py-2 font-medium">Realtor</th>
                   <th className="px-4 py-2 font-medium">Leads</th>
                   <th className="px-4 py-2 font-medium">Transactions</th>
                   <th className="px-4 py-2 font-medium">Status</th>
@@ -36,6 +49,15 @@ export default async function ReferralSourcesPage() {
                     <tr key={s.id} className="border-t border-slate-100">
                       <td className="px-4 py-2 font-medium text-slate-900">{s.name}</td>
                       <td className="px-4 py-2 text-slate-600">{s.type}</td>
+                      <td className="px-4 py-2 text-slate-600">
+                        {s.realtor ? (
+                          <Link href={`/realtors/${s.realtor.id}`} className="hover:underline">
+                            {s.realtor.firstName} {s.realtor.lastName}
+                          </Link>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 tabular-nums text-slate-600">{s._count.leads}</td>
                       <td className="px-4 py-2 tabular-nums text-slate-600">{s._count.transactions}</td>
                       <td className="px-4 py-2">
@@ -60,7 +82,7 @@ export default async function ReferralSourcesPage() {
                 })}
                 {sources.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                    <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                       No referral sources yet.
                     </td>
                   </tr>
@@ -75,6 +97,13 @@ export default async function ReferralSourcesPage() {
           <form action={createReferralSource} className="mt-3 space-y-3">
             <input name="name" placeholder="Name" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <input name="type" placeholder="Type (e.g. Realtor, Past Customer, Online)" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            <div>
+              <label className="block text-xs font-medium text-slate-600">Linked realtor (optional)</label>
+              <p className="text-xs text-slate-400">Only a linked source counts as that realtor&apos;s referrals.</p>
+              <div className="mt-1">
+                <RealtorCombobox name="realtorId" options={realtors.map((r) => ({ id: r.id, label: `${r.firstName} ${r.lastName}` }))} />
+              </div>
+            </div>
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Add referral source
             </button>

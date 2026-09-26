@@ -11,202 +11,283 @@ vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import {
-  createRealtor,
+  createRealtorQuick,
+  updateRealtorProfile,
   changeRealtorBrokerage,
   changeRealtorBrokerageInline,
-  updateRealtorNameInline,
-  updateRealtorEmailInline,
-  updateRealtorPhoneInline,
+  createRealtorTask,
+  logRealtorCommunication,
+  linkReferralSourceToRealtor,
+  createReferralSourceForRealtor,
+  getRealtorPreview,
 } from "./actions";
 
+type Fn = ReturnType<typeof vi.fn>;
 const mockAuth = vi.mocked(auth);
-const mockPrisma = prisma as unknown as {
-  realtor: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
-  realtorBrokerageHistory: { create: ReturnType<typeof vi.fn>; updateMany: ReturnType<typeof vi.fn> };
+const db = prisma as unknown as Record<string, Record<string, Fn>> & { $transaction: Fn };
+
+const staff = { user: { id: "user-1", role: "OFFICE_STAFF" } };
+const inspector = { user: { id: "user-2", role: "INSPECTOR" } };
+
+const existingRealtor = {
+  id: "r1",
+  firstName: "Sarah",
+  lastName: "Jones",
+  preferredName: null,
+  email: "sarah@kw.test",
+  phone: "8285550101",
+  preferredContactMethod: null,
+  notes: null,
+  active: true,
+  brokerageId: "brok-1",
+  archivedAt: null,
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockAuth.mockResolvedValue({ user: { role: "OFFICE_STAFF" } } as never);
+  mockAuth.mockResolvedValue(staff as never);
 });
 
-describe("createRealtor", () => {
-  it("rejects an unauthorized role", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
-    const form = new FormData();
-    form.set("firstName", "Jamie");
-    form.set("lastName", "Rivera");
-    await expect(createRealtor(form)).rejects.toThrow();
-    expect(mockPrisma.realtor.create).not.toHaveBeenCalled();
+describe("createRealtorQuick", () => {
+  it("rejects a role without crm:write (server-side RBAC)", async () => {
+    mockAuth.mockResolvedValue(inspector as never);
+    await expect(createRealtorQuick({ firstName: "Jamie", lastName: "Rivera" })).rejects.toThrow();
+    expect(db.realtor.create).not.toHaveBeenCalled();
   });
 
-  it("does not seed brokerage history when no brokerage is given", async () => {
-    mockPrisma.realtor.create.mockResolvedValue({ id: "r1", createdAt: new Date("2026-01-01") });
-    const form = new FormData();
-    form.set("firstName", "Jamie");
-    form.set("lastName", "Rivera");
-    await createRealtor(form);
-
-    expect(mockPrisma.realtor.create).toHaveBeenCalled();
-    expect(mockPrisma.realtorBrokerageHistory.create).not.toHaveBeenCalled();
+  it("rejects when there is no session", async () => {
+    mockAuth.mockResolvedValue(null as never);
+    await expect(createRealtorQuick({ firstName: "Jamie", lastName: "Rivera" })).rejects.toThrow();
   });
 
-  it("seeds an initial brokerage-history row when created with a brokerage (item 5)", async () => {
+  it("creates a realtor with only a name, storing every optional field as null (non-blocking data)", async () => {
+    db.realtor.findMany.mockResolvedValue([]);
+    db.realtor.create.mockResolvedValue({ id: "r-new", createdAt: new Date("2026-01-01") });
+
+    const result = await createRealtorQuick({ firstName: " Jamie ", lastName: "Rivera", email: "", phone: "" });
+
+    expect(result).toEqual({ ok: true, data: { id: "r-new" } });
+    expect(db.realtor.create).toHaveBeenCalledWith({
+      data: { firstName: "Jamie", lastName: "Rivera", preferredName: null, email: null, phone: null, brokerageId: null },
+    });
+    expect(db.realtorBrokerageHistory.create).not.toHaveBeenCalled();
+  });
+
+  it("requires a first and last name", async () => {
+    const result = await createRealtorQuick({ firstName: "Jamie", lastName: " " });
+    expect(result).toEqual({ ok: false, error: expect.stringMatching(/first and last name/i) });
+    expect(db.realtor.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed phone or email without writing anything", async () => {
+    expect(await createRealtorQuick({ firstName: "A", lastName: "B", phone: "555" })).toMatchObject({ ok: false });
+    expect(await createRealtorQuick({ firstName: "A", lastName: "B", email: "nope" })).toMatchObject({ ok: false });
+    expect(db.realtor.create).not.toHaveBeenCalled();
+  });
+
+  it("stops for review when a possible duplicate exists, and never merges", async () => {
+    db.realtor.findMany.mockResolvedValue([
+      { id: "r1", firstName: "Sarah", lastName: "Jones", email: "sarah@kw.test", phone: null, brokerageId: null, brokerage: null },
+    ]);
+
+    const result = await createRealtorQuick({ firstName: "Sara", lastName: "Jonas", email: "SARAH@kw.test" });
+
+    expect(result).toMatchObject({ ok: false, duplicates: [{ id: "r1", reasons: ["email"], exact: true }] });
+    expect(db.realtor.create).not.toHaveBeenCalled();
+    expect(db.realtor.update).not.toHaveBeenCalled();
+  });
+
+  it("creates anyway once the user has reviewed the matches", async () => {
+    db.realtor.create.mockResolvedValue({ id: "r-new", createdAt: new Date() });
+    const result = await createRealtorQuick({ firstName: "Sara", lastName: "Jonas", email: "sarah@kw.test", confirmDuplicates: true });
+    expect(result).toEqual({ ok: true, data: { id: "r-new" } });
+    expect(db.realtor.findMany).not.toHaveBeenCalled();
+  });
+
+  it("opens a brokerage history row and audits the creation in the same transaction", async () => {
     const createdAt = new Date("2026-01-01T00:00:00.000Z");
-    mockPrisma.realtor.create.mockResolvedValue({ id: "r1", createdAt });
-    const form = new FormData();
-    form.set("firstName", "Jamie");
-    form.set("lastName", "Rivera");
-    form.set("brokerageId", "brok-1");
-    await createRealtor(form);
+    db.realtor.findMany.mockResolvedValue([]);
+    db.realtor.create.mockResolvedValue({ id: "r-new", createdAt });
 
-    expect(mockPrisma.realtorBrokerageHistory.create).toHaveBeenCalledWith({
-      data: { realtorId: "r1", brokerageId: "brok-1", startDate: createdAt },
+    await createRealtorQuick({ firstName: "Jamie", lastName: "Rivera", brokerageId: "brok-1", phone: "(828) 555-0101" });
+
+    expect(db.realtor.create).toHaveBeenCalledWith({ data: expect.objectContaining({ phone: "8285550101", brokerageId: "brok-1" }) });
+    expect(db.realtorBrokerageHistory.create).toHaveBeenCalledWith({ data: { realtorId: "r-new", brokerageId: "brok-1", startDate: createdAt } });
+    expect(db.activityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ action: "realtor.created", entityType: "Realtor", entityId: "r-new", actorId: "user-1" }),
     });
-  });
-
-  it("rejects a phone number that isn't exactly 10 digits", async () => {
-    const form = new FormData();
-    form.set("firstName", "Jamie");
-    form.set("lastName", "Rivera");
-    form.set("phone", "555-0101");
-    await expect(createRealtor(form)).rejects.toThrow(/10 digits/i);
-    expect(mockPrisma.realtor.create).not.toHaveBeenCalled();
-  });
-
-  it("normalizes a formatted 10-digit phone number to digits-only before storing", async () => {
-    mockPrisma.realtor.create.mockResolvedValue({ id: "r1", createdAt: new Date() });
-    const form = new FormData();
-    form.set("firstName", "Jamie");
-    form.set("lastName", "Rivera");
-    form.set("phone", "(828) 555-0101");
-    await createRealtor(form);
-
-    expect(mockPrisma.realtor.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ phone: "8285550101" }) })
-    );
   });
 });
 
-describe("updateRealtorNameInline", () => {
+describe("updateRealtorProfile", () => {
+  it("rejects a role without crm:write (server-side RBAC)", async () => {
+    mockAuth.mockResolvedValue({ user: { role: "REPORTING_ANALYST" } } as never);
+    await expect(updateRealtorProfile("r1", { email: "x@y.test" })).rejects.toThrow();
+    expect(db.realtor.update).not.toHaveBeenCalled();
+  });
+
+  it("returns a validation error for a bad email without writing", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    const result = await updateRealtorProfile("r1", { email: "not-an-email" });
+    expect(result).toEqual({ ok: false, error: expect.stringMatching(/email/i) });
+    expect(db.realtor.update).not.toHaveBeenCalled();
+  });
+
+  it("allows clearing the email — a realtor without email is still a valid record", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    const result = await updateRealtorProfile("r1", { email: "  " });
+    expect(result).toEqual({ ok: true, data: undefined });
+    expect(db.realtor.update).toHaveBeenCalledWith({ where: { id: "r1" }, data: { email: null } });
+  });
+
+  it("writes and audits only the fields that actually changed", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    await updateRealtorProfile("r1", { phone: "(828) 555-0199", email: "sarah@kw.test" });
+
+    expect(db.realtor.update).toHaveBeenCalledWith({ where: { id: "r1" }, data: { phone: "8285550199" } });
+    expect(db.activityLog.create).toHaveBeenCalledTimes(1);
+    expect(db.activityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "realtor.contact_updated",
+        before: { phone: "8285550101" },
+        after: { phone: "8285550199" },
+      }),
+    });
+  });
+
+  it("logs notes and status changes under their own audit actions", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    await updateRealtorProfile("r1", { notes: "Prefers mornings", active: false });
+    const actions = db.activityLog.create.mock.calls.map((c) => c[0].data.action);
+    expect(actions).toEqual(expect.arrayContaining(["realtor.notes_updated", "realtor.status_changed"]));
+  });
+
+  it("refuses fields outside the allow-list", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    const result = await updateRealtorProfile("r1", { brokerageId: "brok-2" } as never);
+    expect(result).toMatchObject({ ok: false });
+    expect(db.realtor.update).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for an archived realtor", async () => {
+    db.realtor.findUnique.mockResolvedValue({ ...existingRealtor, archivedAt: new Date() });
+    expect(await updateRealtorProfile("r1", { notes: "x" })).toMatchObject({ ok: false });
+    expect(db.realtor.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("changing brokerage", () => {
   it("rejects an unauthorized role", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
-    await expect(updateRealtorNameInline("r1", { firstName: "Jamie", lastName: "Rivera" })).rejects.toThrow();
-    expect(mockPrisma.realtor.update).not.toHaveBeenCalled();
-  });
-
-  it("rejects a blank first or last name", async () => {
-    await expect(updateRealtorNameInline("r1", { firstName: "", lastName: "Rivera" })).rejects.toThrow(/required/i);
-    await expect(updateRealtorNameInline("r1", { firstName: "Jamie", lastName: "  " })).rejects.toThrow(/required/i);
-    expect(mockPrisma.realtor.update).not.toHaveBeenCalled();
-  });
-
-  it("updates both names", async () => {
-    await updateRealtorNameInline("r1", { firstName: "Jamie", lastName: "Rivera" });
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({
-      where: { id: "r1" },
-      data: { firstName: "Jamie", lastName: "Rivera" },
-    });
-  });
-});
-
-describe("updateRealtorEmailInline", () => {
-  it("rejects an unauthorized role", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
-    await expect(updateRealtorEmailInline("r1", "jamie@example.com")).rejects.toThrow();
-    expect(mockPrisma.realtor.update).not.toHaveBeenCalled();
-  });
-
-  it("stores an empty value as null", async () => {
-    await updateRealtorEmailInline("r1", "  ");
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({ where: { id: "r1" }, data: { email: null } });
-  });
-
-  it("trims and stores the email", async () => {
-    await updateRealtorEmailInline("r1", "  jamie@example.com  ");
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({
-      where: { id: "r1" },
-      data: { email: "jamie@example.com" },
-    });
-  });
-});
-
-describe("updateRealtorPhoneInline", () => {
-  it("rejects a phone number that isn't exactly 10 digits", async () => {
-    await expect(updateRealtorPhoneInline("r1", "555-0101")).rejects.toThrow(/10 digits/i);
-    expect(mockPrisma.realtor.update).not.toHaveBeenCalled();
-  });
-
-  it("normalizes a formatted phone number to digits-only", async () => {
-    await updateRealtorPhoneInline("r1", "(828) 555-0101");
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({
-      where: { id: "r1" },
-      data: { phone: "8285550101" },
-    });
-  });
-
-  it("clears the phone when given an empty value", async () => {
-    await updateRealtorPhoneInline("r1", "");
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({ where: { id: "r1" }, data: { phone: null } });
-  });
-});
-
-describe("changeRealtorBrokerage", () => {
-  it("rejects an unauthorized role", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
+    mockAuth.mockResolvedValue(inspector as never);
     const form = new FormData();
     form.set("brokerageId", "brok-2");
     await expect(changeRealtorBrokerage("r1", form)).rejects.toThrow();
-    expect(mockPrisma.realtorBrokerageHistory.updateMany).not.toHaveBeenCalled();
+    await expect(changeRealtorBrokerageInline("r1", "brok-2")).rejects.toThrow();
+    expect(db.realtor.update).not.toHaveBeenCalled();
   });
 
-  it("requires a brokerage", async () => {
-    await expect(changeRealtorBrokerage("r1", new FormData())).rejects.toThrow(/brokerage/i);
-  });
+  it("closes the open history row and opens a new one — history is never deleted or overwritten", async () => {
+    db.realtor.findUniqueOrThrow.mockResolvedValue({ brokerageId: "brok-1" });
+    const result = await changeRealtorBrokerageInline("r1", "brok-2");
 
-  it("closes the open history row and opens a new one", async () => {
-    const form = new FormData();
-    form.set("brokerageId", "brok-2");
-    await changeRealtorBrokerage("r1", form);
-
-    expect(mockPrisma.realtorBrokerageHistory.updateMany).toHaveBeenCalledWith({
+    expect(result).toEqual({ ok: true, data: undefined });
+    expect(db.realtorBrokerageHistory.updateMany).toHaveBeenCalledWith({
       where: { realtorId: "r1", endDate: null },
       data: { endDate: expect.any(Date) },
     });
-    expect(mockPrisma.realtorBrokerageHistory.create).toHaveBeenCalledWith({
+    expect(db.realtorBrokerageHistory.create).toHaveBeenCalledWith({
       data: { realtorId: "r1", brokerageId: "brok-2", startDate: expect.any(Date) },
     });
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({
-      where: { id: "r1" },
-      data: { brokerageId: "brok-2" },
+    expect(db.realtorBrokerageHistory.delete).not.toHaveBeenCalled();
+    expect(db.realtorBrokerageHistory.deleteMany).not.toHaveBeenCalled();
+    // Past transactions keep their own brokerage snapshot — a move never touches them.
+    expect(db.transactionRealtor.updateMany).not.toHaveBeenCalled();
+    expect(db.activityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ action: "realtor.brokerage_changed", before: { brokerageId: "brok-1" }, after: { brokerageId: "brok-2" } }),
     });
+  });
+
+  it("is a no-op when moving to the brokerage they're already at", async () => {
+    db.realtor.findUniqueOrThrow.mockResolvedValue({ brokerageId: "brok-1" });
+    await changeRealtorBrokerageInline("r1", "brok-1");
+    expect(db.realtorBrokerageHistory.updateMany).not.toHaveBeenCalled();
+    expect(db.realtorBrokerageHistory.create).not.toHaveBeenCalled();
+  });
+
+  it("requires a brokerage", async () => {
+    expect(await changeRealtorBrokerageInline("r1", "")).toMatchObject({ ok: false });
   });
 });
 
-describe("changeRealtorBrokerageInline", () => {
+describe("createRealtorTask", () => {
   it("rejects an unauthorized role", async () => {
-    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
-    await expect(changeRealtorBrokerageInline("r1", "brok-2")).rejects.toThrow();
-    expect(mockPrisma.realtorBrokerageHistory.updateMany).not.toHaveBeenCalled();
+    mockAuth.mockResolvedValue(inspector as never);
+    await expect(createRealtorTask("r1", { title: "Follow up", dueDate: "" })).rejects.toThrow();
+    expect(db.task.create).not.toHaveBeenCalled();
   });
 
-  it("requires a brokerage", async () => {
-    await expect(changeRealtorBrokerageInline("r1", "")).rejects.toThrow(/brokerage/i);
+  it("creates an ordinary Task linked to the realtor (no separate follow-up system)", async () => {
+    db.realtor.findUnique.mockResolvedValue({ archivedAt: null });
+    const result = await createRealtorTask("r1", { title: " Follow up ", dueDate: "2026-10-03" });
+
+    expect(result).toEqual({ ok: true, data: undefined });
+    const data = db.task.create.mock.calls[0][0].data;
+    expect(data).toMatchObject({ title: "Follow up", realtorId: "r1", assigneeId: "user-1" });
+    // Local noon, so the calendar day survives any timezone.
+    expect(data.dueAt.getFullYear()).toBe(2026);
+    expect(data.dueAt.getMonth()).toBe(9);
+    expect(data.dueAt.getDate()).toBe(3);
   });
 
-  it("closes the open history row and opens a new one, same as the form version", async () => {
-    await changeRealtorBrokerageInline("r1", "brok-2");
+  it("validates title and date", async () => {
+    expect(await createRealtorTask("r1", { title: "", dueDate: "" })).toMatchObject({ ok: false });
+    expect(await createRealtorTask("r1", { title: "x", dueDate: "not-a-date" })).toMatchObject({ ok: false });
+    expect(db.task.create).not.toHaveBeenCalled();
+  });
+});
 
-    expect(mockPrisma.realtorBrokerageHistory.updateMany).toHaveBeenCalledWith({
-      where: { realtorId: "r1", endDate: null },
-      data: { endDate: expect.any(Date) },
+describe("logRealtorCommunication", () => {
+  it("logs against the realtor with the shared channel vocabulary", async () => {
+    await logRealtorCommunication("r1", { channel: "Phone", direction: "OUTBOUND", summary: " Checked in " });
+    expect(db.communication.create).toHaveBeenCalledWith({
+      data: { realtorId: "r1", channel: "Phone", direction: "OUTBOUND", summary: "Checked in" },
     });
-    expect(mockPrisma.realtorBrokerageHistory.create).toHaveBeenCalledWith({
-      data: { realtorId: "r1", brokerageId: "brok-2", startDate: expect.any(Date) },
-    });
-    expect(mockPrisma.realtor.update).toHaveBeenCalledWith({
-      where: { id: "r1" },
-      data: { brokerageId: "brok-2" },
-    });
+  });
+
+  it("rejects unknown channels and empty summaries", async () => {
+    expect(await logRealtorCommunication("r1", { channel: "Carrier pigeon", direction: "OUTBOUND", summary: "hi" })).toMatchObject({ ok: false });
+    expect(await logRealtorCommunication("r1", { channel: "Phone", direction: "OUTBOUND", summary: " " })).toMatchObject({ ok: false });
+    expect(db.communication.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("referral attribution", () => {
+  it("won't re-point a referral source that belongs to another realtor", async () => {
+    db.referralSource.findUnique.mockResolvedValue({ id: "rs1", realtorId: "someone-else" });
+    const result = await linkReferralSourceToRealtor("r1", "rs1");
+    expect(result).toMatchObject({ ok: false });
+    expect(db.referralSource.update).not.toHaveBeenCalled();
+  });
+
+  it("links an unlinked source and audits it", async () => {
+    db.referralSource.findUnique.mockResolvedValue({ id: "rs1", realtorId: null });
+    await linkReferralSourceToRealtor("r1", "rs1");
+    expect(db.referralSource.update).toHaveBeenCalledWith({ where: { id: "rs1" }, data: { realtorId: "r1" } });
+    expect(db.activityLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ action: "realtor.referral_source_linked" }) });
+  });
+
+  it("creates at most one referral source per realtor", async () => {
+    db.realtor.findUnique.mockResolvedValue(existingRealtor);
+    db.referralSource.findFirst.mockResolvedValue({ id: "rs1", name: "Sarah Jones" });
+    expect(await createReferralSourceForRealtor("r1")).toMatchObject({ ok: false });
+    expect(db.referralSource.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("getRealtorPreview", () => {
+  it("requires a signed-in session", async () => {
+    mockAuth.mockResolvedValue(null as never);
+    await expect(getRealtorPreview("r1")).rejects.toThrow();
+    expect(db.realtor.findFirst).not.toHaveBeenCalled();
   });
 });

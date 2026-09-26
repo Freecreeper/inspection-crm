@@ -35,6 +35,12 @@ export function createMockPrisma() {
         }
         return target.$transaction;
       }
+      // Other client-level methods ($queryRaw, $executeRaw, …) are plain
+      // functions on the client, not model delegates.
+      if (prop.startsWith("$")) {
+        if (!(prop in target)) target[prop] = vi.fn();
+        return target[prop];
+      }
       return modelProxy(prop);
     },
   });

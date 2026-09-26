@@ -1,12 +1,11 @@
 "use client";
 
+import { useId } from "react";
 import { formatPhone } from "@/lib/phone";
 
 // A controlled phone input for callers that already own the value in
 // their own state (a modal that has to hand the raw value to a server
-// action on submit) — src/app/(app)/realtors/PhoneInput.tsx is the
-// uncontrolled, form-field version of the same formatting behavior for a
-// plain <form action={serverAction}>.
+// action on submit), formatting as the user types.
 export function PhoneField({
   label = "Phone (optional)",
   value,
@@ -16,10 +15,14 @@ export function PhoneField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+        {label}
+      </label>
       <input
+        id={id}
         type="tel"
         inputMode="numeric"
         value={value}

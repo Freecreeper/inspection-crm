@@ -64,6 +64,12 @@ enum TransactionCustomerRole {
   OTHER
 }
 
+enum PreferredContactMethod {
+  PHONE
+  TEXT
+  EMAIL
+}
+
 enum InspectionStatus {
   SCHEDULED
   IN_PROGRESS
@@ -254,6 +260,12 @@ model Task {
   id            String       @id @default(cuid())
   transactionId String?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  // Optional Realtor this task is a follow-up for — relationship tasks
+  // ("thank-you after inspection") live in the same Task system as
+  // transaction tasks rather than a separate Realtor-only one. A task may
+  // have both, either, or neither.
+  realtorId     String?
+  realtor       Realtor?     @relation(fields: [realtorId], references: [id])
   assigneeId    String?
   assignee      User?        @relation(fields: [assigneeId], references: [id])
   title         String
@@ -265,6 +277,7 @@ model Task {
 
   @@index([assigneeId])
   @@index([dueAt])
+  @@index([realtorId, completedAt])
   @@map("tasks")
 }
 
@@ -277,12 +290,18 @@ model ReferralSource {
   name      String
   type      String
   active    Boolean  @default(true)
+  // Set when this source *is* a specific Realtor. This is the only thing
+  // that attributes a referral to a Realtor — being a TransactionRealtor on
+  // a deal never does (associated ≠ referred).
+  realtorId String?
+  realtor   Realtor? @relation(fields: [realtorId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   leads        Lead[]
   transactions Transaction[]
 
+  @@index([realtorId])
   @@map("referral_sources")
 }
 
@@ -307,21 +326,35 @@ model Brokerage {
 }
 
 model Realtor {
-  id            String    @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String?
-  phone         String?
-  licenseNumber String?
-  brokerageId   String?
-  brokerage     Brokerage? @relation(fields: [brokerageId], references: [id])
-  archivedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                     String                  @id @default(cuid())
+  firstName              String
+  lastName               String
+  preferredName          String?
+  email                  String?
+  phone                  String?
+  preferredContactMethod PreferredContactMethod?
+  licenseNumber          String?
+  notes                  String?
+  brokerageId            String?
+  brokerage              Brokerage?              @relation(fields: [brokerageId], references: [id])
+  // Relationship status, set by staff — an inactive realtor stays visible
+  // and reportable. Distinct from archivedAt, which removes the record from
+  // everyday lists entirely.
+  active                 Boolean                 @default(true)
+  archivedAt             DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
 
-  transactions TransactionRealtor[]
-  history      RealtorBrokerageHistory[]
+  transactions    TransactionRealtor[]
+  history         RealtorBrokerageHistory[]
+  referralSources ReferralSource[]
+  tasks           Task[]
+  communications  Communication[]
 
+  @@index([lastName, firstName])
+  @@index([brokerageId])
+  @@index([email])
+  @@index([phone])
   @@map("realtors")
 }
 
@@ -345,6 +378,10 @@ model Communication {
   id            String       @id @default(cuid())
   transactionId String?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  // Optional Realtor the communication was with — lets a call/email be
+  // logged against the relationship itself, not only against a deal.
+  realtorId     String?
+  realtor       Realtor?     @relation(fields: [realtorId], references: [id])
   channel       String
   direction     String
   summary       String
@@ -352,6 +389,7 @@ model Communication {
   createdAt     DateTime     @default(now())
 
   @@index([transactionId])
+  @@index([realtorId])
   @@map("communications")
 }
 

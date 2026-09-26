@@ -1,217 +1,70 @@
-import Link from "next/link";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
-import { RealtorFilterBar } from "./RealtorFilterBar";
-import { SortableColumnHeader } from "./SortableColumnHeader";
-import { EditableRealtorName } from "./EditableRealtorName";
-import { EditablePhoneCell } from "./EditablePhoneCell";
-import { EditableBrokerageCell } from "./EditableBrokerageCell";
-import { EditableCell } from "@/components/EditableCell";
-import { updateRealtorNameInline, updateRealtorEmailInline, updateRealtorPhoneInline, changeRealtorBrokerageInline } from "./actions";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { sortAlphabetically } from "@/lib/sort";
+import { parseDirectoryParams, type RawSearchParams } from "@/lib/realtors/directoryParams";
+import { fetchDirectoryPage } from "@/lib/realtors/directory";
+import { parseFollowUpFilter } from "@/lib/realtors/followUp";
+import { RealtorsHeader } from "./_components/RealtorsHeader";
+import { DirectoryToolbar } from "./_components/DirectoryToolbar";
+import { DirectoryView } from "./_components/DirectoryView";
+import { FollowUpView } from "./_components/FollowUpView";
 
-export default async function RealtorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; sortBy?: string; sortDir?: string }>;
-}) {
-  const { q = "", sortBy = "name", sortDir: sortDirParam } = await searchParams;
-  const query = q.trim();
-  const sortDir: "asc" | "desc" = sortDirParam === "desc" ? "desc" : "asc";
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-  const where: Prisma.RealtorWhereInput = { archivedAt: null };
-  if (query) {
-    where.OR = [
-      { firstName: { contains: query, mode: "insensitive" } },
-      { lastName: { contains: query, mode: "insensitive" } },
-      { email: { contains: query, mode: "insensitive" } },
-      { brokerage: { name: { contains: query, mode: "insensitive" } } },
-    ];
+export default async function RealtorsPage({ searchParams }: { searchParams: Promise<RawSearchParams> }) {
+  const raw = await searchParams;
+  const session = await auth();
+  const canWrite = can(session?.user?.role as Role | undefined, "crm:write");
+  const view = first(raw.view) === "followup" ? "followup" : "directory";
+
+  // Names only — used by the brokerage filter and the Add Realtor picker.
+  const brokerages = sortAlphabetically(
+    await prisma.brokerage.findMany({ where: { archivedAt: null }, select: { id: true, name: true } }),
+    (b) => b.name
+  );
+
+  const header = <RealtorsHeader view={view} brokerages={brokerages} canWrite={canWrite} openAddOnLoad={first(raw.new) === "1"} />;
+
+  if (view === "followup") {
+    return (
+      <div>
+        {header}
+        <FollowUpView filter={parseFollowUpFilter(first(raw.filter))} canWrite={canWrite} />
+      </div>
+    );
   }
 
-  const orderBy: Prisma.RealtorOrderByWithRelationInput =
-    sortBy === "email"
-      ? { email: sortDir }
-      : sortBy === "phone"
-        ? { phone: sortDir }
-        : sortBy === "brokerage"
-          ? { brokerage: { name: sortDir } }
-          : sortBy === "transactions"
-            ? { transactions: { _count: sortDir } }
-            : { lastName: sortDir };
-
-  function ariaSortFor(key: string): "ascending" | "descending" | "none" {
-    if (sortBy !== key) return "none";
-    return sortDir === "asc" ? "ascending" : "descending";
-  }
-
-  // A generic opening line + blank body, for the popup's "Template Email"
-  // action — a starting point the sender fills in, not a real templating
-  // system.
-  function templateMailto(email: string, greetingName: string) {
-    const subject = encodeURIComponent("Checking in");
-    const body = encodeURIComponent(`Hi ${greetingName},\n\n`);
-    return `mailto:${email}?subject=${subject}&body=${body}`;
-  }
-
-  const [realtors, totalCount, brokerages, allRealtors] = await Promise.all([
-    prisma.realtor.findMany({
-      where,
-      orderBy,
-      include: { brokerage: true, _count: { select: { transactions: true } } },
-    }),
-    prisma.realtor.count({ where: { archivedAt: null } }),
-    prisma.brokerage.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" } }),
-    // Unfiltered, for the search box's suggestions — it needs the full
-    // universe of realtors to search across, independent of whatever `q`
-    // currently narrows the table to.
-    prisma.realtor.findMany({
-      where: { archivedAt: null },
-      select: { id: true, firstName: true, lastName: true, email: true, brokerageId: true, brokerage: { select: { name: true } } },
-      orderBy: { lastName: "asc" },
-    }),
-  ]);
+  const params = parseDirectoryParams(raw);
+  const { rows, total } = await fetchDirectoryPage(params);
 
   return (
     <div>
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Realtors</h1>
-          <p className="mt-1 text-sm text-slate-500">Build and manage your realtor relationships.</p>
-        </div>
-        <Link
-          href="/realtors/new"
-          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          + Add Realtor
-        </Link>
-      </div>
-
-      <RealtorFilterBar
-        initialQuery={query}
-        suggestions={[
-          ...allRealtors.map((r) => ({
-            id: r.id,
-            label: `${r.firstName} ${r.lastName}`,
-            sublabel: r.brokerage?.name ?? r.email ?? undefined,
-            kind: "realtor" as const,
-          })),
-          // Only brokerages someone actually belongs to — suggesting an
-          // empty one would just lead to a "no realtors match" table.
-          ...brokerages
-            .filter((b) => allRealtors.some((r) => r.brokerageId === b.id))
-            .map((b) => ({ id: b.id, label: b.name, sublabel: "Brokerage", kind: "brokerage" as const })),
-        ]}
+      {header}
+      <DirectoryToolbar params={params} brokerages={brokerages} />
+      <DirectoryView
+        params={params}
+        total={total}
+        initialSelectedId={first(raw.selected) ?? null}
+        rows={rows.map((r) => ({
+          id: r.id,
+          firstName: r.firstName,
+          lastName: r.lastName,
+          preferredName: r.preferredName,
+          email: r.email,
+          phone: r.phone,
+          active: r.active,
+          brokerageId: r.brokerageId,
+          brokerageName: r.brokerageName,
+          transactionCount: r.transactionCount,
+          referralCount: r.referralCount,
+          lastActivityAt: r.lastActivityAt?.toISOString() ?? null,
+          nextFollowUpAt: r.nextFollowUpAt?.toISOString() ?? null,
+        }))}
       />
-
-      {/*
-        table-fixed + explicit column widths + truncation keeps every row
-        within the container's own w-full — the table can never grow wider
-        than its box, so this wrapper doesn't need overflow-x-auto (which
-        would clip the cell popups' vertical overflow along with it).
-      */}
-      <div className="mt-6 rounded-lg border border-slate-200 bg-white">
-        <table className="w-full table-fixed text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="w-[20%] rounded-tl-lg px-4 py-3 font-medium" aria-sort={ariaSortFor("name")}>
-                <SortableColumnHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-              <th className="w-[16%] px-4 py-3 font-medium" aria-sort={ariaSortFor("phone")}>
-                <SortableColumnHeader label="Phone" sortKey="phone" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-              <th className="w-[28%] px-4 py-3 font-medium" aria-sort={ariaSortFor("email")}>
-                <SortableColumnHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-              <th className="w-[22%] px-4 py-3 font-medium" aria-sort={ariaSortFor("brokerage")}>
-                <SortableColumnHeader label="Brokerage" sortKey="brokerage" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-              <th className="w-[14%] rounded-tr-lg px-4 py-3 font-medium" aria-sort={ariaSortFor("transactions")}>
-                <SortableColumnHeader label="Transactions" sortKey="transactions" currentSortBy={sortBy} currentSortDir={sortDir} />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {realtors.map((r) => (
-              <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <EditableRealtorName
-                    firstName={r.firstName}
-                    lastName={r.lastName}
-                    onSave={updateRealtorNameInline.bind(null, r.id)}
-                    actions={[{ label: "Profile", href: `/realtors/${r.id}` }]}
-                  />
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  <EditablePhoneCell
-                    phone={r.phone}
-                    onSave={updateRealtorPhoneInline.bind(null, r.id)}
-                    actions={
-                      r.phone
-                        ? [
-                            { label: "Call", href: `tel:${r.phone}` },
-                            { label: "Text", href: `sms:${r.phone}` },
-                          ]
-                        : []
-                    }
-                  />
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  <EditableCell
-                    value={r.email ?? ""}
-                    type="email"
-                    onSave={updateRealtorEmailInline.bind(null, r.id)}
-                    actions={
-                      r.email
-                        ? [
-                            { label: "Email", href: `mailto:${r.email}` },
-                            { label: "Template Email", href: templateMailto(r.email, r.firstName) },
-                          ]
-                        : []
-                    }
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <EditableBrokerageCell
-                    currentName={r.brokerage?.name ?? null}
-                    options={brokerages.map((b) => ({ id: b.id, label: b.name }))}
-                    onSelectBrokerage={changeRealtorBrokerageInline.bind(null, r.id)}
-                    actions={[
-                      ...(r.brokerage?.phone
-                        ? [
-                            { label: "Call", href: `tel:${r.brokerage.phone}` },
-                            { label: "Text", href: `sms:${r.brokerage.phone}` },
-                          ]
-                        : []),
-                      ...(r.brokerage?.email
-                        ? [
-                            { label: "Email", href: `mailto:${r.brokerage.email}` },
-                            { label: "Template Email", href: templateMailto(r.brokerage.email, r.brokerage.name) },
-                          ]
-                        : []),
-                    ]}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                    {r._count.transactions}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {realtors.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
-                  No realtors match your search.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="mt-3 text-xs text-slate-500">
-        Showing {realtors.length} of {totalCount} realtors
-      </p>
     </div>
   );
 }

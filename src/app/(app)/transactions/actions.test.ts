@@ -72,6 +72,30 @@ describe("createTransaction", () => {
     await expect(createTransaction(new FormData())).rejects.toThrow();
     expect(mockPrisma.transaction.create).not.toHaveBeenCalled();
   });
+
+  it("attaches a realtor started from their record as associated only — never as the referral source", async () => {
+    mockPrisma.transaction.create.mockResolvedValue({ id: "txn-1" });
+    mockPrisma.realtor.findUniqueOrThrow.mockResolvedValue({ id: "r1", brokerageId: "b1", brokerage: { name: "KW" } });
+    const form = new FormData();
+    form.set("realtorId", "r1");
+    form.set("realtorRole", "LISTING_AGENT");
+    await expect(createTransaction(form)).rejects.toThrow("NEXT_REDIRECT:/transactions/txn-1");
+
+    expect(mockPrisma.transaction.create).toHaveBeenCalledWith({
+      data: { propertyId: null, referralSourceId: null, status: "LEAD_IN_PROGRESS" },
+    });
+    expect(mockPrisma.transactionRealtor.create).toHaveBeenCalledWith({
+      data: { transactionId: "txn-1", realtorId: "r1", role: "LISTING_AGENT", brokerageId: "b1", brokerageName: "KW" },
+    });
+  });
+
+  it("requires a valid role when a realtor is attached", async () => {
+    const form = new FormData();
+    form.set("realtorId", "r1");
+    form.set("realtorRole", "BUYER");
+    await expect(createTransaction(form)).rejects.toThrow(/role/i);
+    expect(mockPrisma.transaction.create).not.toHaveBeenCalled();
+  });
 });
 
 describe("addCustomerToTransaction", () => {
