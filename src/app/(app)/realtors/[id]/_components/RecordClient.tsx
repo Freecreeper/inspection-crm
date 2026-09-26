@@ -20,7 +20,7 @@ export function RecordQuickActions(props: { realtorId: string; phone: string | n
 export function RecordProfileFields(props: {
   realtorId: string;
   values: ProfileValues;
-  fields: ("firstName" | "lastName" | "preferredName" | "phone" | "email" | "preferredContactMethod" | "notes" | "active")[];
+  fields: ("firstName" | "lastName" | "preferredName" | "phone" | "email" | "preferredContactMethod" | "notes")[];
   canEdit: boolean;
 }) {
   const router = useRouter();

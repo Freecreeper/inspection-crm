@@ -29,11 +29,8 @@ describe("can", () => {
     expect(can(role("INSPECTOR"), "crm:write")).toBe(false);
   });
 
-  it("limits relationship revenue (financial:read) to owner, office staff, and analysts", () => {
-    expect(can(role("OWNER_ADMIN"), "financial:read")).toBe(true);
-    expect(can(role("OFFICE_STAFF"), "financial:read")).toBe(true);
-    expect(can(role("REPORTING_ANALYST"), "financial:read")).toBe(true);
-    expect(can(role("INSPECTOR"), "financial:read")).toBe(false);
+  it("lets every staff role see relationship revenue (financial:read), but not the unauthenticated", () => {
+    for (const r of ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"] as const) expect(can(role(r), "financial:read")).toBe(true);
     expect(can(undefined, "financial:read")).toBe(false);
   });
 });

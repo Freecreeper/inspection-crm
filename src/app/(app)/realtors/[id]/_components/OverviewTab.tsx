@@ -51,7 +51,7 @@ export async function OverviewTab({
           <RecordProfileFields
             realtorId={realtor.id}
             values={realtor}
-            fields={["phone", "email", "preferredContactMethod", "preferredName", "firstName", "lastName", "active"]}
+            fields={["phone", "email", "preferredContactMethod", "preferredName", "firstName", "lastName"]}
             canEdit={permissions.canWrite}
           />
         </Card>

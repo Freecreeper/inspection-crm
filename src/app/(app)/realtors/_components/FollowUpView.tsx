@@ -25,7 +25,7 @@ const MAX_IDLE_REALTORS = 50;
 
 // An action queue over the ordinary Task table (tasks with a realtorId) —
 // grouped by when they're due, not a pipeline of stages. "No upcoming
-// action" is simply active realtors with no open task; nothing here is a
+// action" is simply realtors with no open task; nothing here is a
 // subjective score.
 export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilter; canWrite: boolean }) {
   const now = new Date();
@@ -46,14 +46,14 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
         }),
     filter === "none" || filter === "all"
       ? prisma.realtor.findMany({
-          where: { archivedAt: null, active: true, tasks: { none: { completedAt: null } } },
+          where: { archivedAt: null, tasks: { none: { completedAt: null } } },
           orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
           take: filter === "none" ? MAX_IDLE_REALTORS : 8,
           select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true, brokerage: { select: { name: true } } },
         })
       : Promise.resolve([]),
     filter === "none" || filter === "all"
-      ? prisma.realtor.count({ where: { archivedAt: null, active: true, tasks: { none: { completedAt: null } } } })
+      ? prisma.realtor.count({ where: { archivedAt: null, tasks: { none: { completedAt: null } } } })
       : Promise.resolve(0),
   ]);
 
@@ -136,7 +136,7 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
               No upcoming action
               <span className="text-xs font-normal text-slate-500">{idleCount}</span>
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500">Active realtors with no open follow-up task.</p>
+            <p className="mt-0.5 text-xs text-slate-500">Realtors with no open follow-up task.</p>
             {idleRealtors.length > 0 ? (
               <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
                 {idleRealtors.map((r) => {
@@ -156,7 +156,7 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
                 })}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-500">Every active realtor has a follow-up scheduled.</p>
+              <p className="mt-2 text-sm text-slate-500">Every realtor has a follow-up scheduled.</p>
             )}
             {filter === "all" && idleCount > idleRealtors.length && (
               <Link href="/realtors?view=followup&filter=none" className="mt-2 inline-block text-sm text-emerald-700 hover:underline">

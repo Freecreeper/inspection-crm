@@ -15,7 +15,7 @@ export default async function BrokerageDetailPage({ params }: { params: Promise<
       realtors: {
         where: { archivedAt: null },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true, active: true },
+        select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true },
       },
       history: {
         where: { endDate: { not: null } },
@@ -58,7 +58,7 @@ export default async function BrokerageDetailPage({ params }: { params: Promise<
                   {realtorDisplayName(r)}
                 </Link>
                 <span className="text-xs text-slate-500">
-                  {[r.phone && formatPhone(r.phone), r.email, !r.active && "Inactive"].filter(Boolean).join(" · ")}
+                  {[r.phone && formatPhone(r.phone), r.email].filter(Boolean).join(" · ")}
                 </span>
               </li>
             ))}

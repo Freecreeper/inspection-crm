@@ -20,6 +20,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "name:asc", label: "Name (A–Z)" },
   { value: "name:desc", label: "Name (Z–A)" },
   { value: "brokerage:asc", label: "Brokerage" },
+  { value: "nextAction:asc", label: "Next action (soonest)" },
   { value: "lastActivity:desc", label: "Most recent activity" },
   { value: "lastActivity:asc", label: "Least recent activity" },
   { value: "transactions:desc", label: "Most transactions" },
@@ -83,7 +84,6 @@ export function DirectoryToolbar({
   const brokerageName = params.brokerageId ? brokerages.find((b) => b.id === params.brokerageId)?.name ?? "Selected brokerage" : null;
 
   const chips: { key: string; label: string; clear: Record<string, null> }[] = [];
-  if (params.status !== "all") chips.push({ key: "status", label: params.status === "active" ? "Active" : "Inactive", clear: { status: null } });
   if (brokerageName) chips.push({ key: "brokerageId", label: brokerageName, clear: { brokerageId: null } });
   for (const key of FLAG_FILTER_KEYS) if (params.flags[key]) chips.push({ key, label: FLAG_FILTERS[key], clear: { [key]: null } });
   if (params.activity) chips.push({ key: "activity", label: ACTIVITY_RANGE_LABELS[params.activity], clear: { activity: null } });
@@ -142,23 +142,6 @@ export function DirectoryToolbar({
               aria-label="Filter realtors"
               className="absolute right-0 z-20 mt-1 w-72 space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-lg"
             >
-              <fieldset>
-                <legend className="text-xs font-medium uppercase tracking-wide text-slate-500">Status</legend>
-                <div className="mt-2 flex gap-3 text-sm">
-                  {(["all", "active", "inactive"] as const).map((s) => (
-                    <label key={s} className="flex items-center gap-1.5">
-                      <input
-                        type="radio"
-                        name="status"
-                        checked={params.status === s}
-                        onChange={() => apply({ status: s === "all" ? null : s })}
-                      />
-                      {s === "all" ? "All" : s === "active" ? "Active" : "Inactive"}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
               <div>
                 <label htmlFor={`${panelId}-brokerage`} className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Brokerage
@@ -259,7 +242,7 @@ export function DirectoryToolbar({
             <button
               type="button"
               onClick={() =>
-                apply({ status: null, brokerageId: null, activity: null, ...Object.fromEntries(FLAG_FILTER_KEYS.map((k) => [k, null])) })
+                apply({ brokerageId: null, activity: null, ...Object.fromEntries(FLAG_FILTER_KEYS.map((k) => [k, null])) })
               }
               className="text-xs text-slate-500 hover:text-slate-700 hover:underline"
             >

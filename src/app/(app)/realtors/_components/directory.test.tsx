@@ -11,8 +11,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 const getRealtorPreview = vi.fn();
+const saveRealtorPreviewSections = vi.fn();
 vi.mock("../actions", () => ({
   getRealtorPreview: (id: string) => getRealtorPreview(id),
+  saveRealtorPreviewSections: (sections: string[]) => saveRealtorPreviewSections(sections),
   createRealtorTask: vi.fn(),
   logRealtorCommunication: vi.fn(),
   updateRealtorProfile: vi.fn(),
@@ -37,13 +39,13 @@ const row = (id: string, firstName: string, extra: Partial<DirectoryRowView> = {
   preferredName: null,
   email: `${firstName.toLowerCase()}@x.test`,
   phone: "8285550101",
-  active: true,
   brokerageId: "b1",
   brokerageName: "Keller Williams",
   transactionCount: 2,
   referralCount: 1,
   lastActivityAt: null,
   nextFollowUpAt: null,
+  openTaskCount: 0,
   ...extra,
 });
 
@@ -54,7 +56,6 @@ const preview = {
   firstName: "Ann",
   lastName: "Test",
   preferredName: null,
-  active: true,
   email: null,
   phone: "8285550101",
   preferredContactMethod: null,
@@ -63,6 +64,7 @@ const preview = {
   metrics: { associatedTransactions: 2, referrals: 1, customersReferred: 1, associatedRevenue: null, referralRevenue: null },
   nextAction: null,
   recentActivity: [],
+  sections: ["nextAction", "transactions", "referrals", "contact", "activity"],
   permissions: { canWrite: false, canViewFinancials: false },
 };
 
@@ -229,5 +231,50 @@ describe("QuickActions", () => {
     await user.click(screen.getByRole("button", { name: "More actions" }));
     expect(screen.queryByRole("menuitem", { name: "New transaction" })).toBeNull();
     expect(screen.getByRole("menuitem", { name: "Relationship analytics" })).toBeTruthy();
+  });
+});
+
+describe("preview card", () => {
+  const rows = [row("r1", "Ann")];
+
+  async function openDrawer(user: ReturnType<typeof userEvent.setup>) {
+    render(<DirectoryView rows={rows} total={1} params={parseDirectoryParams({})} initialSelectedId={null} />);
+    await user.click(within(screen.getByRole("table")).getByRole("button", { name: "Ann Test" }));
+    return screen.findByRole("dialog");
+  }
+
+  it("puts the next action at the top, above the quick actions, with no Active status", async () => {
+    getRealtorPreview.mockResolvedValue({ ...preview, nextAction: { id: "t1", title: "Send market update", dueAt: null } });
+    const user = userEvent.setup();
+    const dialog = await openDrawer(user);
+
+    const nextAction = within(dialog).getByText("Send market update");
+    const callButton = within(dialog).getByRole("link", { name: "Call" });
+    expect(nextAction.compareDocumentPosition(callButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(dialog).queryByText("Active")).toBeNull();
+  });
+
+  it("customizes which sections show, from the ••• menu, and saves the choice", async () => {
+    saveRealtorPreviewSections.mockResolvedValue({ ok: true, data: [] });
+    const user = userEvent.setup();
+    const dialog = await openDrawer(user);
+    expect(within(dialog).getByText("Recent activity")).toBeTruthy();
+
+    await user.click(within(dialog).getByRole("button", { name: "More actions" }));
+    await user.click(within(dialog).getByRole("menuitem", { name: "Customize card" }));
+    const panel = within(dialog).getByRole("group", { name: "Customize card" });
+
+    await user.click(within(panel).getByRole("checkbox", { name: "Recent activity" }));
+    expect(saveRealtorPreviewSections).toHaveBeenCalledWith(["nextAction", "transactions", "referrals", "contact"]);
+    expect(within(dialog).queryByText("Recent activity", { selector: "h3" })).toBeNull();
+
+    await user.click(within(panel).getByRole("checkbox", { name: "Notes" }));
+    expect(saveRealtorPreviewSections).toHaveBeenLastCalledWith(["nextAction", "transactions", "referrals", "contact", "notes"]);
+  });
+
+  it("doesn't offer card customization on the full record", () => {
+    render(<QuickActions realtorId="r1" phone={null} email={null} canWrite onChanged={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Customize card" })).toBeNull();
   });
 });

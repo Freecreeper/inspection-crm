@@ -18,23 +18,24 @@ beforeEach(() => vi.clearAllMocks());
 describe("parseDirectoryParams", () => {
   it("defaults to name ascending, page 1, no filters", () => {
     const p = parseDirectoryParams({});
-    expect(p).toMatchObject({ q: "", status: "all", brokerageId: null, activity: null, sort: "name", dir: "asc", page: 1 });
+    expect(p).toMatchObject({ q: "", brokerageId: null, activity: null, sort: "name", dir: "asc", page: 1 });
     expect(activeFilterCount(p)).toBe(0);
   });
 
   it("ignores anything outside the allow-lists", () => {
-    const p = parseDirectoryParams({ sort: 'lastName"; DROP TABLE realtors;--', dir: "sideways", status: "maybe", activity: "forever", page: "-4" });
-    expect(p).toMatchObject({ sort: "name", dir: "asc", status: "all", activity: null, page: 1 });
+    const p = parseDirectoryParams({ sort: 'lastName"; DROP TABLE realtors;--', dir: "sideways", activity: "forever", page: "-4" });
+    expect(p).toMatchObject({ sort: "name", dir: "asc", activity: null, page: 1 });
   });
 
   it("gives derived sorts a sensible default direction", () => {
     expect(parseDirectoryParams({ sort: "lastActivity" }).dir).toBe("desc");
     expect(parseDirectoryParams({ sort: "referrals" }).dir).toBe("desc");
     expect(parseDirectoryParams({ sort: "brokerage" }).dir).toBe("asc");
+    expect(parseDirectoryParams({ sort: "nextAction" }).dir).toBe("asc");
   });
 
   it("reads flag filters and counts active filters", () => {
-    const p = parseDirectoryParams({ hasReferrals: "1", missingBrokerage: "1", status: "active", brokerageId: "b1" });
+    const p = parseDirectoryParams({ hasReferrals: "1", missingBrokerage: "1", activity: "30d", brokerageId: "b1" });
     expect(p.flags).toMatchObject({ hasReferrals: true, missingBrokerage: true, needsFollowUp: false });
     expect(activeFilterCount(p)).toBe(4);
   });
@@ -75,7 +76,6 @@ describe("buildDirectoryQuery", () => {
     expect(sqlOf({ hasReferrals: "1" }).sql).toContain('rf."cnt" > 0');
     expect(sqlOf({ hasTransactions: "1" }).sql).toContain('tx."cnt" > 0');
     expect(sqlOf({ needsFollowUp: "1" }).sql).toMatch(/tk\."completedAt" IS NULL AND tk\."dueAt" < \?/);
-    expect(sqlOf({ status: "inactive" }).sql).toContain('r."active" = false');
   });
 
   it("always excludes archived realtors", () => {
@@ -89,6 +89,14 @@ describe("buildDirectoryQuery", () => {
 
   it("counts associated transactions once each, even with several roles on one deal", () => {
     expect(sqlOf({}).sql).toContain('COUNT(DISTINCT trr."transactionId")');
+  });
+
+  it("sorts by next action with dated follow-ups first, then undated, then none", () => {
+    expect(sqlOf({ sort: "nextAction" }).sql).toMatch(/ORDER BY nf\."due" ASC NULLS LAST, \(nf\."open" > 0\) DESC/);
+  });
+
+  it("no longer selects or filters on an active status", () => {
+    expect(sqlOf({ status: "inactive" } as never).sql).not.toContain('"active"');
   });
 
   it("orders by the requested column and pages with LIMIT/OFFSET", () => {
