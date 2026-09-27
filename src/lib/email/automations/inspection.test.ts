@@ -128,4 +128,23 @@ describe("appointment changed", () => {
     // The old confirmation isn't repeated for a reschedule.
     expect(byKey(":confirmation:")).toHaveLength(2);
   });
+
+  it("with notify off (staff unticked it), the stale reminder is still withdrawn and a new one scheduled — only the notice is skipped", async () => {
+    await onInspectionScheduled("i1", { now: NOW });
+    const previous = inspection.scheduledAt as Date;
+    inspection = { ...inspection, scheduledAt: new Date("2026-10-02T15:00:00Z"), scheduleVersion: 1 };
+    await onInspectionRescheduled("i1", previous, { now: NOW, notify: false });
+
+    expect(db.emailMessage.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ statusReason: "Inspection rescheduled" }) }));
+    expect(byKey(":updated:")).toHaveLength(0);
+    expect(byKey(":reminder:v1:customer:c1")[0]).toMatchObject({ status: "SCHEDULED" });
+  });
+
+  it("cancelling with notify off withdraws reminders but sends no cancellation notice", async () => {
+    await onInspectionScheduled("i1", { now: NOW });
+    inspection = { ...inspection, status: "CANCELLED", scheduleVersion: 1 };
+    await onInspectionCancelled("i1", { now: NOW, notify: false });
+    expect(db.emailMessage.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ statusReason: "Inspection cancelled" }) }));
+    expect(byKey(":cancelled:")).toHaveLength(0);
+  });
 });

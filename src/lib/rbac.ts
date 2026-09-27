@@ -28,6 +28,16 @@ export const PERMISSIONS = {
   "email:campaign_approve": ["OWNER_ADMIN"],
   "email:preferences_manage": ["OWNER_ADMIN", "OFFICE_STAFF"],
   "inspection:conduct": ["OWNER_ADMIN", "INSPECTOR"],
+  // Calendar & scheduling (V1). Everyone can see the schedule; putting an
+  // inspection on it or moving one is an office job. Inspectors keep the
+  // ability to cancel (they could already, via the status control), and may
+  // block their own time — enforced per-user in the block-time action.
+  "calendar:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  "inspection:schedule": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  "inspection:reschedule": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  "inspection:cancel": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR"],
+  "calendar:block_time": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR"],
+  "task:update": ["OWNER_ADMIN", "OFFICE_STAFF"],
   // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
   // here rather than a bare "is there a session" check in the download route,
   // so a future per-transaction assignment restriction is a one-line change

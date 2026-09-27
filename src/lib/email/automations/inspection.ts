@@ -219,10 +219,14 @@ async function withdrawStaleInspectionEmails(inspectionId: string, reason: strin
 // A meaningful date/time change. The caller has already bumped
 // scheduleVersion, so anything written for the old time is withdrawn here
 // and would be refused by its guard even if it weren't.
+//
+// `notify: false` (staff unticked "notify" when rescheduling) skips only the
+// change notice — stale emails are still withdrawn and the reminder is still
+// re-created for the new time, so nobody is ever reminded of the old one.
 export async function onInspectionRescheduled(
   inspectionId: string,
   previousScheduledAt: Date | null,
-  opts: { actorId?: string | null; now?: Date; db?: Db } = {}
+  opts: { actorId?: string | null; now?: Date; db?: Db; notify?: boolean } = {}
 ) {
   const db = opts.db ?? prisma;
   await withdrawStaleInspectionEmails(inspectionId, "Inspection rescheduled", db);
@@ -232,7 +236,7 @@ export async function onInspectionRescheduled(
   if (!inspection || inspection.status !== "SCHEDULED" || !inspection.scheduledAt) return [];
 
   const auto = await getAutomation("appointment_change", db);
-  const results = auto.active
+  const results = auto.active && opts.notify !== false
     ? await sendToRecipients(
         {
           automationKey: "appointment_change",
@@ -254,12 +258,13 @@ export async function onInspectionRescheduled(
   return results;
 }
 
-export async function onInspectionCancelled(inspectionId: string, opts: { actorId?: string | null; now?: Date; db?: Db } = {}) {
+export async function onInspectionCancelled(inspectionId: string, opts: { actorId?: string | null; now?: Date; db?: Db; notify?: boolean } = {}) {
   const db = opts.db ?? prisma;
   await withdrawStaleInspectionEmails(inspectionId, "Inspection cancelled", db);
   const inspection = await loadInspection(inspectionId, db);
   // Nothing was ever scheduled, so there's nothing to tell anyone.
   if (!inspection || inspection.status !== "CANCELLED" || !inspection.scheduledAt) return [];
+  if (opts.notify === false) return [];
 
   const auto = await getAutomation("appointment_change", db);
   if (!auto.active) return [];

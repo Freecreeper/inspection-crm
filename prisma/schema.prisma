@@ -133,6 +133,11 @@ enum CampaignStatus {
   CANCELLED
 }
 
+enum AppointmentKind {
+  APPOINTMENT
+  BLOCK
+}
+
 enum InspectionStatus {
   SCHEDULED
   IN_PROGRESS
@@ -233,11 +238,15 @@ model User {
   // This user's Realtor directory layout: visible columns and row density
   // (src/lib/realtors/directoryLayout.ts). NULL means "use the defaults".
   realtorDirectoryLayout Json?
+  // This user's Calendar preferences: default view, visible layers, and
+  // inspector filter (src/lib/calendar/preferences.ts). NULL = defaults.
+  calendarPreferences    Json?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
   inspectionsAsInspector  Inspection[]       @relation("InspectorUser")
   tasksAssigned           Task[]
+  calendarBlocks          Appointment[]      @relation("CalendarBlockUser")
   activityLogs            ActivityLog[]
   automationEvents        AutomationEvent[]  @relation("TriggeredByUser")
   reportDefinitions       ReportDefinition[]
@@ -313,21 +322,30 @@ model Property {
   @@map("properties")
 }
 
+// Non-inspection time on the Calendar. APPOINTMENT is a site visit or
+// meeting; BLOCK is time a user is unavailable (vacation, office meeting,
+// personal) — an inspector's blocks count as scheduling conflicts.
+// Inspections themselves are scheduled on Inspection, never duplicated here.
 model Appointment {
-  id            String       @id @default(cuid())
+  id            String          @id @default(cuid())
+  kind          AppointmentKind @default(APPOINTMENT)
+  // Whose calendar this is on. For a BLOCK, the user who is unavailable.
+  userId        String?
+  user          User?           @relation("CalendarBlockUser", fields: [userId], references: [id])
   transactionId String?
-  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  transaction   Transaction?    @relation(fields: [transactionId], references: [id])
   inspectionId  String?
-  inspection    Inspection?  @relation(fields: [inspectionId], references: [id])
+  inspection    Inspection?     @relation(fields: [inspectionId], references: [id])
   title         String
   startAt       DateTime
   endAt         DateTime
   location      String?
   cancelledAt   DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([startAt])
+  @@index([userId, startAt])
   @@map("appointments")
 }
 
@@ -508,16 +526,20 @@ model Document {
 // the primary contact through the customers relation (see
 // src/lib/transactions.ts#getPrimaryCustomer) instead.
 model Transaction {
-  id               String            @id @default(cuid())
-  propertyId       String?
-  property         Property?         @relation(fields: [propertyId], references: [id])
-  referralSourceId String?
-  referralSource   ReferralSource?   @relation(fields: [referralSourceId], references: [id])
-  status           TransactionStatus @default(LEAD_IN_PROGRESS)
-  closingDate      DateTime?
-  archivedAt       DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id                 String            @id @default(cuid())
+  propertyId         String?
+  property           Property?         @relation(fields: [propertyId], references: [id])
+  referralSourceId   String?
+  referralSource     ReferralSource?   @relation(fields: [referralSourceId], references: [id])
+  status             TransactionStatus @default(LEAD_IN_PROGRESS)
+  // Date-only (no time, no time zone): a closing or a due-diligence deadline
+  // is a calendar day, and storing it as a timestamp would let a time-zone
+  // conversion move it to the neighboring day.
+  closingDate        DateTime?         @db.Date
+  inspectionDeadline DateTime?         @db.Date
+  archivedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   customers      TransactionCustomer[]
   realtors       TransactionRealtor[]
@@ -531,6 +553,8 @@ model Transaction {
 
   @@index([status])
   @@index([createdAt])
+  @@index([closingDate])
+  @@index([inspectionDeadline])
   @@map("transactions")
 }
 
@@ -613,13 +637,17 @@ model TransactionRealtor {
 // ---------------------------------------------------------------------------
 
 model Service {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  basePrice   Decimal  @db.Decimal(10, 2)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  name                   String
+  description            String?
+  basePrice              Decimal  @db.Decimal(10, 2)
+  // Suggested length of an appointment for this service; the longest among
+  // an inspection's services is the default, and any appointment can
+  // override it. NULL = no opinion (the business default applies).
+  defaultDurationMinutes Int?
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   inspectionServices InspectionService[]
 
@@ -627,27 +655,34 @@ model Service {
 }
 
 model Inspection {
-  id              String           @id @default(cuid())
-  transactionId   String
-  transaction     Transaction      @relation(fields: [transactionId], references: [id])
-  propertyId      String
-  property        Property         @relation(fields: [propertyId], references: [id])
-  inspectorId     String?
-  inspector       User?            @relation("InspectorUser", fields: [inspectorId], references: [id])
-  status          InspectionStatus @default(SCHEDULED)
-  scheduledAt     DateTime?
-  startedAt       DateTime?
-  completedAt     DateTime?
-  weather         String?
-  temperatureF    Int?
-  occupancyStatus String?
-  utilitiesOn     Boolean?
+  id                String           @id @default(cuid())
+  transactionId     String
+  transaction       Transaction      @relation(fields: [transactionId], references: [id])
+  propertyId        String
+  property          Property         @relation(fields: [propertyId], references: [id])
+  inspectorId       String?
+  inspector         User?            @relation("InspectorUser", fields: [inspectorId], references: [id])
+  status            InspectionStatus @default(SCHEDULED)
+  scheduledAt       DateTime?
+  // The appointment runs scheduledAt → scheduledAt + durationMinutes; the
+  // end is always derived, never stored separately, so they can't disagree.
+  durationMinutes   Int              @default(180)
+  // No e-signature system yet: staff record when the agreement was signed.
+  agreementSignedAt DateTime?
+  // Lockbox codes, occupant notes, gate instructions — staff only.
+  accessNotes       String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  weather           String?
+  temperatureF      Int?
+  occupancyStatus   String?
+  utilitiesOn       Boolean?
   // Bumped on every meaningful date/time/cancellation change. Queued
   // reminders record the version they were written for and are dropped at
   // send time if it no longer matches, so a stale time is never emailed.
-  scheduleVersion Int              @default(0)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  scheduleVersion   Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   inspectionServices InspectionService[]
   reports            InspectionReport[]
@@ -659,6 +694,7 @@ model Inspection {
 
   @@index([status])
   @@index([scheduledAt])
+  @@index([inspectorId, scheduledAt])
   @@map("inspections")
 }
 
@@ -704,6 +740,7 @@ model Invoice {
   @@index([status])
   @@index([transactionId])
   @@index([inspectionId])
+  @@index([dueAt])
   @@map("invoices")
 }
 
@@ -807,6 +844,7 @@ model InspectionReport {
   media        Media[]
 
   @@index([status])
+  @@index([inspectionId])
   @@map("inspection_reports")
 }
 

@@ -6,6 +6,7 @@ import {
   setPrimaryCustomer,
   addRealtorToTransaction,
   setTransactionProperty,
+  setTransactionDates,
   addCommunication,
   uploadDocument,
 } from "../actions";
@@ -13,6 +14,7 @@ import { createTask, completeTask } from "../../tasks/actions";
 import { createAppointment, cancelAppointment } from "../../calendar/actions";
 import { createInspection } from "../../inspections/actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
+import { dateOnlyKey } from "@/lib/calendar/time";
 import { PropertyCombobox } from "../../properties/PropertyCombobox";
 import { CustomerCombobox } from "../../customers/CustomerCombobox";
 import { RealtorCombobox } from "../../realtors/RealtorCombobox";
@@ -102,6 +104,24 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             </form>
           </>
         )}
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Key dates</h2>
+        <p className="mt-1 text-xs text-slate-500">Optional. Shown on the Calendar under Transaction dates.</p>
+        <form action={setTransactionDates.bind(null, transaction.id)} className="mt-3 flex flex-wrap items-end gap-3">
+          <label className="text-xs text-slate-600">
+            Inspection deadline
+            <input type="date" name="inspectionDeadline" defaultValue={dateOnlyKey(transaction.inspectionDeadline) ?? ""} className="mt-1 block rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+          </label>
+          <label className="text-xs text-slate-600">
+            Closing date
+            <input type="date" name="closingDate" defaultValue={dateOnlyKey(transaction.closingDate) ?? ""} className="mt-1 block rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+          </label>
+          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            Save dates
+          </button>
+        </form>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">

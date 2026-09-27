@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
 import { validateUpload, safeFileName, scanForMalware } from "@/lib/documents";
 import { logActivity } from "@/lib/activity";
+import { dateOnlyKey, dayKeyToDateOnly, isDayKey } from "@/lib/calendar/time";
 import type { RealtorParticipantRole, Role } from "@prisma/client";
 
 const REALTOR_ROLES: RealtorParticipantRole[] = ["BUYER_AGENT", "LISTING_AGENT", "TRANSACTION_COORDINATOR", "OTHER"];
@@ -195,6 +196,37 @@ export async function setTransactionProperty(transactionId: string, formData: Fo
 
   await prisma.transaction.update({ where: { id: transactionId }, data: { propertyId } });
   revalidatePath(`/transactions/${transactionId}`);
+}
+
+// Key dates are date-only: the day typed is the day stored, never shifted
+// through a time zone. Blank clears it.
+export async function setTransactionDates(transactionId: string, formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  const read = (key: string) => {
+    const raw = String(formData.get(key) ?? "").trim();
+    if (!raw) return null;
+    if (!isDayKey(raw)) throw new Error("Pick a valid date.");
+    return dayKeyToDateOnly(raw);
+  };
+  const closingDate = read("closingDate");
+  const inspectionDeadline = read("inspectionDeadline");
+  const before = await prisma.transaction.findUniqueOrThrow({ where: { id: transactionId }, select: { closingDate: true, inspectionDeadline: true } });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.update({ where: { id: transactionId }, data: { closingDate, inspectionDeadline } });
+    await logActivity(tx, {
+      actorId: session?.user?.id,
+      action: "transaction.dates_updated",
+      entityType: "Transaction",
+      entityId: transactionId,
+      before: { closingDate: dateOnlyKey(before.closingDate), inspectionDeadline: dateOnlyKey(before.inspectionDeadline) },
+      after: { closingDate: dateOnlyKey(closingDate), inspectionDeadline: dateOnlyKey(inspectionDeadline) },
+    });
+  });
+  revalidatePath(`/transactions/${transactionId}`);
+  revalidatePath("/calendar");
 }
 
 // Communication history is append-only — a logged call or email is a fact

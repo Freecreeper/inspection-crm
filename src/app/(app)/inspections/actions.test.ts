@@ -13,16 +13,19 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/email/automations/inspection", () => ({
   onInspectionScheduled: vi.fn(async () => []),
-  onInspectionRescheduled: vi.fn(async () => []),
-  onInspectionCancelled: vi.fn(async () => []),
   onInspectionCompleted: vi.fn(async () => []),
 }));
 vi.mock("@/lib/email/automations/registry", () => ({ getAutomation: vi.fn(async () => ({ row: { id: "a1" } })), logAutomationEvent: vi.fn() }));
+vi.mock("@/lib/scheduling/service", () => ({
+  scheduleInspection: vi.fn(async () => ({ ok: true, data: { inspectionId: "i1", transactionId: "t1" } })),
+  rescheduleInspection: vi.fn(async () => ({ ok: true, data: { changed: true, transactionId: "t1" } })),
+  cancelInspection: vi.fn(async () => ({ ok: true, data: { changed: true, transactionId: "t1" } })),
+}));
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import * as hooks from "@/lib/email/automations/inspection";
-import { logAutomationEvent } from "@/lib/email/automations/registry";
+import * as service from "@/lib/scheduling/service";
 import { assignInspector, createInspection, rescheduleInspection, updateInspectionConditions, updateInspectionStatus } from "./actions";
 
 type Fn = ReturnType<typeof vi.fn>;
@@ -32,64 +35,68 @@ const form = (entries: Record<string, string>) => {
   for (const [k, v] of Object.entries(entries)) f.set(k, v);
   return f;
 };
+const as = (role: string) => vi.mocked(auth).mockResolvedValue({ user: { id: "u1", role } } as never);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(auth).mockResolvedValue({ user: { id: "u1", role: "OWNER_ADMIN" } } as never);
+  as("OWNER_ADMIN");
   db.inspection.update.mockResolvedValue({ id: "i1", transactionId: "t1" });
   db.activityLog.create.mockResolvedValue({});
 });
 
-describe("inspection email triggers", () => {
-  it("scheduling with a time queues the confirmation after saving", async () => {
-    db.inspection.create.mockResolvedValue({ id: "i1", scheduledAt: new Date("2026-10-03T13:00:00Z") });
-    await expect(createInspection("t1", form({ propertyId: "p1", scheduledAt: "2026-10-03T09:00" }))).rejects.toThrow("NEXT_REDIRECT");
-    expect(hooks.onInspectionScheduled).toHaveBeenCalledWith("i1", { actorId: "u1" });
+describe("inspection page actions go through the shared scheduling service", () => {
+  it("scheduling passes the datetime-local value as a business-time-zone day + time", async () => {
+    await expect(createInspection("t1", form({ propertyId: "p1", scheduledAt: "2026-10-03T09:00", inspectorId: "u2" }))).rejects.toThrow("NEXT_REDIRECT:/inspections/i1");
+    expect(service.scheduleInspection).toHaveBeenCalledWith(
+      { transactionId: "t1", propertyId: "p1", inspectorId: "u2", day: "2026-10-03", time: "09:00" },
+      "u1"
+    );
   });
 
-  it("an email failure never fails the scheduling — it's logged instead", async () => {
-    db.inspection.create.mockResolvedValue({ id: "i1", scheduledAt: new Date() });
-    vi.mocked(hooks.onInspectionScheduled).mockRejectedValueOnce(new Error("template missing"));
-    await expect(createInspection("t1", form({ propertyId: "p1", scheduledAt: "2026-10-03T09:00" }))).rejects.toThrow("NEXT_REDIRECT:/inspections/i1");
-    expect(logAutomationEvent).toHaveBeenCalledWith("a1", expect.objectContaining({ result: "FAILED", detail: { reason: "template missing" } }));
+  it("a scheduling conflict surfaces as an error, not a redirect", async () => {
+    vi.mocked(service.scheduleInspection).mockResolvedValueOnce({ ok: false, error: "That time overlaps something already on the inspector's calendar.", conflicts: [] });
+    await expect(createInspection("t1", form({ propertyId: "p1", scheduledAt: "2026-10-03T09:00" }))).rejects.toThrow(/overlaps/);
   });
 
-  it("unrelated edits (conditions, inspector) never trigger appointment emails", async () => {
-    await updateInspectionConditions("i1", form({ weather: "Sunny" }));
-    await assignInspector("i1", form({ inspectorId: "u2" }));
-    for (const fn of Object.values(hooks)) expect(fn).not.toHaveBeenCalled();
-  });
+  it("rescheduling needs inspection:reschedule and delegates with the new day/time", async () => {
+    as("INSPECTOR");
+    await expect(rescheduleInspection("i1", form({ scheduledAt: "2026-10-04T13:00" }))).rejects.toThrow();
+    expect(service.rescheduleInspection).not.toHaveBeenCalled();
 
-  it("re-saving the same status is a no-op", async () => {
-    db.inspection.findUniqueOrThrow.mockResolvedValue({ status: "SCHEDULED" });
-    await updateInspectionStatus("i1", form({ status: "SCHEDULED" }));
-    expect(db.inspection.update).not.toHaveBeenCalled();
-    for (const fn of Object.values(hooks)) expect(fn).not.toHaveBeenCalled();
-  });
-
-  it("re-saving the same time is not a reschedule", async () => {
-    db.inspection.findUniqueOrThrow.mockResolvedValue({ id: "i1", status: "SCHEDULED", scheduledAt: new Date("2026-10-03T09:00:30"), transactionId: "t1" });
-    await rescheduleInspection("i1", form({ scheduledAt: "2026-10-03T09:00" }));
-    expect(db.inspection.update).not.toHaveBeenCalled();
-    expect(hooks.onInspectionRescheduled).not.toHaveBeenCalled();
-  });
-
-  it("a real time change bumps the schedule version and notifies with the previous time", async () => {
-    const previous = new Date("2026-10-03T09:00:00");
-    db.inspection.findUniqueOrThrow.mockResolvedValue({ id: "i1", status: "SCHEDULED", scheduledAt: previous, transactionId: "t1" });
+    as("OFFICE_STAFF");
     await rescheduleInspection("i1", form({ scheduledAt: "2026-10-04T13:00" }));
-    expect(db.inspection.update).toHaveBeenCalledWith({ where: { id: "i1" }, data: { scheduledAt: new Date("2026-10-04T13:00"), scheduleVersion: { increment: 1 } } });
-    expect(hooks.onInspectionRescheduled).toHaveBeenCalledWith("i1", previous, { actorId: "u1" });
+    expect(service.rescheduleInspection).toHaveBeenCalledWith("i1", { day: "2026-10-04", time: "13:00" }, "u1");
   });
 
-  it("cancelling bumps the version and sends the cancellation path; completing prepares thank-yous", async () => {
-    db.inspection.findUniqueOrThrow.mockResolvedValue({ status: "SCHEDULED" });
-    await updateInspectionStatus("i1", form({ status: "CANCELLED" }));
-    expect(db.inspection.update).toHaveBeenCalledWith({ where: { id: "i1" }, data: { status: "CANCELLED", scheduleVersion: { increment: 1 } } });
-    expect(hooks.onInspectionCancelled).toHaveBeenCalled();
+  it("reassigning a scheduled inspection is conflict-checked via the service", async () => {
+    db.inspection.findUniqueOrThrow.mockResolvedValue({ status: "SCHEDULED", scheduledAt: new Date(), inspectorId: "u1" });
+    await assignInspector("i1", form({ inspectorId: "u2" }));
+    expect(service.rescheduleInspection).toHaveBeenCalledWith("i1", { inspectorId: "u2" }, "u1");
+  });
 
+  it("cancelling via the status control needs inspection:cancel and uses the shared cancel path", async () => {
+    as("REPORTING_ANALYST");
+    await expect(updateInspectionStatus("i1", form({ status: "CANCELLED" }))).rejects.toThrow();
+    as("INSPECTOR");
+    await updateInspectionStatus("i1", form({ status: "CANCELLED" }));
+    expect(service.cancelInspection).toHaveBeenCalledWith("i1", {}, "u1");
+    expect(db.inspection.update).not.toHaveBeenCalled();
+  });
+
+  it("completing still prepares thank-yous; re-saving the same status is a no-op", async () => {
     db.inspection.findUniqueOrThrow.mockResolvedValue({ status: "IN_PROGRESS" });
     await updateInspectionStatus("i1", form({ status: "COMPLETED" }));
     expect(hooks.onInspectionCompleted).toHaveBeenCalled();
+
+    vi.clearAllMocks();
+    db.inspection.findUniqueOrThrow.mockResolvedValue({ status: "SCHEDULED" });
+    await updateInspectionStatus("i1", form({ status: "SCHEDULED" }));
+    expect(db.inspection.update).not.toHaveBeenCalled();
+  });
+
+  it("unrelated edits (conditions) never touch the schedule", async () => {
+    await updateInspectionConditions("i1", form({ weather: "Sunny" }));
+    expect(service.rescheduleInspection).not.toHaveBeenCalled();
+    expect(service.cancelInspection).not.toHaveBeenCalled();
   });
 });
