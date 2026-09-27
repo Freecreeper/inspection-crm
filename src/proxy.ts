@@ -11,7 +11,11 @@ export default auth((req) => {
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/r/"); // signed report-delivery links
+    pathname.startsWith("/r/") || // signed report-delivery links
+    pathname.startsWith("/u/") || // signed email-preference links
+    pathname === "/api/email/unsubscribe" || // one-click unsubscribe (signed token)
+    pathname === "/api/webhooks/postmark" || // Basic-auth verified in the route
+    pathname === "/api/cron/email"; // bearer-secret verified in the route
 
   if (!req.auth && !isPublic) {
     const loginUrl = new URL("/login", req.nextUrl.origin);

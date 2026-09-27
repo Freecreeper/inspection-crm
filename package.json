@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "worker": "tsx --tsconfig tsconfig.json scripts/email-worker.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
