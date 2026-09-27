@@ -11,13 +11,24 @@ export async function createBrokerage(formData: FormData) {
   const session = await auth();
   assertCan(session?.user?.role as Role | undefined, "crm:write");
 
-  const name = String(formData.get("name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const email = String(formData.get("email") ?? "").trim() || null;
+  const text = (key: string) => String(formData.get(key) ?? "").trim() || null;
+  const name = text("name");
+  const rawPhone = text("phone") ?? "";
 
   if (!name) throw new Error("Brokerage name is required.");
+  if (!isValidPhoneInput(rawPhone)) throw new Error("Phone number must have 10 digits.");
 
-  await prisma.brokerage.create({ data: { name, phone, email } });
+  await prisma.brokerage.create({
+    data: {
+      name,
+      phone: rawPhone ? digitsOnly(rawPhone) : null,
+      email: text("email"),
+      addressLine1: text("addressLine1"),
+      city: text("city"),
+      state: text("state")?.toUpperCase() ?? null,
+      zip: text("zip"),
+    },
+  });
   revalidatePath("/brokerages");
 }
 
