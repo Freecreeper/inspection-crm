@@ -8,7 +8,9 @@ import { BrokeragesToolbar } from "./_components/BrokeragesToolbar";
 import { BrokerageDirectory } from "./_components/BrokerageDirectory";
 
 export default async function BrokeragesPage({ searchParams }: { searchParams: Promise<RawSearchParams> }) {
-  const params = parseBrokerageParams(await searchParams);
+  const raw = await searchParams;
+  const params = parseBrokerageParams(raw);
+  const selected = Array.isArray(raw.selected) ? raw.selected[0] : raw.selected;
   const session = await auth();
   const canWrite = can(session?.user?.role as Role | undefined, "crm:write");
   const { rows, total } = await fetchBrokerageDirectory(params);
@@ -20,7 +22,7 @@ export default async function BrokeragesPage({ searchParams }: { searchParams: P
         {canWrite && <AddBrokerageButton />}
       </div>
       <BrokeragesToolbar params={params} />
-      <BrokerageDirectory rows={rows} total={total} params={params} />
+      <BrokerageDirectory rows={rows} total={total} params={params} initialSelectedId={selected ?? null} />
     </div>
   );
 }
