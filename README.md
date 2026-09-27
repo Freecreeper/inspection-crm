@@ -9,7 +9,7 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
 **IMPLEMENTED**
 - **Pillar 1/2 — CRM & relationships**: Leads → Customers → Transactions, with multiple independent
   Customers per Transaction (`TransactionCustomer`, at most one primary contact); Properties;
-  Realtors/Brokerages with brokerage-change history; Referral sources; Scheduling (`Appointment`),
+  Realtors/Brokerages with brokerage-change history; Referral sources; Calendar scheduling (see below),
   Tasks, Communications, Documents (upload + session/RBAC-gated download, local-disk storage)
 - **Pillar 3 — Inspection Report Builder**: Inspection scheduling and conditions-on-site capture;
   report creation from a `ReportTemplate` (sections/components copied, never linked); per-component
@@ -35,6 +35,12 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
   reminder, appointment change, payment reminder, report ready), realtor relationship automations (thank-you,
   birthday, anniversaries) with review-before-send, lightweight realtor campaigns with owner approval, and
   category-aware preferences/suppression. Delivery is simulated unless `EMAIL_DELIVERY_MODE=live`.
+- **Calendar & scheduling (V1)** — see [docs/calendar.md](docs/calendar.md): Day / Week / Month views built
+  from the authoritative records (inspections with duration, blocked time, tasks, report deadlines, date-only
+  transaction dates, realtor follow-ups/birthdays/anniversaries, billing) via range-bounded queries; a preview
+  drawer with readiness; click-to-schedule with server-backed typeahead and duplicate-checked create-while-
+  scheduling; drag-or-button rescheduling with confirmation; server-side inspector conflict detection under a
+  lock; one business time zone everywhere; and the existing email automations for confirm/change/cancel.
 - Staff auth (Auth.js, credentials + JWT) and RBAC (`src/lib/rbac.ts`), enforced in every mutating
   server action across all four pillars — not just hidden in the UI
 
