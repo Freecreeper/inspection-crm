@@ -10,13 +10,13 @@ export const ROLE_LABELS: Record<RealtorParticipantRole, string> = {
   OTHER: "Other",
 };
 
-const TRANSACTION_INCLUDE = {
+export const TRANSACTION_INCLUDE = {
   property: true,
   customers: { include: { customer: true }, orderBy: { createdAt: "asc" } },
   inspections: { orderBy: [{ scheduledAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }], take: 1 },
 } satisfies Prisma.TransactionInclude;
 
-type TransactionWithDetails = Prisma.TransactionGetPayload<{ include: typeof TRANSACTION_INCLUDE }>;
+export type TransactionWithDetails = Prisma.TransactionGetPayload<{ include: typeof TRANSACTION_INCLUDE }>;
 
 export interface TransactionRow {
   id: string;
@@ -30,7 +30,7 @@ export interface TransactionRow {
   revenue: string | null;
 }
 
-function toRow(t: TransactionWithDetails, revenue: Map<string, string> | null): TransactionRow {
+export function toRow(t: TransactionWithDetails, revenue: Map<string, string> | null): TransactionRow {
   const primary = getPrimaryCustomer(t.customers);
   const inspection = t.inspections[0];
   return {

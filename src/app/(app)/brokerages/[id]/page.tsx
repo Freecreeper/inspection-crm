@@ -1,92 +1,90 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { formatShortDate } from "@/lib/dates";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { formatPhone } from "@/lib/phone";
-import { realtorDisplayName } from "@/lib/realtors/display";
+import { formatBrokerageAddress } from "@/lib/brokerages/directoryParams";
+import { parseBrokerageTimelineFilter } from "@/lib/brokerages/record";
+import { BrokerageQuickActions } from "../_components/BrokerageShared";
+import { OverviewTab } from "./_components/OverviewTab";
+import { RealtorsTab } from "./_components/RealtorsTab";
+import { TransactionsTab } from "./_components/TransactionsTab";
+import { ActivityTab } from "./_components/ActivityTab";
 
-// The brokerage as a relationship: who's there now, and who was there
-// before (from RealtorBrokerageHistory, which is never rewritten).
-export default async function BrokerageDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const brokerage = await prisma.brokerage.findUnique({
-    where: { id },
-    include: {
-      realtors: {
-        where: { archivedAt: null },
-        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true },
-      },
-      history: {
-        where: { endDate: { not: null } },
-        orderBy: { endDate: "desc" },
-        take: 50,
-        include: { realtor: { select: { id: true, firstName: true, lastName: true, preferredName: true, brokerageId: true } } },
-      },
-    },
-  });
+const TABS = [
+  { key: "overview", label: "Overview" },
+  { key: "realtors", label: "Realtors" },
+  { key: "transactions", label: "Transactions" },
+  { key: "activity", label: "Activity" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+// Same shape as the realtor record: a header with quick actions, then
+// tabs that each render on the server only when opened (?tab=).
+export default async function BrokerageRecordPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string; type?: string }>;
+}) {
+  const [{ id }, { tab: tabRaw, type }] = await Promise.all([params, searchParams]);
+  const tab: TabKey = TABS.some((t) => t.key === tabRaw) ? (tabRaw as TabKey) : "overview";
+
+  const session = await auth();
+  const role = session?.user?.role as Role | undefined;
+  const permissions = { canWrite: can(role, "crm:write"), canViewFinancials: can(role, "financial:read") };
+
+  const brokerage = await prisma.brokerage.findFirst({ where: { id, archivedAt: null } });
   if (!brokerage) notFound();
-
-  const address = [brokerage.addressLine1, [brokerage.city, brokerage.state].filter(Boolean).join(", "), brokerage.zip].filter(Boolean).join(" · ");
-  // Someone who left and came back is a current realtor, not a former one.
-  const former = brokerage.history.filter((h) => h.realtor.brokerageId !== brokerage.id);
+  const address = formatBrokerageAddress(brokerage);
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <Link href="/brokerages" className="text-xs text-slate-500 hover:underline">
-          ← Back to brokerages
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">{brokerage.name}</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {[brokerage.phone && formatPhone(brokerage.phone), brokerage.email, address].filter(Boolean).join(" · ") || (
-            <span className="text-slate-400">No contact details on file</span>
-          )}
-        </p>
-        {brokerage.archivedAt && <p className="mt-1 text-xs text-amber-700">This brokerage is archived.</p>}
+    <div className="max-w-5xl">
+      <Link href={`/brokerages?selected=${brokerage.id}`} className="text-xs text-slate-500 hover:underline">
+        ← Back to brokerages
+      </Link>
+
+      <header className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold text-slate-900">{brokerage.name}</h1>
+          <p className="mt-1 text-sm text-slate-600">{address || <span className="text-slate-400">No address on file</span>}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+            {/* Missing values are already called out on the action buttons. */}
+            {brokerage.phone && <span className="tabular-nums">{formatPhone(brokerage.phone)}</span>}
+            {brokerage.email && <span>{brokerage.email}</span>}
+          </div>
+        </div>
+        <div className="lg:max-w-md">
+          <BrokerageQuickActions brokerageId={brokerage.id} phone={brokerage.phone} email={brokerage.email} />
+        </div>
+      </header>
+
+      <div className="mt-6 border-b border-slate-200">
+        <nav aria-label="Brokerage record sections" className="-mb-px flex gap-1 overflow-x-auto">
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={t.key === "overview" ? `/brokerages/${brokerage.id}` : `/brokerages/${brokerage.id}?tab=${t.key}`}
+              aria-current={tab === t.key ? "page" : undefined}
+              className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
+                tab === t.key ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
-      <section aria-labelledby="current-realtors" className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 id="current-realtors" className="text-sm font-semibold text-slate-900">
-          Realtors <span className="font-normal text-slate-500">{brokerage.realtors.length}</span>
-        </h2>
-        {brokerage.realtors.length > 0 ? (
-          <ul className="mt-3 divide-y divide-slate-100">
-            {brokerage.realtors.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <Link href={`/realtors/${r.id}`} className="font-medium text-slate-900 hover:underline">
-                  {realtorDisplayName(r)}
-                </Link>
-                <span className="text-xs text-slate-500">
-                  {[r.phone && formatPhone(r.phone), r.email].filter(Boolean).join(" · ")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-slate-500">No current realtors.</p>
-        )}
-      </section>
-
-      {former.length > 0 && (
-        <section aria-labelledby="former-realtors" className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 id="former-realtors" className="text-sm font-semibold text-slate-900">
-            Former realtors
-          </h2>
-          <ul className="mt-3 divide-y divide-slate-100">
-            {former.map((h) => (
-              <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <Link href={`/realtors/${h.realtor.id}`} className="text-slate-800 hover:underline">
-                  {realtorDisplayName(h.realtor)}
-                </Link>
-                <span className="text-xs tabular-nums text-slate-500">
-                  {formatShortDate(h.startDate)} – {formatShortDate(h.endDate)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <div className="mt-6">
+        {tab === "overview" && <OverviewTab brokerage={brokerage} permissions={permissions} />}
+        {tab === "realtors" && <RealtorsTab brokerageId={brokerage.id} />}
+        {tab === "transactions" && <TransactionsTab brokerageId={brokerage.id} permissions={permissions} />}
+        {tab === "activity" && <ActivityTab brokerageId={brokerage.id} filter={parseBrokerageTimelineFilter(type)} />}
+      </div>
     </div>
   );
 }
