@@ -7,6 +7,7 @@ import { assertCan } from "@/lib/rbac";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 import { digitsOnly, isValidPhoneInput } from "@/lib/phone";
+import { loadBrokeragePreview, type BrokeragePreview } from "@/lib/brokerages/preview";
 import type { Role } from "@prisma/client";
 
 export interface NewBrokerageInput {
@@ -90,4 +91,62 @@ export async function createBrokerageInline(data: { name: string; phone: string 
   const brokerage = await prisma.brokerage.create({ data: { name, phone } });
   revalidatePath("/brokerages");
   return { id: brokerage.id, name: brokerage.name };
+}
+
+export async function getBrokeragePreview(brokerageId: string): Promise<BrokeragePreview | null> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Not signed in.");
+  return loadBrokeragePreview(brokerageId, session.user.role as Role | undefined);
+}
+
+export type BrokerageField = "name" | "phone" | "email" | "addressLine1" | "city" | "state" | "zip";
+
+// One field at a time, from the drawer's click-to-edit fields. Validates
+// the same way as creating, enforces crm:write, and audits before/after.
+export async function updateBrokerageField(brokerageId: string, field: BrokerageField, value: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+
+  const trimmed = value.trim();
+  let next: string | null = trimmed || null;
+  switch (field) {
+    case "name":
+      if (!next) return { ok: false, error: "Brokerage name is required." };
+      break;
+    case "phone":
+      if (!isValidPhoneInput(trimmed)) return { ok: false, error: "Phone number must have 10 digits." };
+      next = trimmed ? digitsOnly(trimmed) : null;
+      break;
+    case "email":
+      if (next && !z.email().safeParse(next).success) return { ok: false, error: "That email address doesn't look valid." };
+      break;
+    case "state":
+      next = next?.toUpperCase() ?? null;
+      if (next && !/^[A-Z]{2}$/.test(next)) return { ok: false, error: "State should be a 2-letter code, like NC." };
+      break;
+    case "addressLine1":
+    case "city":
+    case "zip":
+      break;
+    default:
+      return { ok: false, error: "That field can't be edited here." };
+  }
+
+  const before = await prisma.brokerage.findUnique({ where: { id: brokerageId } });
+  if (!before || before.archivedAt) return { ok: false, error: "Brokerage not found." };
+  if (before[field] === next) return { ok: true };
+  await prisma.$transaction(async (tx) => {
+    await tx.brokerage.update({ where: { id: brokerageId }, data: { [field]: next } });
+    await logActivity(tx, {
+      actorId: session?.user?.id,
+      action: "brokerage.updated",
+      entityType: "Brokerage",
+      entityId: brokerageId,
+      before: { [field]: before[field] },
+      after: { [field]: next },
+    });
+  });
+  revalidatePath("/brokerages");
+  revalidatePath(`/brokerages/${brokerageId}`);
+  return { ok: true };
 }
