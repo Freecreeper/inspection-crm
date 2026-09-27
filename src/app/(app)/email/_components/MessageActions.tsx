@@ -7,7 +7,9 @@ import { cancelEmail, processEmailQueueNow, retryEmail } from "../actions";
 
 const btn = "rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60";
 
-export function MessageActions({ id, status, canSend }: { id: string; status: EmailStatus; canSend: boolean }) {
+// A campaign recipient skipped by the audience rules (duplicate address, not
+// opted in, …) can't be retried one by one; only a provider failure can.
+export function MessageActions({ id, status, canSend, campaign = false }: { id: string; status: EmailStatus; canSend: boolean; campaign?: boolean }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -28,7 +30,7 @@ export function MessageActions({ id, status, canSend }: { id: string; status: Em
   return (
     <span className="inline-flex flex-col items-end gap-1">
       <span className="flex gap-1.5">
-        {(status === "FAILED" || status === "SKIPPED") && (
+        {(status === "FAILED" || (status === "SKIPPED" && !campaign)) && (
           <button type="button" disabled={pending} onClick={() => run(() => retryEmail(id))} className={btn}>
             Retry
           </button>

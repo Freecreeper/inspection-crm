@@ -265,6 +265,9 @@ export async function retryEmail(id: string): Promise<Result<{ status: string }>
   const { userId } = await requirePermission("email:send");
   const message = await prisma.emailMessage.findUnique({ where: { id }, include: { customer: true, realtor: true } });
   if (!message || !["FAILED", "SKIPPED"].includes(message.status)) return { ok: false, error: "Only a failed or skipped email can be retried." };
+  // Campaign recipients were decided by the approved audience rules; letting
+  // one be re-queued could send a duplicate or bypass an exclusion.
+  if (message.campaignId && message.status === "SKIPPED") return { ok: false, error: "Campaign recipients skipped by the audience rules can't be retried." };
 
   const email = message.customer?.email ?? message.realtor?.email ?? message.recipientEmail;
   const settings = await getEmailSettings();

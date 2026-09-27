@@ -188,8 +188,10 @@ months, or hand-picked realtors) → **Preview audience** (eligible count, exclu
 Submit for review → **Owner approves** (now or at a time) → worker materializes one EmailMessage per realtor
 (excluded ones recorded as SKIPPED with the reason; duplicate addresses collapsed) → rate-limited sending
 (`campaignSendsPerMinute`) → Completed. Cancelling withdraws everything not yet sent. Editing after submission returns
-it to draft, so approval always covers exactly what was reviewed. Nothing — including AI — can choose an audience or
-send a campaign without that approval.
+it to draft, so approval always covers exactly what was reviewed. Approving is two-step: the owner sees a fresh
+eligible/excluded count and the send time, then confirms; it's blocked while the editor has unsaved changes. Recipients
+skipped by the audience rules can't be retried individually (that could send a duplicate or bypass an exclusion); a
+provider failure can. Nothing — including AI — can choose an audience or send a campaign without that approval.
 
 ## RBAC
 
@@ -222,3 +224,6 @@ other preparer; it can't send, change preferences, pick recipients, or touch fin
 - Report emails can't be switched to review mode (the recipient decision is the review).
 - Customer marketing isn't supported (customers only receive operational email).
 - The composer offers recipients related to the record it was opened from; there's no free-form "To".
+- No separation of duties on campaigns: an owner can create, submit, and approve their own campaign.
+- Delivery webhooks (delivered/bounced/complaint) only arrive in `live` mode; in `log` mode statuses stop at "Sent
+  (simulated)".

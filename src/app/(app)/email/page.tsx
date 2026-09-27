@@ -94,7 +94,7 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
                   <span className="block text-xs text-slate-500">{CATEGORY_LABELS[m.category]}</span>
                 </td>
                 <td className="px-3 py-2.5 text-xs text-slate-600">
-                  {MODE_LABELS[m.mode]}
+                  {m.campaignId ? "Campaign" : MODE_LABELS[m.mode]}
                   <span className="block text-slate-500">{m.automation?.name ?? m.campaign?.name ?? m.template?.name ?? ""}</span>
                 </td>
                 <td className="px-3 py-2.5">
@@ -102,7 +102,7 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
                   {m.statusReason && !m.simulated && <span className="mt-0.5 block max-w-xs text-xs text-slate-500">{m.statusReason}</span>}
                 </td>
                 <td className="px-3 py-2.5 text-right">
-                  <MessageActions id={m.id} status={m.status} canSend={can(role, "email:send")} />
+                  <MessageActions id={m.id} status={m.status} canSend={can(role, "email:send")} campaign={m.campaignId !== null} />
                 </td>
               </tr>
             ))}

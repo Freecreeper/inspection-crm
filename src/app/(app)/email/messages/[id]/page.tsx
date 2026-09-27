@@ -65,7 +65,7 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
           {m.status === "DRAFT" && composeContextForMessage(m) && can(role, "email:send") && (
             <EmailButton context={composeContextForMessage(m)!} draftId={m.id} label="Review & send" />
           )}
-          <MessageActions id={m.id} status={m.status} canSend={can(role, "email:send")} />
+          <MessageActions id={m.id} status={m.status} canSend={can(role, "email:send")} campaign={m.campaignId !== null} />
         </div>
       </div>
 
@@ -94,7 +94,7 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
         </div>
         <div>
           <dt className="text-xs text-slate-500">Mode</dt>
-          <dd>{MODE_LABELS[m.mode]}</dd>
+          <dd>{m.campaignId ? "Campaign (owner-approved)" : MODE_LABELS[m.mode]}</dd>
         </div>
         <div>
           <dt className="text-xs text-slate-500">Source</dt>

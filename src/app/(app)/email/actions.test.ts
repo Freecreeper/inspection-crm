@@ -82,6 +82,7 @@ describe("retrying a skipped email", () => {
     category: "TRANSACTIONAL",
     recipientType: "CUSTOMER",
     recipientEmail: null,
+    campaignId: null,
     scheduledFor,
     customer: { email: "ava@example.test" },
     realtor: null,
@@ -92,6 +93,12 @@ describe("retrying a skipped email", () => {
     db.emailMessage.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "m1", ...data }));
     expect(await retryEmail("m1")).toEqual({ ok: true, data: { status: "SCHEDULED" } });
     expect(db.emailMessage.update).toHaveBeenCalledWith({ where: { id: "m1" }, data: expect.objectContaining({ status: "SCHEDULED", recipientEmail: "ava@example.test" }) });
+  });
+
+  it("a campaign recipient skipped by the audience rules can't be retried into a duplicate", async () => {
+    db.emailMessage.findUnique.mockResolvedValue({ ...skipped(null), campaignId: "camp-1", statusReason: "Duplicate email address in audience" });
+    expect(await retryEmail("m1")).toMatchObject({ ok: false });
+    expect(db.emailMessage.update).not.toHaveBeenCalled();
   });
 
   it("anything already due is queued now", async () => {
