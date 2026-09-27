@@ -2,21 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Mail, Phone } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
-import { InlineField } from "@/components/InlineField";
 import { formatShortDate } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
-import { telHref } from "@/lib/realtors/display";
 import type { BrokeragePreview } from "@/lib/brokerages/preview";
-import { MoreMenu } from "../../realtors/_components/MoreMenu";
-import { getBrokeragePreview, updateBrokerageField, type BrokerageField } from "../actions";
+import { getBrokeragePreview } from "../actions";
+import { BrokerageContactFields, BrokerageQuickActions } from "./BrokerageShared";
 
 type LoadState = { status: "loading" } | { status: "ready"; preview: BrokeragePreview } | { status: "missing" } | { status: "error" };
-
-const actionClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
-const unavailableClass = "inline-flex items-center gap-1.5 rounded-md border border-dashed border-slate-200 px-3 py-1.5 text-sm text-slate-400";
 
 // The brokerage counterpart of RealtorPreviewDrawer: opened by selecting a
 // directory row, it fetches that one brokerage on demand. A response for a
@@ -62,44 +55,11 @@ export function BrokeragePreviewDrawer({ brokerageId, onClose, onChanged }: { br
 
 function PreviewBody({ preview, onChanged }: { preview: BrokeragePreview; onChanged: () => void }) {
   const { stats, permissions } = preview;
-  const saver = (field: BrokerageField) => async (value: string) => {
-    const result = await updateBrokerageField(preview.id, field, value);
-    if (result.ok) onChanged();
-    return result;
-  };
-  const field = (label: string, key: BrokerageField, extra: Partial<React.ComponentProps<typeof InlineField>> = {}) => (
-    <InlineField label={label} value={preview[key] ?? ""} canEdit={permissions.canWrite} onSave={saver(key)} {...(extra as object)} />
-  );
-
   return (
     <div className="divide-y divide-slate-100">
       <section className="space-y-3 px-5 py-4" aria-label="Summary">
         <p className="text-sm text-slate-600">{preview.address || <span className="text-slate-400">No address on file</span>}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          {preview.phone ? (
-            <a href={telHref(preview.phone)} className={actionClass}>
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Call
-            </a>
-          ) : (
-            <span className={unavailableClass}>
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Phone not provided
-            </span>
-          )}
-          {preview.email ? (
-            <a href={`mailto:${preview.email}`} className={actionClass}>
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              Email
-            </a>
-          ) : (
-            <span className={unavailableClass}>
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              Email not provided
-            </span>
-          )}
-          <MoreMenu buttonClassName={actionClass} items={[{ label: "Open full record", href: `/brokerages/${preview.id}` }]} />
-        </div>
+        <BrokerageQuickActions brokerageId={preview.id} phone={preview.phone} email={preview.email} showOpenRecord />
       </section>
 
       <section className="px-5 py-4" aria-label="At a glance">
@@ -126,16 +86,7 @@ function PreviewBody({ preview, onChanged }: { preview: BrokeragePreview; onChan
         <h3 id="brokerage-drawer-contact" className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
           Contact
         </h3>
-        <div className="space-y-3">
-          {field("Phone", "phone", { editor: "tel", display: preview.phone ? formatPhone(preview.phone) : undefined, formatInput: formatPhone })}
-          {field("Email", "email", { editor: "email" })}
-          {field("Street address", "addressLine1")}
-          {field("City", "city")}
-          <div className="grid grid-cols-2 gap-3">
-            {field("State", "state")}
-            {field("ZIP", "zip")}
-          </div>
-        </div>
+        <BrokerageContactFields brokerageId={preview.id} values={preview} canEdit={permissions.canWrite} onSaved={onChanged} />
       </section>
 
       <section className="px-5 py-4" aria-labelledby="brokerage-drawer-realtors">
