@@ -17,6 +17,13 @@ import { PropertyCombobox } from "../../properties/PropertyCombobox";
 import { CustomerCombobox } from "../../customers/CustomerCombobox";
 import { RealtorCombobox } from "../../realtors/RealtorCombobox";
 import { Combobox } from "@/components/Combobox";
+import type { Role } from "@prisma/client";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { formatMoney, invoiceTotals, isInvoiceCollectible } from "@/lib/invoices";
+import { EmailButton } from "@/components/email/EmailComposer";
+import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
+import { RecordPaymentForm } from "../../invoices/RecordPaymentForm";
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,7 +41,8 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         },
         tasks: { orderBy: [{ completedAt: "asc" }, { dueAt: "asc" }], include: { assignee: true } },
         appointments: { where: { cancelledAt: null }, orderBy: { startAt: "asc" } },
-        communications: { orderBy: { occurredAt: "desc" } },
+        communications: { orderBy: { occurredAt: "desc" }, include: { email: { select: { id: true, status: true, simulated: true } } } },
+        invoices: { orderBy: { createdAt: "asc" }, include: { items: true, payments: true } },
         documents: { orderBy: { createdAt: "desc" } },
       },
     }),
@@ -44,6 +52,10 @@ export default async function TransactionDetailPage({ params }: { params: Promis
     prisma.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
   if (!transaction) notFound();
+  const session = await auth();
+  const role = session?.user?.role as Role | undefined;
+  const canEmail = can(role, "email:send");
+  const canRecordPayment = can(role, "invoice:create");
 
   const inspectors = users.filter((u) => u.role === "INSPECTOR");
   const primaryCustomer = getPrimaryCustomer(transaction.customers);
@@ -301,14 +313,69 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         </form>
       </section>
 
+      {transaction.invoices.length > 0 && (
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="text-sm font-semibold text-slate-900">Invoices</h2>
+          <ul className="mt-2 space-y-2 text-sm">
+            {transaction.invoices.map((inv) => {
+              const totals = invoiceTotals(inv);
+              const collectible = isInvoiceCollectible(inv.status, totals.balance);
+              return (
+                <li key={inv.id} className="rounded-md bg-slate-50 px-3 py-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-medium text-slate-800">{inv.invoiceNumber}</span>
+                    <span className="font-mono text-[11px] text-slate-500">{inv.status}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs tabular-nums text-slate-600">
+                    Total {formatMoney(totals.total)} · Paid {formatMoney(totals.paid)} · Balance {formatMoney(totals.balance)}
+                    {inv.dueAt && ` · Due ${inv.dueAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                  </p>
+                  {collectible && (
+                    <div className="mt-2 flex flex-wrap items-start gap-2">
+                      {canEmail && (
+                        <EmailButton
+                          context={{ kind: "invoice", id: inv.id }}
+                          templateKey="payment_reminder"
+                          label="Send reminder"
+                          icon={false}
+                          className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        />
+                      )}
+                      {canRecordPayment && <RecordPaymentForm invoiceId={inv.id} balance={totals.balance.toFixed(2)} />}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Communications</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-slate-900">Communications</h2>
+          {canEmail && (transaction.customers.length > 0 || transaction.realtors.length > 0) && (
+            <EmailButton
+              context={{ kind: "transaction", id: transaction.id }}
+              className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            />
+          )}
+        </div>
         <ul className="mt-2 space-y-1 text-sm">
           {transaction.communications.map((c) => (
             <li key={c.id} className="rounded-md bg-slate-50 px-3 py-2">
-              <p className="text-slate-800">{c.summary}</p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="text-slate-800">
+                {c.email ? (
+                  <Link href={`/email/messages/${c.email.id}`} className="hover:underline">
+                    {c.summary}
+                  </Link>
+                ) : (
+                  c.summary
+                )}
+              </p>
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
                 {c.channel} · {c.direction} · {c.occurredAt.toLocaleString()}
+                {c.email && <EmailStatusBadge status={c.email.status} simulated={c.email.simulated} />}
               </p>
             </li>
           ))}

@@ -15,6 +15,9 @@ import { generateReportNumber, syncReportSummary, isReportEditable } from "@/lib
 import { getPrimaryCustomer } from "@/lib/transactions";
 import { renderReportPdf } from "@/lib/pdf/renderReportPdf";
 import type { Role } from "@prisma/client";
+import { runAutomationSafely } from "@/lib/email/automations/safe";
+import { onReportDeliveryCreated } from "@/lib/email/automations/report";
+import { getAutomation } from "@/lib/email/automations/registry";
 
 const UPLOAD_ROOT = path.join(process.cwd(), "storage", "uploads");
 const MEDIA_ROOT = path.join(process.cwd(), "storage", "media");
@@ -410,6 +413,36 @@ export async function createDelivery(reportId: string, formData: FormData) {
   });
   if (!latestVersion) throw new Error("Finalize the report before delivering it.");
 
+  // "Send by email": the delivery is created PENDING with an unusable
+  // placeholder token hash; the email worker mints the real link at the
+  // moment it sends, so the raw token never exists anywhere at rest. The
+  // delivery (and report) only become SENT/DELIVERED once the email goes out.
+  if (String(formData.get("sendEmail") ?? "") === "1") {
+    if (!(await getAutomation("report_ready")).active) {
+      throw new Error("Report emails are turned off in Email settings — create a link instead.");
+    }
+    const delivery = await prisma.reportDelivery.create({
+      data: {
+        reportId,
+        versionId: latestVersion.id,
+        recipientType: recipientType as never,
+        recipientName,
+        recipientEmail,
+        deliveryMethod: "email",
+        status: "PENDING",
+        deliveredById: session?.user?.id ?? null,
+        accessTokenHash: createHash("sha256").update(`unissued:${randomUUID()}`).digest("hex"),
+        accessExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+      include: { report: true },
+    });
+    await runAutomationSafely({ key: "report_ready", entityType: "ReportDelivery", entityId: delivery.id, actorId: session?.user?.id }, () =>
+      onReportDeliveryCreated(delivery.id, { actorId: session?.user?.id })
+    );
+    revalidatePath(`/inspections`);
+    redirect(`/inspections/${delivery.report.inspectionId}/report/versions`);
+  }
+
   const rawToken = randomUUID() + randomUUID();
   const accessTokenHash = createHash("sha256").update(rawToken).digest("hex");
   const accessExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
@@ -422,6 +455,7 @@ export async function createDelivery(reportId: string, formData: FormData) {
         recipientType: recipientType as never,
         recipientName,
         recipientEmail,
+        deliveryMethod: "link",
         status: "SENT",
         deliveredAt: new Date(),
         deliveredById: session?.user?.id ?? null,

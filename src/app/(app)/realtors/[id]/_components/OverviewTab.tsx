@@ -11,6 +11,8 @@ import { loadRealtorTimeline } from "@/lib/realtors/timeline";
 import { sortAlphabetically } from "@/lib/sort";
 import { BrokerageEditor, RecordProfileFields, RecordTaskActions } from "./RecordClient";
 import { Card, Empty, Metric, type RecordPermissions } from "./ui";
+import { RelationshipEmailCard } from "./RelationshipEmailCard";
+import { suppressionScopesFor } from "@/lib/email/eligibility";
 
 // A summary, not the whole record: a handful of metrics, then focused
 // cards that each link onward to the tab holding the full detail.
@@ -21,7 +23,7 @@ export async function OverviewTab({
   realtor: Realtor & { brokerage: Brokerage | null };
   permissions: RecordPermissions;
 }) {
-  const [metrics, nextAction, recentTransactions, recentActivity, history, brokerages] = await Promise.all([
+  const [metrics, nextAction, recentTransactions, recentActivity, history, brokerages, lastEmails, suppressions] = await Promise.all([
     getRealtorMetrics(realtor.id, { includeFinancials: permissions.canViewFinancials }),
     findNextAction(realtor.id),
     loadAssociatedTransactions(realtor.id, { take: 5, includeFinancials: permissions.canViewFinancials }),
@@ -33,7 +35,15 @@ export async function OverviewTab({
       include: { brokerage: { select: { id: true, name: true } } },
     }),
     permissions.canWrite ? prisma.brokerage.findMany({ where: { archivedAt: null }, select: { id: true, name: true } }) : Promise.resolve([]),
+    prisma.emailMessage.groupBy({
+      by: ["category"],
+      where: { realtorId: realtor.id, status: { in: ["SENT", "DELIVERED"] } },
+      _max: { sentAt: true },
+    }),
+    suppressionScopesFor(realtor.email),
   ]);
+  const lastSent = (category: string) => lastEmails.find((e) => e.category === category)?._max.sentAt?.toISOString() ?? null;
+  const toDateInput = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
   return (
     <div className="space-y-6">
@@ -120,6 +130,35 @@ export async function OverviewTab({
           </Card>
         </div>
       </div>
+
+      <Card title="Relationship & email">
+        <RelationshipEmailCard
+          canEditDates={permissions.canWrite}
+          canEditPreferences={permissions.canManageEmailPreferences}
+          data={{
+            realtorId: realtor.id,
+            birthdayMonth: realtor.birthdayMonth,
+            birthdayDay: realtor.birthdayDay,
+            careerStartDate: toDateInput(realtor.careerStartDate),
+            relationshipStartDate: toDateInput(realtor.relationshipStartDate),
+            relationshipEmailsEnabled: realtor.relationshipEmailsEnabled,
+            marketingOptIn: realtor.marketingOptIn,
+            marketingOptInSource: realtor.marketingOptInSource,
+            marketingOptInAt: realtor.marketingOptInAt?.toISOString() ?? null,
+            marketingUnsubscribedAt: realtor.marketingUnsubscribedAt?.toISOString() ?? null,
+            hasEmail: Boolean(realtor.email),
+            suppression: suppressions.includes("ALL")
+              ? "bounced / undeliverable — no email is sent"
+              : suppressions.includes("NON_TRANSACTIONAL")
+                ? "complaint or opt-out — only operational email is sent"
+                : suppressions.includes("MARKETING")
+                  ? "marketing only"
+                  : null,
+            lastRelationshipEmailAt: lastSent("RELATIONSHIP"),
+            lastMarketingEmailAt: lastSent("MARKETING"),
+          }}
+        />
+      </Card>
 
       <Card title="Notes">
         <RecordProfileFields realtorId={realtor.id} values={realtor} fields={["notes"]} canEdit={permissions.canWrite} />

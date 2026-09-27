@@ -134,7 +134,15 @@ async function sendToRecipients(plan: SendPlan, db: Db) {
 
 // Schedules the pre-inspection reminder for the inspection's *current*
 // appointment version. Called on scheduling and on every reschedule.
-type HookOpts = { actorId?: string | null; now?: Date; db?: Db; quiet?: boolean };
+type HookOpts = {
+  actorId?: string | null;
+  now?: Date;
+  db?: Db;
+  quiet?: boolean;
+  // A cancelled inspection put back on the calendar: confirm it again, for
+  // this appointment version, even though the original confirmation went out.
+  reinstated?: boolean;
+};
 
 export async function scheduleInspectionReminders(inspectionId: string, opts: HookOpts = {}) {
   const db = opts.db ?? prisma;
@@ -182,7 +190,9 @@ export async function onInspectionScheduled(inspectionId: string, opts: HookOpts
           automationKey: "inspection_confirmation",
           automationId: auto.row.id,
           sendMode: auto.sendMode,
-          keyPrefix: `inspection:${inspection.id}:confirmation`,
+          keyPrefix: opts.reinstated
+            ? `inspection:${inspection.id}:confirmation:reinstated:v${inspection.scheduleVersion}`
+            : `inspection:${inspection.id}:confirmation`,
           customerTemplateKey: auto.config.templateKey,
           realtorTemplateKey: auto.config.realtorTemplateKey,
           guard: { kind: "inspectionScheduled", inspectionId: inspection.id, scheduleVersion: inspection.scheduleVersion },

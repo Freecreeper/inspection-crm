@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getPrimaryCustomer } from "@/lib/transactions";
-import { updateInspectionStatus, updateInspectionConditions, assignInspector } from "../actions";
+import { updateInspectionStatus, updateInspectionConditions, assignInspector, rescheduleInspection } from "../actions";
+import type { Role } from "@prisma/client";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { EmailButton } from "@/components/email/EmailComposer";
+import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 import { createReportFromTemplate } from "../report-actions";
 import { Combobox } from "@/components/Combobox";
 
@@ -22,6 +27,19 @@ export default async function InspectionDetailPage({ params }: { params: Promise
     prisma.reportTemplate.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
   if (!inspection) notFound();
+  const session = await auth();
+  const role = session?.user?.role as Role | undefined;
+  const canEmail = can(role, "email:send");
+  const canSchedule = can(role, "crm:write");
+  const rescheduleAction = rescheduleInspection.bind(null, inspection.id);
+  const emails = await prisma.emailMessage.findMany({
+    where: { inspectionId: inspection.id, status: { not: "DRAFT" } },
+    orderBy: [{ createdAt: "desc" }],
+    take: 12,
+    select: { id: true, subject: true, recipientName: true, status: true, statusReason: true, simulated: true, scheduledFor: true, sentAt: true, createdAt: true },
+  });
+  // <input type="datetime-local"> wants local wall-clock time.
+  const localValue = (d: Date | null) => (d ? new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "");
 
   const primaryCustomer = getPrimaryCustomer(inspection.transaction.customers);
   const statusAction = updateInspectionStatus.bind(null, inspection.id);
@@ -62,6 +80,23 @@ export default async function InspectionDetailPage({ params }: { params: Promise
           </button>
         </form>
 
+        <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Scheduled for</h3>
+        <p className="mt-1 text-sm text-slate-700">
+          {inspection.scheduledAt ? inspection.scheduledAt.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not scheduled"}
+        </p>
+        {canSchedule && inspection.status === "SCHEDULED" && (
+          <form action={rescheduleAction} className="mt-2 flex flex-wrap gap-2">
+            <label htmlFor="scheduledAt" className="sr-only">
+              New date and time
+            </label>
+            <input id="scheduledAt" name="scheduledAt" type="datetime-local" required defaultValue={localValue(inspection.scheduledAt)} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              {inspection.scheduledAt ? "Reschedule" : "Schedule"}
+            </button>
+          </form>
+        )}
+        <p className="mt-1 text-xs text-slate-500">Changing the date or time updates reminders and notifies customers per the email automations.</p>
+
         <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Inspector</h3>
         <p className="mt-1 text-sm text-slate-700">{inspection.inspector?.name || "Unassigned"}</p>
         <form action={assignAction} className="mt-2 flex gap-2">
@@ -77,6 +112,36 @@ export default async function InspectionDetailPage({ params }: { params: Promise
             Assign
           </button>
         </form>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-slate-900">Emails</h2>
+          {canEmail && (
+            <EmailButton
+              context={{ kind: "inspection", id: inspection.id }}
+              className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            />
+          )}
+        </div>
+        <ul className="mt-2 space-y-1 text-sm">
+          {emails.map((m) => (
+            <li key={m.id} className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
+              <span className="min-w-0">
+                <Link href={`/email/messages/${m.id}`} className="text-slate-800 hover:underline">
+                  {m.subject || "(no subject)"}
+                </Link>
+                <span className="block text-xs text-slate-500">
+                  To {m.recipientName}
+                  {m.status === "SCHEDULED" && m.scheduledFor && ` · sends ${m.scheduledFor.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
+                  {m.statusReason && !m.simulated && ` · ${m.statusReason}`}
+                </span>
+              </span>
+              <EmailStatusBadge status={m.status} simulated={m.simulated} />
+            </li>
+          ))}
+          {emails.length === 0 && <p className="text-sm text-slate-400">No emails for this inspection yet.</p>}
+        </ul>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">

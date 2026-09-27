@@ -42,6 +42,8 @@ export default async function RealtorRecordPage({
     canWrite: can(role, "crm:write"),
     canViewFinancials: can(role, "financial:read"),
     canReadDocuments: can(role, "document:read"),
+    canEmail: can(role, "email:send"),
+    canManageEmailPreferences: can(role, "email:preferences_manage"),
   };
 
   const realtor = await prisma.realtor.findFirst({ where: { id, archivedAt: null }, include: { brokerage: true } });
@@ -75,7 +77,7 @@ export default async function RealtorRecordPage({
           </div>
         </div>
         <div className="lg:max-w-md">
-          <RecordQuickActions realtorId={realtor.id} phone={realtor.phone} email={realtor.email} canWrite={permissions.canWrite} />
+          <RecordQuickActions realtorId={realtor.id} phone={realtor.phone} email={realtor.email} canWrite={permissions.canWrite} canEmail={permissions.canEmail} />
         </div>
       </header>
 

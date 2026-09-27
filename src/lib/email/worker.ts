@@ -86,8 +86,24 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
   const message = await db.emailMessage.findUnique({ where: { id }, include: { template: true } });
   if (!message || message.status !== "SENDING") return { status: message?.status ?? "CANCELLED" };
 
+  // A report delivery's status follows its email: it only becomes SENT
+  // (and the report DELIVERED) when the email actually goes out.
+  const syncReportDelivery = async (status: EmailMessage["status"]) => {
+    if (!message.reportDeliveryId || status === "QUEUED") return;
+    if (status === "SENT") {
+      const delivery = await db.reportDelivery.update({
+        where: { id: message.reportDeliveryId },
+        data: { status: "SENT", deliveredAt: now },
+      });
+      await db.inspectionReport.update({ where: { id: delivery.reportId }, data: { status: "DELIVERED", deliveredAt: now } });
+    } else {
+      await db.reportDelivery.updateMany({ where: { id: message.reportDeliveryId, status: "PENDING" }, data: { status: "FAILED" } });
+    }
+  };
+
   const finish = async (data: Prisma.EmailMessageUpdateInput): Promise<Outcome> => {
     await db.emailMessage.update({ where: { id }, data });
+    await syncReportDelivery(data.status as EmailMessage["status"]);
     return { status: data.status as EmailMessage["status"], reason: (data.statusReason as string | undefined) ?? undefined };
   };
 
@@ -201,6 +217,7 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
         },
       });
     });
+    await syncReportDelivery("SENT");
     return { status: "SENT" };
   }
 

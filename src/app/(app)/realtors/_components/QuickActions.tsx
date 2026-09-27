@@ -5,6 +5,7 @@ import { Mail, Phone, Plus } from "lucide-react";
 import { telHref } from "@/lib/realtors/display";
 import { LogCommunicationForm, QuickTaskForm } from "./QuickForms";
 import { MoreMenu } from "./MoreMenu";
+import { EmailComposer } from "@/components/email/EmailComposer";
 
 const actionClass =
   "inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
@@ -17,6 +18,7 @@ export function QuickActions({
   phone,
   email,
   canWrite,
+  canEmail = canWrite,
   showOpenRecord = false,
   onChanged,
   onCustomize,
@@ -25,12 +27,16 @@ export function QuickActions({
   phone: string | null;
   email: string | null;
   canWrite: boolean;
+  // Sending through the CRM (email:send). The server enforces it; this only
+  // decides whether to offer the composer or fall back to a mail link.
+  canEmail?: boolean;
   showOpenRecord?: boolean;
   onChanged: () => void;
   // Present only where the card is customizable (the preview drawer).
   onCustomize?: () => void;
 }) {
   const [panel, setPanel] = useState<"task" | "log" | null>(null);
+  const [composer, setComposer] = useState<{ templateKey?: string } | null>(null);
 
   return (
     <div className="space-y-3">
@@ -46,7 +52,12 @@ export function QuickActions({
             Phone not provided
           </span>
         )}
-        {email ? (
+        {email && canEmail ? (
+          <button type="button" onClick={() => setComposer({})} className={actionClass}>
+            <Mail className="h-4 w-4" aria-hidden="true" />
+            Email
+          </button>
+        ) : email ? (
           <a href={`mailto:${email}`} className={actionClass}>
             <Mail className="h-4 w-4" aria-hidden="true" />
             Email
@@ -66,6 +77,7 @@ export function QuickActions({
         <MoreMenu
           buttonClassName={actionClass}
           items={[
+            ...(email && canEmail ? [{ label: "Prepare follow-up email", onSelect: () => setComposer({ templateKey: "realtor_follow_up" }) }] : []),
             ...(canWrite ? [{ label: "Log call or email", onSelect: () => setPanel("log") }] : []),
             ...(canWrite ? [{ label: "New transaction", href: `/transactions/new?realtorId=${realtorId}` }] : []),
             ...(showOpenRecord ? [{ label: "Open full record", href: `/realtors/${realtorId}` }] : []),
@@ -74,6 +86,14 @@ export function QuickActions({
           ]}
         />
       </div>
+      {composer && (
+        <EmailComposer
+          context={{ kind: "realtor", id: realtorId }}
+          templateKey={composer.templateKey}
+          onClose={() => setComposer(null)}
+          onSent={onChanged}
+        />
+      )}
       {panel === "task" && (
         <QuickTaskForm
           realtorId={realtorId}

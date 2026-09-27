@@ -361,3 +361,100 @@ export async function linkReferralSourceToRealtor(realtorId: string, referralSou
   revalidatePath("/referral-sources");
   return { ok: true, data: undefined };
 }
+
+// ---------------------------------------------------------------------------
+// Relationship dates & email preferences
+// ---------------------------------------------------------------------------
+
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+export interface RelationshipDatesInput {
+  birthdayMonth: number | null;
+  birthdayDay: number | null;
+  careerStartDate: string | null;
+  relationshipStartDate: string | null;
+}
+
+function parseOptionalDate(value: string | null): Date | null | "invalid" {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "invalid";
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date > new Date() ? "invalid" : date;
+}
+
+// All optional: a realtor with none of these simply never gets birthday or
+// anniversary emails. Birthday is month + day only — never a year.
+export async function updateRealtorRelationshipDates(realtorId: string, input: RelationshipDatesInput): Promise<ActionResult> {
+  const { userId } = await requireSession("crm:write");
+  const { birthdayMonth, birthdayDay } = input;
+  if ((birthdayMonth == null) !== (birthdayDay == null)) return { ok: false, error: "Enter both the birthday month and day, or neither." };
+  if (birthdayMonth != null && birthdayDay != null) {
+    if (!Number.isInteger(birthdayMonth) || birthdayMonth < 1 || birthdayMonth > 12) return { ok: false, error: "Pick a birthday month." };
+    if (!Number.isInteger(birthdayDay) || birthdayDay < 1 || birthdayDay > DAYS_IN_MONTH[birthdayMonth - 1]) return { ok: false, error: "That day doesn't exist in that month." };
+  }
+  const career = parseOptionalDate(input.careerStartDate);
+  const relationship = parseOptionalDate(input.relationshipStartDate);
+  if (career === "invalid" || relationship === "invalid") return { ok: false, error: "Dates must be valid and not in the future." };
+
+  const before = await prisma.realtor.findUnique({ where: { id: realtorId } });
+  if (!before || before.archivedAt) return { ok: false, error: "Realtor not found." };
+  await prisma.$transaction(async (tx) => {
+    await tx.realtor.update({
+      where: { id: realtorId },
+      data: { birthdayMonth, birthdayDay, careerStartDate: career, relationshipStartDate: relationship },
+    });
+    await logActivity(tx, {
+      actorId: userId,
+      action: "realtor.relationship_dates_updated",
+      entityType: "Realtor",
+      entityId: realtorId,
+      before: {
+        birthdayMonth: before.birthdayMonth,
+        birthdayDay: before.birthdayDay,
+        careerStartDate: before.careerStartDate?.toISOString() ?? null,
+        relationshipStartDate: before.relationshipStartDate?.toISOString() ?? null,
+      },
+      after: { birthdayMonth, birthdayDay, careerStartDate: input.careerStartDate, relationshipStartDate: input.relationshipStartDate },
+    });
+  });
+  revalidateRealtor(realtorId);
+  return { ok: true, data: undefined };
+}
+
+export interface EmailPreferencesInput {
+  relationshipEmailsEnabled: boolean;
+  marketingOptIn: boolean;
+  // Required when opting someone in: where their permission came from.
+  marketingOptInSource: string | null;
+}
+
+// Staff-managed communication preferences, separate by category. Opting a
+// realtor in to marketing requires recording where that permission came
+// from; a realtor's own unsubscribe is shown and only reversed deliberately.
+export async function updateRealtorEmailPreferences(realtorId: string, input: EmailPreferencesInput): Promise<ActionResult> {
+  const { userId } = await requireSession("email:preferences_manage");
+  const before = await prisma.realtor.findUnique({ where: { id: realtorId } });
+  if (!before || before.archivedAt) return { ok: false, error: "Realtor not found." };
+
+  const source = input.marketingOptInSource?.trim() || null;
+  const optingIn = input.marketingOptIn && !before.marketingOptIn;
+  if (optingIn && !source) return { ok: false, error: "Record how they agreed to marketing email (e.g. “signed up at open house”)." };
+
+  const data: Prisma.RealtorUpdateInput = { relationshipEmailsEnabled: input.relationshipEmailsEnabled, marketingOptIn: input.marketingOptIn };
+  if (optingIn) Object.assign(data, { marketingOptInSource: source, marketingOptInAt: new Date(), marketingUnsubscribedAt: null });
+  if (!input.marketingOptIn && before.marketingOptIn) Object.assign(data, { marketingUnsubscribedAt: new Date() });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.realtor.update({ where: { id: realtorId }, data });
+    await logActivity(tx, {
+      actorId: userId,
+      action: "realtor.email_preferences_updated",
+      entityType: "Realtor",
+      entityId: realtorId,
+      before: { relationshipEmailsEnabled: before.relationshipEmailsEnabled, marketingOptIn: before.marketingOptIn },
+      after: { relationshipEmailsEnabled: input.relationshipEmailsEnabled, marketingOptIn: input.marketingOptIn, source },
+    });
+  });
+  revalidateRealtor(realtorId);
+  return { ok: true, data: undefined };
+}

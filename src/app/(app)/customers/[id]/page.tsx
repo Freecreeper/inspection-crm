@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { EmailButton } from "@/components/email/EmailComposer";
+import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,12 +19,27 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     },
   });
   if (!customer) notFound();
+  const session = await auth();
+  const canEmail = can(session?.user?.role as Role | undefined, "email:send");
+  const emails = await prisma.emailMessage.findMany({
+    where: { customerId: customer.id, status: { not: "DRAFT" } },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { id: true, subject: true, status: true, statusReason: true, simulated: true, createdAt: true, sentAt: true },
+  });
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl font-semibold text-slate-900">
-        {customer.firstName} {customer.lastName}
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-slate-900">
+          {customer.firstName} {customer.lastName}
+        </h1>
+        {customer.email && canEmail ? (
+          <EmailButton context={{ kind: "customer", id: customer.id }} />
+        ) : !customer.email ? (
+          <span className="text-sm text-slate-400">Email not provided</span>
+        ) : null}
+      </div>
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-white p-4 text-sm">
         <dt className="text-slate-500">Email</dt>
         <dd className="text-slate-900">{customer.email || <span className="text-slate-400">Not provided</span>}</dd>
@@ -69,6 +89,25 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </tbody>
         </table>
       </div>
+
+      <h2 className="mt-6 text-sm font-semibold text-slate-900">Emails</h2>
+      <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white text-sm">
+        {emails.map((m) => (
+          <li key={m.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-2.5">
+            <span className="min-w-0">
+              <Link href={`/email/messages/${m.id}`} className="text-slate-900 hover:underline">
+                {m.subject || "(no subject)"}
+              </Link>
+              {m.statusReason && !m.simulated && <span className="block text-xs text-slate-500">{m.statusReason}</span>}
+            </span>
+            <span className="text-right text-xs tabular-nums text-slate-500">
+              <EmailStatusBadge status={m.status} simulated={m.simulated} />
+              <span className="block">{(m.sentAt ?? m.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+            </span>
+          </li>
+        ))}
+        {emails.length === 0 && <li className="px-4 py-4 text-slate-500">No emails yet.</li>}
+      </ul>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { amendReport, createDelivery } from "../../../report-actions";
+import { getAutomation } from "@/lib/email/automations/registry";
+import { describeEmailDelivery } from "@/lib/email/config";
 
 export default async function ReportVersionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +24,8 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
   const report = inspection.reports[0];
   if (!report) notFound();
 
+  const reportEmailsOn = (await getAutomation("report_ready")).active;
+  const delivery = describeEmailDelivery();
   const cookieStore = await cookies();
   const flashToken = cookieStore.get("delivery_token_flash")?.value;
 
@@ -40,10 +44,7 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
       {flashToken && (
         <section className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
           <p className="font-medium">Delivery link created — copy it now, it won&apos;t be shown again here.</p>
-          <p className="mt-1 text-xs">
-            Email delivery isn&apos;t configured in this environment (no SMTP/Postmark credentials) — share this link
-            with the recipient yourself.
-          </p>
+          <p className="mt-1 text-xs">Share this link with the recipient yourself.</p>
           <code className="mt-2 block break-all rounded bg-white px-2 py-1.5 text-xs">{`/r/${flashToken}`}</code>
         </section>
       )}
@@ -78,6 +79,7 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
                   {v.deliveries.map((d) => (
                     <li key={d.id}>
                       → {d.recipientName} ({d.recipientType}) — <span className="font-mono">{d.status}</span>
+                      <span className="text-slate-400"> · {d.deliveryMethod === "email" ? "by email" : "link"}</span>
                     </li>
                   ))}
                 </ul>
@@ -103,8 +105,24 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
             </select>
             <input name="recipientName" required placeholder="Recipient name" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
             <input name="recipientEmail" type="email" required placeholder="Recipient email" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            {reportEmailsOn ? (
+              <fieldset className="space-y-1 text-sm">
+                <legend className="sr-only">How to deliver</legend>
+                <label className="flex items-center gap-2">
+                  <input type="radio" name="sendEmail" value="1" defaultChecked />
+                  Email the secure link to this recipient
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="radio" name="sendEmail" value="0" />
+                  Just create a link — I&apos;ll send it myself
+                </label>
+                {!delivery.delivers && <p className="text-xs text-amber-700">{delivery.summary}</p>}
+              </fieldset>
+            ) : (
+              <p className="text-xs text-slate-500">Report emails are turned off in Email → Automations; this creates a link to share yourself.</p>
+            )}
             <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
-              Create delivery link
+              Deliver report
             </button>
           </form>
         </section>

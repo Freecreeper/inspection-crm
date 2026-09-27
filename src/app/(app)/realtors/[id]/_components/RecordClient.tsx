@@ -12,7 +12,7 @@ import { changeRealtorBrokerageInline, createReferralSourceForRealtor, linkRefer
 // Thin client wrappers for the server-rendered record: each performs its
 // action and then refreshes the route so every tab reflects the change.
 
-export function RecordQuickActions(props: { realtorId: string; phone: string | null; email: string | null; canWrite: boolean }) {
+export function RecordQuickActions(props: { realtorId: string; phone: string | null; email: string | null; canWrite: boolean; canEmail: boolean }) {
   const router = useRouter();
   return <QuickActions {...props} onChanged={() => router.refresh()} />;
 }
