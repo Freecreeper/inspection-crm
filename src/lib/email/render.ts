@@ -51,6 +51,12 @@ export function renderSubjectAndBody(subject: string, body: string, vars: EmailV
   };
 }
 
+// Templates mark the part a person must write as a line of bracketed text,
+// e.g. "[Describe the service here.]". Returns the first one left in.
+export function unfilledPlaceholder(text: string): string | null {
+  return text.match(/^[ \t]*(\[[^\]\n]+\])[ \t]*$/m)?.[1] ?? null;
+}
+
 export function referencedVariables(template: string): string[] {
   return [...new Set([...template.matchAll(PLACEHOLDER)].map((m) => m[1]))];
 }

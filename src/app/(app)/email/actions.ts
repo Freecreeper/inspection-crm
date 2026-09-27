@@ -11,7 +11,7 @@ import { loadEmailVariables } from "@/lib/email/context";
 import { checkEligibility, normalizeEmail } from "@/lib/email/eligibility";
 import { listComposeRecipients, parseComposeContext, type ComposeContext, type ComposeRecipient } from "@/lib/email/composer";
 import { enqueueEmail } from "@/lib/email/queue";
-import { redactSendTime, renderSubjectAndBody } from "@/lib/email/render";
+import { redactSendTime, renderSubjectAndBody, unfilledPlaceholder } from "@/lib/email/render";
 import { getEmailSettings } from "@/lib/email/settings";
 import { ensureEmailSystem, runEmailTick } from "@/lib/email/system";
 import { AUTOMATIONS, parseAutomationConfig, type AutomationKey } from "@/lib/email/automations/registry";
@@ -516,8 +516,17 @@ export async function getAudiencePreview(input: { audience: unknown; category: "
   return { ok: true, data: await previewAudience(audience.data, input.category) };
 }
 
+// Template instructions like "[Describe the service here.]" must never reach
+// a mailbox, so a campaign can't be submitted or approved with one left in.
+async function campaignPlaceholder(id: string): Promise<string | null> {
+  const campaign = await prisma.emailCampaign.findUnique({ where: { id }, select: { subject: true, body: true } });
+  return campaign ? unfilledPlaceholder(`${campaign.subject}\n${campaign.body}`) : null;
+}
+
 export async function submitCampaignForReview(id: string): Promise<Result> {
   const { userId } = await requirePermission("email:campaign_create");
+  const placeholder = await campaignPlaceholder(id);
+  if (placeholder) return { ok: false, error: `Replace the placeholder ${placeholder} before submitting.` };
   const { count } = await prisma.emailCampaign.updateMany({ where: { id, status: "DRAFT" }, data: { status: "READY_FOR_REVIEW", submittedAt: new Date() } });
   if (count === 0) return { ok: false, error: "Only a draft can be submitted." };
   await logActivity(prisma, { actorId: userId, action: "email.campaign_submitted", entityType: "EmailCampaign", entityId: id });
@@ -531,6 +540,8 @@ export async function approveCampaign(id: string, input: { sendAt: string | null
   const { userId } = await requirePermission("email:campaign_approve");
   const sendAt = input.sendAt ? new Date(input.sendAt) : new Date();
   if (Number.isNaN(sendAt.getTime())) return { ok: false, error: "Pick a valid send time." };
+  const placeholder = await campaignPlaceholder(id);
+  if (placeholder) return { ok: false, error: `This campaign still contains the placeholder ${placeholder}.` };
   const { count } = await prisma.emailCampaign.updateMany({
     where: { id, status: "READY_FOR_REVIEW" },
     data: { status: "SCHEDULED", scheduledAt: sendAt, approvedAt: new Date(), approvedById: userId },

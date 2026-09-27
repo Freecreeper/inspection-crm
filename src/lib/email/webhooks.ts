@@ -98,11 +98,14 @@ async function suppress(address: string, scope: SuppressionScope, reason: string
 export async function processPostmarkPayload(payload: PostmarkPayload, db: Db = prisma): Promise<{ duplicate: boolean; event: ParsedEvent }> {
   const event = parsePostmarkEvent(payload);
 
-  const message = event.emailMessageId
+  const found = event.emailMessageId
     ? await db.emailMessage.findUnique({ where: { id: event.emailMessageId } })
     : event.providerMessageId
       ? await db.emailMessage.findUnique({ where: { providerMessageId: event.providerMessageId } })
       : null;
+  // A simulated send never reached the provider, so no genuine event can be
+  // about it; one that claims to is recorded but can't change its status.
+  const message = found?.simulated ? null : found;
 
   try {
     await db.emailEvent.create({

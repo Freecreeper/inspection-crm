@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { redactSendTime, referencedVariables, renderSubjectAndBody, renderTemplate, textToHtml } from "./render";
+import { redactSendTime, referencedVariables, renderSubjectAndBody, renderTemplate, textToHtml, unfilledPlaceholder } from "./render";
 
 describe("renderTemplate", () => {
   it("resolves allowed variables from real values", () => {
@@ -55,5 +55,13 @@ describe("safety of rendered output", () => {
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
     expect(html).toContain('<a href="https://example.com/r/abc">');
+  });
+});
+
+describe("unfilledPlaceholder", () => {
+  it("finds a template instruction line left in, and ignores brackets inside prose", () => {
+    expect(unfilledPlaceholder("Hi,\n\n[Describe the service here.]\n\nThanks")).toBe("[Describe the service here.]");
+    expect(unfilledPlaceholder("Hi,\n\nSewer scopes [new] are available.\n")).toBeNull();
+    expect(unfilledPlaceholder("Hi {{realtor.firstName}},\nAll done.")).toBeNull();
   });
 });

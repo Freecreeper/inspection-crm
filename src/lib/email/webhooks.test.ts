@@ -43,6 +43,13 @@ describe("processPostmarkPayload", () => {
     });
   });
 
+  it("an event claiming to be about a simulated send can't change its status", async () => {
+    db.emailMessage.findUnique.mockResolvedValue({ ...message, simulated: true });
+    await processPostmarkPayload(delivery);
+    expect(db.emailEvent.create).toHaveBeenCalledWith({ data: expect.objectContaining({ emailMessageId: null }) });
+    expect(db.emailMessage.updateMany).not.toHaveBeenCalled();
+  });
+
   it("a duplicate webhook is recognized by its key and changes nothing", async () => {
     db.emailEvent.create.mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError("dup", { code: "P2002", clientVersion: "test" }));
     const result = await processPostmarkPayload(delivery);

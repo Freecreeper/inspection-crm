@@ -151,6 +151,14 @@ describe("campaign approval", () => {
     });
   });
 
+  it("a template's placeholder line can't be submitted or approved", async () => {
+    db.emailCampaign.findUnique.mockResolvedValue({ subject: "Tip", body: "Hi,\n\n[Your seasonal or educational content here.]\n" });
+    expect(await submitCampaignForReview("camp-1")).toMatchObject({ ok: false, error: expect.stringContaining("[Your seasonal") });
+    as("OWNER_ADMIN");
+    expect(await approveCampaign("camp-1", { sendAt: null })).toMatchObject({ ok: false });
+    expect(db.emailCampaign.updateMany).not.toHaveBeenCalled();
+  });
+
   it("can't approve a campaign that hasn't been submitted for review", async () => {
     as("OWNER_ADMIN");
     db.emailCampaign.updateMany.mockResolvedValue({ count: 0 });
