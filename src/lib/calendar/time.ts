@@ -133,11 +133,22 @@ export function addMonths(day: DayKey, months: number): DayKey {
   return new Date(Date.UTC(y, m - 1 + months, 1)).toISOString().slice(0, 10);
 }
 
-export type CalendarView = "day" | "week" | "month";
+export type CalendarView = "day" | "week" | "month" | "4month";
+export const CALENDAR_VIEWS: CalendarView[] = ["day", "week", "month", "4month"];
+export const VIEW_LABELS: Record<CalendarView, string> = { day: "Day", week: "Week", month: "Month", "4month": "4 Months" };
 
-// The day keys a view covers: [start, end). Month views show whole weeks.
+export function isCalendarView(value: unknown): value is CalendarView {
+  return typeof value === "string" && (CALENDAR_VIEWS as string[]).includes(value);
+}
+
+// The day keys a view covers: [start, end). The month view shows whole
+// weeks; the 4-month planning view shows exactly the four months.
 export function viewRange(view: CalendarView, anchor: DayKey, weekStartsOn: number): { start: DayKey; end: DayKey } {
   if (view === "day") return { start: anchor, end: addDays(anchor, 1) };
+  if (view === "4month") {
+    const start = startOfMonth(anchor);
+    return { start, end: addMonths(start, 4) };
+  }
   if (view === "week") {
     const start = startOfWeek(anchor, weekStartsOn);
     return { start, end: addDays(start, 7) };
@@ -152,6 +163,7 @@ export function viewRange(view: CalendarView, anchor: DayKey, weekStartsOn: numb
 export function shiftAnchor(view: CalendarView, anchor: DayKey, direction: 1 | -1): DayKey {
   if (view === "day") return addDays(anchor, direction);
   if (view === "week") return addDays(anchor, 7 * direction);
+  if (view === "4month") return addMonths(anchor, 4 * direction);
   return addMonths(anchor, direction);
 }
 

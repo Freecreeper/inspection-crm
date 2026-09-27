@@ -421,8 +421,9 @@ const LOADERS: Record<CalendarLayer, Loader> = {
   billing: loadBilling,
 };
 
-// Maximum span one request may ask for (a month grid is at most 6 weeks).
-export const MAX_RANGE_DAYS = 42;
+// Maximum span one request may ask for: the 4-month planning view (at most
+// 123 days). Every other view asks for far less.
+export const MAX_RANGE_DAYS = 124;
 
 export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarEvent[]> {
   const config = getCalendarConfig();

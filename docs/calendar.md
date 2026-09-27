@@ -56,8 +56,8 @@ inspectorId, inspectorName, status, priority, warnings, href, searchText, movabl
 | Realtor events | off | follow-up `Task`s with a realtor; `Realtor` birthday / career / working-together dates | missing dates produce nothing; Feb 29 → Feb 28 in non-leap years |
 | Billing | off | collectible `Invoice` by `dueAt` | `financial:read` only |
 
-Every query is bounded by the visible range (a month grid is at most 42 days;
-the server rejects wider requests). Inspections look back 12 hours (the
+Every query is bounded by the visible range (the 4-month view, at most 124
+days, is the widest; the server rejects wider requests). Inspections look back 12 hours (the
 longest allowed appointment) so one that started before the range and is
 still running shows. Related data is loaded with `include`/`select` in the
 same query — no N+1.
@@ -163,12 +163,21 @@ Environment (see `.env.example`): `CALENDAR_DAY_START_HOUR`,
 `CALENDAR_REQUIRE_PAYMENT`. Per user (`User.calendarPreferences`, saved
 automatically): default view, visible layers, inspector filter.
 
+## Views
+
+Day · Week · Month · 4 Months, switchable at every screen width. 4 Months is
+a planning view: four compact month calendars where each day shows its
+inspection count and a marker for other (or needs-attention) events; tapping
+a day opens it, tapping a month name opens the month. It pages four months at
+a time and is the widest range the server accepts (≤ 124 days).
+
 ## Mobile
 
-Below 768px the Calendar is a Day agenda: full-width cards, swipe or
-prev/next/date picker to change day, the preview drawer as a full-screen
-sheet, and Reschedule through date/time controls. Drag-and-drop is a desktop
-convenience — every drag has a button/keyboard equivalent.
+Below 768px nothing shrinks into an unusable seven-column grid: Day is an
+agenda, Week is a day-by-day agenda, Month and 4 Months use the compact month
+calendars. Swipe or prev/next/date picker to move; the preview drawer is a
+full-screen sheet, and Reschedule uses date/time controls. Drag-and-drop is a
+desktop convenience — every drag has a button/keyboard equivalent.
 
 ## Known limitations (V1)
 

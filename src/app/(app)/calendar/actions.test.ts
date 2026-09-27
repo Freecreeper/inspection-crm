@@ -104,6 +104,8 @@ describe("validation", () => {
   it("calendar ranges are bounded — no loading years of history in one request", async () => {
     expect(await getCalendarEvents({ start: "2026-01-01", end: "2026-12-31", layers: ["inspections"] })).toEqual({ ok: false, error: "Invalid range." });
     expect(await getCalendarEvents({ start: "2026-10-04", end: "2026-09-27", layers: [] })).toEqual({ ok: false, error: "Invalid range." });
+    // Four months (the planning view) is the widest allowed.
+    expect(await getCalendarEvents({ start: "2026-09-01", end: "2027-01-01", layers: [] })).toEqual({ ok: true, data: [] });
     await getCalendarEvents({ start: "2026-09-27", end: "2026-10-04", layers: ["inspections", "bogus"] });
     expect(loadCalendarEvents).toHaveBeenCalledWith(expect.objectContaining({ layers: ["inspections"] }));
   });

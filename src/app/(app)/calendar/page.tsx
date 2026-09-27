@@ -5,7 +5,7 @@ import { can } from "@/lib/rbac";
 import { clientCalendarConfig, getCalendarConfig } from "@/lib/calendar/config";
 import { loadCalendarEvents } from "@/lib/calendar/events";
 import { normalizePreferences } from "@/lib/calendar/layers";
-import { isDayKey, toDayKey, viewRange, type CalendarView } from "@/lib/calendar/time";
+import { isCalendarView, isDayKey, toDayKey, viewRange, type CalendarView } from "@/lib/calendar/time";
 import { CalendarApp } from "./_components/CalendarApp";
 
 // The Calendar renders its first range on the server (no loading flash),
@@ -26,7 +26,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     prisma.user.findMany({ where: { active: true, role: { in: ["INSPECTOR", "OWNER_ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const preferences = normalizePreferences(user?.calendarPreferences);
-  const view: CalendarView = params.view === "day" || params.view === "week" || params.view === "month" ? params.view : preferences.view;
+  const view: CalendarView = isCalendarView(params.view) ? params.view : preferences.view;
   const today = toDayKey(new Date(), config.timeZone);
   const anchor = params.date && isDayKey(params.date) ? params.date : today;
   const { start, end } = viewRange(view, anchor, config.weekStartsOn);

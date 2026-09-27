@@ -74,9 +74,24 @@ describe("view ranges", () => {
     expect(viewRange("day", "2026-09-30", 0)).toEqual({ start: "2026-09-30", end: "2026-10-01" });
   });
 
+  it("the 4-month planning view covers exactly four whole months and pages by four", () => {
+    expect(viewRange("4month", "2026-09-27", 0)).toEqual({ start: "2026-09-01", end: "2027-01-01" });
+    expect(eachDay("2026-09-01", "2027-01-01")).toHaveLength(122);
+    expect(shiftAnchor("4month", "2026-09-27", 1)).toBe("2027-01-01");
+    expect(shiftAnchor("4month", "2026-09-27", -1)).toBe("2026-05-01");
+  });
+
   it("navigates by the view's unit", () => {
     expect(shiftAnchor("week", "2026-09-30", 1)).toBe("2026-10-07");
     expect(shiftAnchor("month", "2026-01-31", 1)).toBe("2026-02-01");
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
+  });
+});
+
+describe("saved view preference", () => {
+  it("accepts the four views and falls back to week for anything else", async () => {
+    const { normalizePreferences } = await import("./layers");
+    expect(normalizePreferences({ view: "4month" }).view).toBe("4month");
+    expect(normalizePreferences({ view: "year" }).view).toBe("week");
   });
 });

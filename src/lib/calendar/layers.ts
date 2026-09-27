@@ -1,6 +1,6 @@
 // Pure (client-safe): the Calendar's layers and per-user preferences.
 
-import type { CalendarView } from "./time";
+import { isCalendarView, type CalendarView } from "./time";
 
 export const CALENDAR_LAYERS = [
   { key: "inspections", label: "Inspections", defaultOn: true },
@@ -36,7 +36,7 @@ export const DEFAULT_PREFERENCES: CalendarPreferences = { view: "week", layers: 
 export function normalizePreferences(raw: unknown): CalendarPreferences {
   if (!raw || typeof raw !== "object") return DEFAULT_PREFERENCES;
   const r = raw as Record<string, unknown>;
-  const view = r.view === "day" || r.view === "week" || r.view === "month" ? r.view : DEFAULT_PREFERENCES.view;
+  const view = isCalendarView(r.view) ? r.view : DEFAULT_PREFERENCES.view;
   const inspectorId = typeof r.inspectorId === "string" && r.inspectorId.length <= 64 ? r.inspectorId : null;
   return { view, layers: "layers" in r ? parseLayers(r.layers) : DEFAULT_LAYERS, inspectorId };
 }

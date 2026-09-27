@@ -6,7 +6,23 @@ import type { CalendarEvent } from "@/lib/calendar/types";
 import type { ClientCalendarConfig } from "@/lib/calendar/config";
 import { CALENDAR_LAYERS, type CalendarLayer, type CalendarPreferences } from "@/lib/calendar/layers";
 import type { InspectionPreview } from "@/lib/calendar/preview";
-import { eachDay, formatDay, formatMonth, minutesIntoDay, minutesToTime, shiftAnchor, timeOfDay, toDayKey, viewRange, type CalendarView, type DayKey } from "@/lib/calendar/time";
+import {
+  CALENDAR_VIEWS,
+  VIEW_LABELS,
+  addMonths,
+  eachDay,
+  formatDay,
+  formatMonth,
+  minutesIntoDay,
+  minutesToTime,
+  shiftAnchor,
+  startOfMonth,
+  timeOfDay,
+  toDayKey,
+  viewRange,
+  type CalendarView,
+  type DayKey,
+} from "@/lib/calendar/time";
 import { getCalendarEvents, saveCalendarPreferences, type SchedulingOptions } from "../actions";
 import { TimeGrid } from "./TimeGrid";
 import { MonthGrid } from "./MonthGrid";
@@ -15,6 +31,8 @@ import { PreviewDrawer, type Viewer } from "./PreviewDrawer";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { AddTaskDialog, BlockTimeDialog, CancelDialog, RescheduleDialog, whenLabel, type RescheduleTarget } from "./ChangeDialogs";
 import { Popover } from "./Popover";
+import { MiniMonths } from "./MiniMonths";
+import { WeekAgenda } from "./WeekAgenda";
 
 const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
 const iconBtn = "inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
@@ -43,6 +61,12 @@ type Dialog =
 function rangeLabel(view: CalendarView, anchor: DayKey, start: DayKey, end: DayKey) {
   if (view === "day") return formatDay(anchor, "long");
   if (view === "month") return formatMonth(anchor);
+  if (view === "4month") {
+    const first = startOfMonth(anchor);
+    const last = addMonths(first, 3);
+    const short = (d: DayKey, year: boolean) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", ...(year ? { year: "numeric" } : {}), timeZone: "UTC" });
+    return `${short(first, first.slice(0, 4) !== last.slice(0, 4))} – ${short(last, true)}`;
+  }
   const last = eachDay(start, end).at(-1)!;
   const sameMonth = start.slice(0, 7) === last.slice(0, 7);
   const a = new Date(`${start}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -84,8 +108,10 @@ export function CalendarApp({
   const [now, setNow] = useState(() => new Date());
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Phones get the Day/agenda experience; a seven-column week doesn't fit.
-  const effectiveView: CalendarView = isPhone ? "day" : view;
+  // Every view is available at every width; on phones each one renders in
+  // a form that fits (agenda lists and compact month calendars) instead of
+  // shrinking the seven-column grid.
+  const effectiveView: CalendarView = view;
   const today = toDayKey(now, tz) || initialToday;
   const { start, end } = viewRange(effectiveView, anchor, config.weekStartsOn);
 
@@ -180,6 +206,15 @@ export function CalendarApp({
     return { day: anchor < today && effectiveView === "day" ? today : anchor, time: minutesToTime(nextHour * 60) };
   };
 
+  const openDay = (day: DayKey) => {
+    setAnchor(day);
+    setView("day");
+  };
+  const openMonth = (first: DayKey) => {
+    setAnchor(first);
+    setView("month");
+  };
+
   // Swipe between days on phones.
   const touch = useRef<{ x: number; y: number } | null>(null);
 
@@ -242,10 +277,10 @@ export function CalendarApp({
           Today
         </button>
         <div className="flex gap-1">
-          <button type="button" aria-label={`Previous ${effectiveView}`} onClick={() => setAnchor((a) => shiftAnchor(effectiveView, a, -1))} className={iconBtn}>
+          <button type="button" aria-label={`Previous ${VIEW_LABELS[effectiveView].toLowerCase()}`} onClick={() => setAnchor((a) => shiftAnchor(effectiveView, a, -1))} className={iconBtn}>
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button type="button" aria-label={`Next ${effectiveView}`} onClick={() => setAnchor((a) => shiftAnchor(effectiveView, a, 1))} className={iconBtn}>
+          <button type="button" aria-label={`Next ${VIEW_LABELS[effectiveView].toLowerCase()}`} onClick={() => setAnchor((a) => shiftAnchor(effectiveView, a, 1))} className={iconBtn}>
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -258,16 +293,16 @@ export function CalendarApp({
             className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
           />
         )}
-        <nav aria-label="Calendar view" className="hidden rounded-lg bg-slate-100 p-0.5 md:flex">
-          {(["day", "week", "month"] as const).map((v) => (
+        <nav aria-label="Calendar view" className="flex w-full rounded-lg bg-slate-100 p-0.5 sm:w-auto">
+          {CALENDAR_VIEWS.map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize ${view === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium sm:flex-none ${view === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
             >
-              {v}
+              {VIEW_LABELS[v]}
             </button>
           ))}
         </nav>
@@ -371,23 +406,47 @@ export function CalendarApp({
               if (!t) return;
               const dx = e.changedTouches[0].clientX - t.x;
               const dy = e.changedTouches[0].clientY - t.y;
-              if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) setAnchor((a) => shiftAnchor("day", a, dx < 0 ? 1 : -1));
+              if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) setAnchor((a) => shiftAnchor(effectiveView, a, dx < 0 ? 1 : -1));
             }}
           >
-            <AgendaList
-              day={anchor}
-              events={visible}
-              timeZone={tz}
-              onEventClick={setSelected}
-              emptyAction={
-                canSchedule ? (
-                  <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white">
-                    Schedule inspection
-                  </button>
-                ) : undefined
-              }
-            />
+            {effectiveView === "day" && (
+              <AgendaList
+                day={anchor}
+                events={visible}
+                timeZone={tz}
+                onEventClick={setSelected}
+                emptyAction={
+                  canSchedule ? (
+                    <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white">
+                      Schedule inspection
+                    </button>
+                  ) : undefined
+                }
+              />
+            )}
+            {effectiveView === "week" && <WeekAgenda start={start} end={end} events={visible} today={today} timeZone={tz} onEventClick={setSelected} onOpenDay={openDay} />}
+            {(effectiveView === "month" || effectiveView === "4month") && (
+              <MiniMonths
+                months={effectiveView === "month" ? [startOfMonth(anchor)] : [0, 1, 2, 3].map((i) => addMonths(startOfMonth(anchor), i))}
+                events={visible}
+                today={today}
+                weekStartsOn={config.weekStartsOn}
+                onOpenDay={openDay}
+                onOpenMonth={effectiveView === "4month" ? openMonth : undefined}
+                columns={1}
+              />
+            )}
           </div>
+        ) : effectiveView === "4month" ? (
+          <MiniMonths
+            months={[0, 1, 2, 3].map((i) => addMonths(startOfMonth(anchor), i))}
+            events={visible}
+            today={today}
+            weekStartsOn={config.weekStartsOn}
+            onOpenDay={openDay}
+            onOpenMonth={openMonth}
+            columns={2}
+          />
         ) : effectiveView === "month" ? (
           <MonthGrid
             start={start}
@@ -397,10 +456,7 @@ export function CalendarApp({
             timeZone={tz}
             today={today}
             onEventClick={setSelected}
-            onOpenDay={(day) => {
-              setAnchor(day);
-              setView("day");
-            }}
+            onOpenDay={openDay}
             onSlotClick={onSlotClick}
           />
         ) : effectiveView === "day" ? (
@@ -415,7 +471,7 @@ export function CalendarApp({
           <TimeGrid days={eachDay(start, end)} events={visible} config={config} variant="week" today={today} now={now} onEventClick={setSelected} onSlotClick={onSlotClick} onDrop={onDrop} />
         )}
       </div>
-      {!isPhone && (canSchedule || onDrop) && (
+      {!isPhone && (effectiveView === "day" || effectiveView === "week") && (canSchedule || onDrop) && (
         <p className="mt-2 text-xs text-slate-500">
           {canSchedule && "Click an empty time to schedule an inspection. "}
           {onDrop && "Drag an inspection to reschedule it — you'll confirm before anything changes. "}
