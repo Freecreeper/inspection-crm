@@ -45,14 +45,19 @@ async function main() {
     await prisma.findingCategory.upsert({ where: { key: c.key }, update: {}, create: c });
   }
 
+  // Default durations suggest an appointment length when scheduling; the
+  // longest among an inspection's services wins (General + Radon = 3h).
   const services = [
-    { name: "General Home Inspection", basePrice: "450.00" },
-    { name: "Radon Test", basePrice: "150.00" },
-    { name: "Termite / WDI Inspection", basePrice: "95.00" },
+    { name: "General Home Inspection", basePrice: "450.00", defaultDurationMinutes: 180 },
+    { name: "Radon Test", basePrice: "150.00", defaultDurationMinutes: 30 },
+    { name: "Termite / WDI Inspection", basePrice: "95.00", defaultDurationMinutes: 45 },
   ];
   for (const s of services) {
     const existing = await prisma.service.findFirst({ where: { name: s.name } });
     if (!existing) await prisma.service.create({ data: s });
+    else if (existing.defaultDurationMinutes === null) {
+      await prisma.service.update({ where: { id: existing.id }, data: { defaultDurationMinutes: s.defaultDurationMinutes } });
+    }
   }
 
   const referralSources = [
