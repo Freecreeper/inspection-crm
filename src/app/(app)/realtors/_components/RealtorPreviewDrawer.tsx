@@ -122,6 +122,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
                       templateKey="realtor_follow_up"
                       label="Prepare follow-up"
                       icon={false}
+                      onChanged={onChanged}
                       className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     />
                   )}
@@ -148,6 +149,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
                       draftId={d.id}
                       label="Review & send"
                       icon={false}
+                      onChanged={onChanged}
                       className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     />
                   )}

@@ -275,8 +275,13 @@ export async function retryEmail(id: string): Promise<Result<{ status: string }>
     realtor: message.recipientType === "REALTOR" ? message.realtor : null,
     marketingRequiresOptIn: settings.marketingRequiresOptIn,
   });
+  const now = new Date();
+  // A reminder whose send time is still ahead goes back to waiting for it.
+  const future = message.scheduledFor && message.scheduledFor > now;
   const data: Prisma.EmailMessageUpdateInput = eligibility.ok
-    ? { status: "QUEUED", queuedAt: new Date(), nextAttemptAt: null, failedAt: null, statusReason: null, recipientEmail: email }
+    ? future
+      ? { status: "SCHEDULED", nextAttemptAt: null, failedAt: null, statusReason: null, recipientEmail: email }
+      : { status: "QUEUED", queuedAt: now, nextAttemptAt: null, failedAt: null, statusReason: null, recipientEmail: email }
     : { status: eligibility.status, statusReason: eligibility.reason, recipientEmail: email };
   const updated = await prisma.emailMessage.update({ where: { id }, data });
   await logActivity(prisma, { actorId: userId, action: "email.retried", entityType: "EmailMessage", entityId: id, after: { status: updated.status } });

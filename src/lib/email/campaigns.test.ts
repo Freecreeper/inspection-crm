@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { primeEmailDb, type MockDb } from "@/test-utils/emailFixtures";
 import { materializeCampaign, parseAudience, previewAudience } from "./campaigns";
 import { createUnsubscribeToken, verifyUnsubscribeToken } from "./unsubscribe";
+import { applyUnsubscribe } from "./preferences";
 
 const db = prisma as unknown as MockDb;
 let rows: Map<string, Record<string, unknown>>;
@@ -87,6 +88,18 @@ describe("unsubscribe tokens", () => {
   it("round-trip and are scoped to one realtor and one category", () => {
     const token = createUnsubscribeToken("r1", "marketing");
     expect(verifyUnsubscribeToken(token)).toEqual({ realtorId: "r1", scope: "marketing" });
+  });
+
+  it("unsubscribing is scoped, audited, and a repeated one-click is a no-op", async () => {
+    db.realtor.findUnique.mockResolvedValueOnce({ id: "r1", marketingOptIn: true, marketingUnsubscribedAt: null, relationshipEmailsEnabled: true });
+    expect(await applyUnsubscribe("r1", "marketing", "one-click unsubscribe")).toBe(true);
+    expect(db.realtor.update).toHaveBeenCalledWith({ where: { id: "r1" }, data: { marketingUnsubscribedAt: expect.any(Date), marketingOptIn: false } });
+    expect(db.activityLog.create).toHaveBeenCalledTimes(1);
+
+    db.realtor.findUnique.mockResolvedValueOnce({ id: "r1", marketingOptIn: false, marketingUnsubscribedAt: new Date(), relationshipEmailsEnabled: true });
+    expect(await applyUnsubscribe("r1", "marketing", "one-click unsubscribe")).toBe(true);
+    expect(db.realtor.update).toHaveBeenCalledTimes(1);
+    expect(db.activityLog.create).toHaveBeenCalledTimes(1);
   });
 
   it("reject tampering", () => {

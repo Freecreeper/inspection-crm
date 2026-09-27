@@ -11,6 +11,9 @@ type Db = PrismaClient | Prisma.TransactionClient;
 export async function applyUnsubscribe(realtorId: string, scope: UnsubscribeScope, source: string, db: Db = prisma) {
   const realtor = await db.realtor.findUnique({ where: { id: realtorId } });
   if (!realtor) return false;
+  // Mail clients retry one-click unsubscribes; an already-applied one is a no-op.
+  const already = scope === "marketing" ? realtor.marketingUnsubscribedAt !== null && !realtor.marketingOptIn : !realtor.relationshipEmailsEnabled;
+  if (already) return true;
   const data: Prisma.RealtorUpdateInput =
     scope === "marketing"
       ? { marketingUnsubscribedAt: realtor.marketingUnsubscribedAt ?? new Date(), marketingOptIn: false }

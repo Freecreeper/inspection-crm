@@ -91,7 +91,7 @@ export function QuickActions({
           context={{ kind: "realtor", id: realtorId }}
           templateKey={composer.templateKey}
           onClose={() => setComposer(null)}
-          onSent={onChanged}
+          onChanged={onChanged}
         />
       )}
       {panel === "task" && (

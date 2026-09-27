@@ -40,10 +40,15 @@ export function CampaignEditor({
   const [preview, setPreview] = useState<AudiencePreview | null>(null);
   const [showList, setShowList] = useState(false);
   const [sendAt, setSendAt] = useState("");
+  // Approval is two-step: the first click fetches a fresh audience count and
+  // shows exactly what will go out; only the confirm button approves.
+  const [confirming, setConfirming] = useState<AudiencePreview | null>(null);
+  // Approval applies to the saved campaign, so unsaved edits block it.
+  const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const editable = permissions.create && (status === "DRAFT" || status === "READY_FOR_REVIEW");
-  const set = <K extends keyof Fields>(k: K, v: Fields[K]) => (setFields({ ...fields, [k]: v }), setPreview(null));
+  const set = <K extends keyof Fields>(k: K, v: Fields[K]) => (setFields({ ...fields, [k]: v }), setPreview(null), setDirty(true), setConfirming(null));
   const setAudience = (changes: Partial<Audience>) => set("audience", { ...fields.audience, ...changes });
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>, success: string, after?: () => void) =>
@@ -230,6 +235,36 @@ export function CampaignEditor({
         </p>
       )}
 
+      {dirty && status === "READY_FOR_REVIEW" && permissions.approve && (
+        <p className="text-sm text-amber-700">You have unsaved changes. Saving sends the campaign back to draft for another review.</p>
+      )}
+
+      {id && confirming && (
+        <section aria-label="Confirm approval" className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm">
+          <p className="font-medium text-slate-900">
+            {confirming.eligible.length === 0
+              ? "No one in this audience can receive it right now."
+              : `Send “${initial.subject}” to ${confirming.eligible.length} ${confirming.eligible.length === 1 ? "realtor" : "realtors"} ${sendAt ? `at ${new Date(sendAt).toLocaleString()}` : "now"}?`}
+          </p>
+          <p className="mt-1 text-slate-600">
+            {confirming.excluded.length} excluded. Eligibility is checked again for each recipient at send time. This can&apos;t be undone once emails go out.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              disabled={pending || confirming.eligible.length === 0}
+              onClick={() => run(() => approveCampaign(id, { sendAt: sendAt || null }), sendAt ? "Approved and scheduled." : "Approved — sending shortly.", () => setConfirming(null))}
+              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              Confirm approval
+            </button>
+            <button type="button" disabled={pending} onClick={() => setConfirming(null)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Back
+            </button>
+          </div>
+        </section>
+      )}
+
       <div className="flex flex-wrap items-end gap-2">
         {editable && (
           <button
@@ -239,6 +274,7 @@ export function CampaignEditor({
               run(
                 async () => {
                   const r = await saveCampaign(id, fields);
+                  if (r.ok) setDirty(false);
                   if (r.ok && !id) router.push(`/email/campaigns/${r.data.id}`);
                   return r;
                 },
@@ -255,7 +291,7 @@ export function CampaignEditor({
             Submit for review
           </button>
         )}
-        {id && status === "READY_FOR_REVIEW" && permissions.approve && (
+        {id && status === "READY_FOR_REVIEW" && permissions.approve && !confirming && (
           <>
             <label className="text-xs text-slate-600">
               Send at (optional)
@@ -263,11 +299,23 @@ export function CampaignEditor({
             </label>
             <button
               type="button"
-              disabled={pending}
-              onClick={() => run(() => approveCampaign(id, { sendAt: sendAt || null }), sendAt ? "Approved and scheduled." : "Approved — sending shortly.")}
+              disabled={pending || dirty}
+              title={dirty ? "Save your changes first — approval applies to the saved campaign." : undefined}
+              onClick={() =>
+                startTransition(async () => {
+                  setMessage(null);
+                  try {
+                    const result = await getAudiencePreview({ audience: initial.audience, category: initial.category });
+                    if (result.ok) setConfirming(result.data);
+                    else setMessage({ ok: false, text: result.error });
+                  } catch {
+                    setMessage({ ok: false, text: "You may not have permission to do that." });
+                  }
+                })
+              }
               className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
             >
-              Approve &amp; {sendAt ? "schedule" : "send"}
+              Approve &amp; {sendAt ? "schedule" : "send"}…
             </button>
           </>
         )}

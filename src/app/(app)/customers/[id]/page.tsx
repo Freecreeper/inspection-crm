@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { EmailButton } from "@/components/email/EmailComposer";
 import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
+import { CustomerContactFields } from "../CustomerContactFields";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,12 +41,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           <span className="text-sm text-slate-400">Email not provided</span>
         ) : null}
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-white p-4 text-sm">
-        <dt className="text-slate-500">Email</dt>
-        <dd className="text-slate-900">{customer.email || <span className="text-slate-400">Not provided</span>}</dd>
-        <dt className="text-slate-500">Phone</dt>
-        <dd className="text-slate-900">{customer.phone || <span className="text-slate-400">Not provided</span>}</dd>
-      </dl>
+      <CustomerContactFields customerId={customer.id} email={customer.email} phone={customer.phone} canEdit={can(session?.user?.role as Role | undefined, "crm:write")} />
 
       <div className="mt-6 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">Transactions</h2>

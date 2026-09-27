@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient, type Realtor } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { realtorDisplayName } from "@/lib/realtors/display";
 import { getEmailConfig } from "../config";
 import { enqueueEmail } from "../queue";
 import { getAutomation, logAutomationEvent } from "./registry";
@@ -26,7 +27,7 @@ export function matchingMonthDays(target: { year: number; month: number; day: nu
 }
 
 async function prepare(
-  realtor: Pick<Realtor, "id" | "firstName" | "lastName" | "email">,
+  realtor: Pick<Realtor, "id" | "firstName" | "lastName" | "preferredName" | "email">,
   args: {
     automationId: string;
     sendMode: "AUTOMATIC" | "REVIEW" | "MANUAL";
@@ -45,7 +46,7 @@ async function prepare(
       mode: draft ? "REVIEW" : "AUTOMATIC",
       draft,
       templateKey: args.templateKey,
-      recipient: { type: "REALTOR", name: `${realtor.firstName} ${realtor.lastName}`, email: realtor.email },
+      recipient: { type: "REALTOR", name: realtorDisplayName(realtor), email: realtor.email },
       refs: { realtorId: realtor.id },
       automationId: args.automationId,
       idempotencyKey: args.key,
@@ -76,7 +77,7 @@ export async function sweepRealtorBirthdays(now: Date, db: Db = prisma) {
   const target = targetCalendarDate(now, auto.config.daysBefore);
   const realtors = await db.realtor.findMany({
     where: { archivedAt: null, OR: matchingMonthDays(target).map((p) => ({ birthdayMonth: p.month, birthdayDay: p.day })) },
-    select: { id: true, firstName: true, lastName: true, email: true },
+    select: { id: true, firstName: true, lastName: true, preferredName: true, email: true },
   });
   const results = [];
   for (const realtor of realtors) {
@@ -98,8 +99,8 @@ async function realtorsWithAnniversary(column: "careerStartDate" | "relationship
     (p) => Prisma.sql`(EXTRACT(MONTH FROM ${col}) = ${p.month} AND EXTRACT(DAY FROM ${col}) = ${p.day})`
   );
   // At least one full year — no "0 years" anniversary on the start date.
-  return db.$queryRaw<{ id: string; firstName: string; lastName: string; email: string | null }[]>(Prisma.sql`
-    SELECT "id", "firstName", "lastName", "email" FROM "realtors"
+  return db.$queryRaw<{ id: string; firstName: string; lastName: string; preferredName: string | null; email: string | null }[]>(Prisma.sql`
+    SELECT "id", "firstName", "lastName", "preferredName", "email" FROM "realtors"
     WHERE "archivedAt" IS NULL AND ${col} IS NOT NULL
       AND EXTRACT(YEAR FROM ${col}) < ${target.year}
       AND (${Prisma.join(conditions, " OR ")})

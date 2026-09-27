@@ -1,5 +1,6 @@
 import type { EmailSendMode, Prisma, PrismaClient, RealtorParticipantRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { realtorDisplayName } from "@/lib/realtors/display";
 import { formatDateLong, formatTime } from "../context";
 import { cancelPendingEmails, enqueueEmail } from "../queue";
 import type { GuardCheck } from "../guards";
@@ -102,7 +103,7 @@ async function sendToRecipients(plan: SendPlan, db: Db) {
           mode: draft ? "REVIEW" : "AUTOMATIC",
           draft,
           templateKey: plan.realtorTemplateKey,
-          recipient: { type: "REALTOR", name: `${realtor.firstName} ${realtor.lastName}`, email: realtor.email },
+          recipient: { type: "REALTOR", name: realtorDisplayName(realtor), email: realtor.email },
           refs: { ...refsBase, realtorId: realtor.id },
           automationId: plan.automationId,
           idempotencyKey: `${plan.keyPrefix}:realtor:${realtor.id}`,
@@ -302,7 +303,7 @@ export async function onInspectionCompleted(inspectionId: string, opts: { actorI
         mode: draft ? "REVIEW" : "AUTOMATIC",
         draft,
         templateKey: auto.config.templateKey,
-        recipient: { type: "REALTOR", name: `${realtor.firstName} ${realtor.lastName}`, email: realtor.email },
+        recipient: { type: "REALTOR", name: realtorDisplayName(realtor), email: realtor.email },
         refs: { realtorId: realtor.id, inspectionId: inspection.id, transactionId: inspection.transactionId },
         automationId: auto.row.id,
         idempotencyKey: `thank-you:inspection:${inspection.id}:realtor:${realtor.id}`,

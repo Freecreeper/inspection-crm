@@ -20,7 +20,8 @@ const input = "mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-s
 
 // Opens the shared composer. `templateKey` preselects a template (e.g.
 // "realtor_follow_up" for Prepare Follow-up); `draftId` opens a prepared
-// draft for review. Everything that matters — recipients, permissions,
+// draft for review. `onChanged` lets client-fetched views (the realtor drawer)
+// reload after a send, saved draft, or discard. Everything that matters — recipients, permissions,
 // eligibility, rendering, sending — is decided on the server.
 export function EmailButton({
   context,
@@ -29,6 +30,7 @@ export function EmailButton({
   draftId,
   className,
   icon = true,
+  onChanged,
 }: {
   context: ComposerContext;
   label?: string;
@@ -36,6 +38,7 @@ export function EmailButton({
   draftId?: string;
   className?: string;
   icon?: boolean;
+  onChanged?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -51,7 +54,7 @@ export function EmailButton({
         {icon && <Mail className="h-4 w-4" aria-hidden="true" />}
         {label}
       </button>
-      {open && <EmailComposer context={context} templateKey={templateKey} draftId={draftId} onClose={() => setOpen(false)} />}
+      {open && <EmailComposer context={context} templateKey={templateKey} draftId={draftId} onClose={() => setOpen(false)} onChanged={onChanged} />}
     </>
   );
 }
@@ -61,13 +64,13 @@ export function EmailComposer({
   templateKey,
   draftId,
   onClose,
-  onSent,
+  onChanged,
 }: {
   context: ComposerContext;
   templateKey?: string;
   draftId?: string;
   onClose: () => void;
-  onSent?: () => void;
+  onChanged?: () => void;
 }) {
   const router = useRouter();
   const id = useId();
@@ -146,11 +149,11 @@ export function EmailComposer({
           return;
         }
         router.refresh();
+        onChanged?.();
         if (action === "draft") {
           setNotice("Draft saved.");
           return;
         }
-        onSent?.();
         onClose();
       } catch {
         setError("Couldn't save this email. You may not have permission to send email.");
@@ -164,6 +167,7 @@ export function EmailComposer({
       const result = await discardDraft(data.draft!.id);
       if (!result.ok) return setError(result.error);
       router.refresh();
+      onChanged?.();
       onClose();
     });
   }

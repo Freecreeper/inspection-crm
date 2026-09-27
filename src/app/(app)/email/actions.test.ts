@@ -11,7 +11,7 @@ vi.mock("@/lib/email/system", () => ({ ensureEmailSystem: vi.fn(async () => {}),
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { primeEmailDb, type MockDb } from "@/test-utils/emailFixtures";
-import { approveCampaign, saveCampaign, submitComposedEmail, submitCampaignForReview, updateAutomation } from "./actions";
+import { approveCampaign, retryEmail, saveCampaign, submitComposedEmail, submitCampaignForReview, updateAutomation } from "./actions";
 
 const db = prisma as unknown as MockDb;
 const mockAuth = vi.mocked(auth);
@@ -72,6 +72,32 @@ describe("manual email", () => {
     const result = await submitComposedEmail(compose());
     expect(result).toEqual({ ok: false, error: "Realtor email not provided" });
     expect([...rows.values()][0]).toMatchObject({ status: "SKIPPED" });
+  });
+});
+
+describe("retrying a skipped email", () => {
+  const skipped = (scheduledFor: Date | null) => ({
+    id: "m1",
+    status: "SKIPPED",
+    category: "TRANSACTIONAL",
+    recipientType: "CUSTOMER",
+    recipientEmail: null,
+    scheduledFor,
+    customer: { email: "ava@example.test" },
+    realtor: null,
+  });
+
+  it("a reminder whose send time is still ahead goes back to waiting, not straight out", async () => {
+    db.emailMessage.findUnique.mockResolvedValue(skipped(new Date(Date.now() + 86_400_000)));
+    db.emailMessage.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "m1", ...data }));
+    expect(await retryEmail("m1")).toEqual({ ok: true, data: { status: "SCHEDULED" } });
+    expect(db.emailMessage.update).toHaveBeenCalledWith({ where: { id: "m1" }, data: expect.objectContaining({ status: "SCHEDULED", recipientEmail: "ava@example.test" }) });
+  });
+
+  it("anything already due is queued now", async () => {
+    db.emailMessage.findUnique.mockResolvedValue(skipped(null));
+    db.emailMessage.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "m1", ...data }));
+    expect(await retryEmail("m1")).toEqual({ ok: true, data: { status: "QUEUED" } });
   });
 });
 
