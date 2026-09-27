@@ -82,17 +82,24 @@ export function timeZoneOffsetMinutes(date: Date, timeZone: string): number {
   return Math.round((asUtc - Math.floor(date.getTime() / 1000) * 1000) / 60_000);
 }
 
-// "2026-09-29" + "13:00" in America/New_York → the UTC instant. Resolved
-// twice so a DST change between the guess and the answer can't skew it. A
-// wall time that doesn't exist (the skipped hour in spring) lands just after
-// the gap; an ambiguous one (the repeated hour in fall) takes the first.
+// "2026-09-29" + "13:00" in America/New_York → the UTC instant. Tries the
+// zone's offsets on either side of the wall time and keeps the one that
+// reads back as the same wall time. Around DST: an ambiguous time (the
+// repeated hour in fall) takes the first occurrence; a time that doesn't
+// exist (the skipped hour in spring) moves forward past the gap — the same
+// rule as Temporal's "compatible" disambiguation.
 export function zonedDateTimeToUtc(day: DayKey, time: string, timeZone: string): Date {
   const [y, m, d] = day.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
   const wall = Date.UTC(y, m - 1, d, hh, mm);
-  let instant = wall - timeZoneOffsetMinutes(new Date(wall), timeZone) * 60_000;
-  instant = wall - timeZoneOffsetMinutes(new Date(instant), timeZone) * 60_000;
-  return new Date(instant);
+  const offsets = [...new Set([wall - 12 * 3600_000, wall + 12 * 3600_000, wall].map((t) => timeZoneOffsetMinutes(new Date(t), timeZone)))];
+  const readsBack = (instant: number) => {
+    const p = zonedParts(new Date(instant), timeZone);
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) === wall;
+  };
+  const valid = offsets.map((o) => wall - o * 60_000).filter(readsBack).sort((a, b) => a - b);
+  if (valid.length) return new Date(valid[0]);
+  return new Date(wall - Math.min(...offsets) * 60_000);
 }
 
 export function startOfDayUtc(day: DayKey, timeZone: string): Date {

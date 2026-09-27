@@ -10,6 +10,7 @@ import type { Role } from "@prisma/client";
 
 function revalidateTaskPaths(task: { transactionId: string | null; realtorId: string | null }) {
   revalidatePath("/tasks");
+  revalidatePath("/calendar");
   if (task.transactionId) revalidatePath(`/transactions/${task.transactionId}`);
   if (task.realtorId) {
     revalidatePath("/realtors");
@@ -47,7 +48,7 @@ export async function createTask(formData: FormData) {
 
 export async function completeTask(id: string) {
   const session = await auth();
-  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  assertCan(session?.user?.role as Role | undefined, "task:update");
 
   const task = await prisma.$transaction(async (tx) => {
     const updated = await tx.task.update({ where: { id }, data: { completedAt: new Date() } });
@@ -62,7 +63,7 @@ export async function completeTask(id: string) {
 // client code, where Next would redact a thrown message in production.
 export async function rescheduleTask(id: string, dueDate: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await auth();
-  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  assertCan(session?.user?.role as Role | undefined, "task:update");
 
   const dueAt = parseDateInput(dueDate);
   if (!dueAt) return { ok: false, error: "Pick a valid date." };
