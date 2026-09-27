@@ -27,7 +27,16 @@ export function matchingMonthDays(target: { year: number; month: number; day: nu
 
 async function prepare(
   realtor: Pick<Realtor, "id" | "firstName" | "lastName" | "email">,
-  args: { automationId: string; sendMode: "AUTOMATIC" | "REVIEW" | "MANUAL"; templateKey: string; key: string; entityResult: string },
+  args: {
+    automationId: string;
+    sendMode: "AUTOMATIC" | "REVIEW" | "MANUAL";
+    templateKey: string;
+    key: string;
+    entityResult: string;
+    // The occasion's own date: "years since" values are computed as of the
+    // anniversary itself, not the (possibly earlier) day it's prepared.
+    occasionDate?: Date;
+  },
   db: Db
 ) {
   const draft = args.sendMode !== "AUTOMATIC";
@@ -40,6 +49,7 @@ async function prepare(
       refs: { realtorId: realtor.id },
       automationId: args.automationId,
       idempotencyKey: args.key,
+      now: args.occasionDate,
     },
     db
   );
@@ -100,6 +110,7 @@ export async function sweepRealtorAnniversaries(now: Date, db: Db = prisma) {
   const auto = await getAutomation("realtor_anniversary", db);
   if (!auto.active) return [];
   const target = targetCalendarDate(now, auto.config.daysBefore);
+  const occasionDate = new Date(Date.UTC(target.year, target.month - 1, target.day, 12));
   const results = [];
   if (auto.config.career) {
     for (const realtor of await realtorsWithAnniversary("careerStartDate", target, db)) {
@@ -112,6 +123,7 @@ export async function sweepRealtorAnniversaries(now: Date, db: Db = prisma) {
             templateKey: auto.config.careerTemplateKey,
             key: `career-anniversary:${realtor.id}:${target.year}`,
             entityResult: "career anniversary",
+            occasionDate,
           },
           db
         )
@@ -129,6 +141,7 @@ export async function sweepRealtorAnniversaries(now: Date, db: Db = prisma) {
             templateKey: auto.config.relationshipTemplateKey,
             key: `relationship-anniversary:${realtor.id}:${target.year}`,
             entityResult: "working-together anniversary",
+            occasionDate,
           },
           db
         )
