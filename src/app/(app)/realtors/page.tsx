@@ -35,7 +35,7 @@ export default async function RealtorsPage({ searchParams }: { searchParams: Pro
     return (
       <div>
         {header}
-        <FollowUpView filter={parseFollowUpFilter(first(raw.filter))} canWrite={canWrite} />
+        <FollowUpView filter={parseFollowUpFilter(first(raw.filter))} canWrite={canWrite} canEmail={can(session?.user?.role as Role | undefined, "email:send")} />
       </div>
     );
   }

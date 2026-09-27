@@ -18,6 +18,7 @@ import {
   Star,
   CheckSquare,
   Mail,
+  Send,
   FileText,
   BookOpen,
   BarChart3,
@@ -62,6 +63,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Work",
     items: [
       { href: "/tasks", label: "Tasks", icon: CheckSquare },
+      { href: "/email", label: "Email", icon: Send },
       { href: "/communications", label: "Communications", icon: Mail },
       { href: "/documents", label: "Documents", icon: FileText },
     ],

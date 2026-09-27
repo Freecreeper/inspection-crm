@@ -21,9 +21,8 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
   (`@react-pdf/renderer`), creating an immutable `ReportVersion`; Amendment (reopens editing,
   preserves every prior version); Delivery via a signed, hashed, expiring token
   (`/r/[token]`, no staff auth) — recipients are always explicit, never auto-selected from
-  transaction participants; email sending itself isn't wired to a real provider yet (no SMTP/Postmark
-  credentials configured), so delivery produces a shareable link for staff to send manually,
-  and says so in the UI
+  transaction participants; staff can email the link to that recipient (minted at send time) or copy it
+  to send themselves
 - **Pillar 4 — Business Intelligence**: a Reporting Query Service (`src/lib/reporting.ts`) that
   validates every field/filter/group/aggregation against `ReportFieldCatalogEntry` (a DB-seeded
   allow-list) before building a safe, typed Prisma query — no raw SQL, no arbitrary field names; a
@@ -31,22 +30,24 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
   plain GET forms, no client JS); four Standard Reports; CSV export; saved reports (private or
   shared); grouped totals always reconcile against unfiltered NULL/"Unknown" buckets, never silently
   dropped
+- **Email & communication (V1)** — see [docs/email.md](docs/email.md): one central engine (Postmark adapter,
+  Postgres outbox + worker, verified webhooks), templates, composer, operational automations (confirmation,
+  reminder, appointment change, payment reminder, report ready), realtor relationship automations (thank-you,
+  birthday, anniversaries) with review-before-send, lightweight realtor campaigns with owner approval, and
+  category-aware preferences/suppression. Delivery is simulated unless `EMAIL_DELIVERY_MODE=live`.
 - Staff auth (Auth.js, credentials + JWT) and RBAC (`src/lib/rbac.ts`), enforced in every mutating
   server action across all four pillars — not just hidden in the UI
 
 **PARTIALLY IMPLEMENTED**
-- Data model only, no UI/logic: `Service`/`InspectionService`, `Invoice` (anchored to Transaction,
-  not a 1:1 with Inspection — supports multiple invoices per transaction), `InvoiceItem`, `Payment`
+- Invoices: balances, payment recording, and reminders on the transaction page; no invoice creation UI yet
+  (`Service`/`InspectionService` remain data-model only)
 - `CustomFieldDefinition`/`CustomFieldValue`, `ReportDefinition` (saved custom reports use this —
   the schema's other intended purpose, business-user-defined custom fields on core entities, is
-  still unbuilt), `Automation`/`AutomationEvent` — tables only
+  still unbuilt)
 
 **DEFERRED**
-- Invoicing/payments UI (blocked on Invoice's relationship to real billing workflow, not on the
-  Inspection entity anymore — that now exists)
+- Invoice creation UI
 - Custom fields UI
-- Automations engine
-- Actual email delivery (SMTP/Postmark integration) for report delivery
 - Object storage (S3/R2) — see "Local filesystem storage is a production blocker" below
 
 ## Known limitations & production readiness
@@ -114,6 +115,7 @@ npm install
 npx prisma migrate dev      # apply the schema
 npx prisma db seed          # admin@example.com / inspector@example.com, password "changeme123"
 npm run dev
+npm run worker              # optional: sends queued email (simulated unless EMAIL_DELIVERY_MODE=live)
 ```
 
 Open http://localhost:3000 and sign in with the seeded admin account.

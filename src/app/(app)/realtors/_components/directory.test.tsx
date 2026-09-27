@@ -69,7 +69,8 @@ const preview = {
   nextAction: null,
   recentActivity: [],
   sections: ["nextAction", "transactions", "referrals", "contact", "activity"],
-  permissions: { canWrite: false, canViewFinancials: false },
+  preparedEmails: [],
+  permissions: { canWrite: false, canViewFinancials: false, canEmail: false },
 };
 
 beforeEach(() => {

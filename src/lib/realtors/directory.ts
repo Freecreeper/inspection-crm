@@ -21,6 +21,23 @@ export interface DirectoryRow {
   totalCount: number;
 }
 
+// A realtor's last activity (for a row aliased `r`): the latest of a
+// communication logged with them, a completed realtor task, being added to
+// a transaction, a completed inspection on one of their transactions, or a
+// transaction they referred. Shared by the directory and campaign audiences
+// so "recent activity" means one thing everywhere.
+export const LAST_ACTIVITY_EXPR = Prisma.sql`GREATEST(
+  (SELECT MAX(c."occurredAt") FROM "communications" c WHERE c."realtorId" = r."id"),
+  (SELECT MAX(tk."completedAt") FROM "tasks" tk WHERE tk."realtorId" = r."id"),
+  (SELECT MAX(trr."createdAt") FROM "transaction_realtors" trr WHERE trr."realtorId" = r."id"),
+  (SELECT MAX(i."completedAt") FROM "inspections" i
+     JOIN "transaction_realtors" trr ON trr."transactionId" = i."transactionId"
+     WHERE trr."realtorId" = r."id"),
+  (SELECT MAX(t."createdAt") FROM "transactions" t
+     JOIN "referral_sources" rs ON rs."id" = t."referralSourceId"
+     WHERE rs."realtorId" = r."id")
+)`;
+
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 }
@@ -123,19 +140,7 @@ export function buildDirectoryQuery(params: DirectoryParams, now: Date): Prisma.
       JOIN "referral_sources" rs ON rs."id" = t."referralSourceId"
       WHERE rs."realtorId" = r."id" AND t."archivedAt" IS NULL
     ) rf
-    CROSS JOIN LATERAL (
-      SELECT GREATEST(
-        (SELECT MAX(c."occurredAt") FROM "communications" c WHERE c."realtorId" = r."id"),
-        (SELECT MAX(tk."completedAt") FROM "tasks" tk WHERE tk."realtorId" = r."id"),
-        (SELECT MAX(trr."createdAt") FROM "transaction_realtors" trr WHERE trr."realtorId" = r."id"),
-        (SELECT MAX(i."completedAt") FROM "inspections" i
-           JOIN "transaction_realtors" trr ON trr."transactionId" = i."transactionId"
-           WHERE trr."realtorId" = r."id"),
-        (SELECT MAX(t."createdAt") FROM "transactions" t
-           JOIN "referral_sources" rs ON rs."id" = t."referralSourceId"
-           WHERE rs."realtorId" = r."id")
-      ) AS "at"
-    ) la
+    CROSS JOIN LATERAL (SELECT ${LAST_ACTIVITY_EXPR} AS "at") la
     CROSS JOIN LATERAL (
       SELECT MIN(tk."dueAt") AS "due", COUNT(*)::int AS "open"
       FROM "tasks" tk
@@ -150,4 +155,11 @@ export function buildDirectoryQuery(params: DirectoryParams, now: Date): Prisma.
 export async function fetchDirectoryPage(params: DirectoryParams, now = new Date()) {
   const rows = await prisma.$queryRaw<DirectoryRow[]>(buildDirectoryQuery(params, now));
   return { rows, total: rows[0]?.totalCount ?? 0 };
+}
+
+export async function realtorIdsWithActivitySince(since: Date): Promise<string[]> {
+  const rows = await prisma.$queryRaw<{ id: string }[]>(
+    Prisma.sql`SELECT r."id" FROM "realtors" r WHERE r."archivedAt" IS NULL AND ${LAST_ACTIVITY_EXPR} >= ${since}`
+  );
+  return rows.map((r) => r.id);
 }

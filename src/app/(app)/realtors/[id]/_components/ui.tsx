@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-export type RecordPermissions = { canWrite: boolean; canViewFinancials: boolean; canReadDocuments: boolean };
+export type RecordPermissions = {
+  canWrite: boolean;
+  canViewFinancials: boolean;
+  canReadDocuments: boolean;
+  canEmail: boolean;
+  canManageEmailPreferences: boolean;
+};
 
 export function Card({
   title,

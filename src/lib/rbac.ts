@@ -17,6 +17,16 @@ export const PERMISSIONS = {
   // revenue, per-transaction revenue). Every staff role, per the business
   // owner — kept as its own key so narrowing it later is a one-line change.
   "financial:read": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  // Email & communication (V1). Viewing history is broad; sending, editing
+  // copy, and changing automation or preference state are not. Approving a
+  // campaign is what authorizes it to send, so it's owner-only.
+  "email:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  "email:send": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  "email:template_manage": ["OWNER_ADMIN"],
+  "email:automation_manage": ["OWNER_ADMIN"],
+  "email:campaign_create": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  "email:campaign_approve": ["OWNER_ADMIN"],
+  "email:preferences_manage": ["OWNER_ADMIN", "OFFICE_STAFF"],
   "inspection:conduct": ["OWNER_ADMIN", "INSPECTOR"],
   // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
   // here rather than a bare "is there a session" check in the download route,

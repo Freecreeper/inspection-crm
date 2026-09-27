@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { ensureDefaultTemplates } from "../src/lib/email/defaults";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -192,6 +193,10 @@ async function main() {
       },
     });
   }
+
+  // Default email templates + settings row (create-only; edits are kept).
+  // Automation rows are created on first use by the app itself.
+  await ensureDefaultTemplates(prisma);
 
   console.log("Seed complete: admin@example.com / inspector@example.com, password 'changeme123'.");
 }

@@ -23,7 +23,9 @@ export interface RealtorPreview {
   nextAction: { id: string; title: string; dueAt: string | null } | null;
   recentActivity: { id: string; kind: string; at: string; title: string; detail?: string; href?: string }[];
   sections: PreviewSection[];
-  permissions: { canWrite: boolean; canViewFinancials: boolean };
+  // Automation-prepared emails (thank-yous, birthdays…) waiting for review.
+  preparedEmails: { id: string; subject: string }[];
+  permissions: { canWrite: boolean; canViewFinancials: boolean; canEmail: boolean };
 }
 
 // Everything the drawer shows, loaded only once a realtor is selected, and
@@ -48,10 +50,16 @@ export async function loadRealtorPreview(
   const canViewFinancials = can(role, "financial:read");
   const wantsMetrics = on("transactions") || on("referrals") || on("revenue");
 
-  const [metrics, nextTask, recentActivity] = await Promise.all([
+  const [metrics, nextTask, recentActivity, preparedEmails] = await Promise.all([
     wantsMetrics ? getRealtorMetrics(realtorId, { includeFinancials: canViewFinancials && on("revenue") }) : null,
     on("nextAction") ? findNextAction(realtorId) : null,
     on("activity") ? loadRealtorTimeline(realtorId, { limit: 5, includeDocuments: false }) : [],
+    prisma.emailMessage.findMany({
+      where: { realtorId, status: "DRAFT", campaignId: null },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, subject: true },
+      take: 5,
+    }),
   ]);
 
   return {
@@ -70,7 +78,8 @@ export async function loadRealtorPreview(
     nextAction: nextTask ? { id: nextTask.id, title: nextTask.title, dueAt: nextTask.dueAt?.toISOString() ?? null } : null,
     recentActivity: recentActivity.map((item) => ({ ...item, at: item.at.toISOString() })),
     sections,
-    permissions: { canWrite: can(role, "crm:write"), canViewFinancials },
+    preparedEmails,
+    permissions: { canWrite: can(role, "crm:write"), canViewFinancials, canEmail: can(role, "email:send") },
   };
 }
 

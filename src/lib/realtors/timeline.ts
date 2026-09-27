@@ -13,9 +13,10 @@ export type TimelineKind =
   | "brokerage"
   | "note"
   | "profile"
-  | "document";
+  | "document"
+  | "marketing";
 
-export const TIMELINE_FILTERS = ["all", "calls", "emails", "tasks", "transactions", "notes"] as const;
+export const TIMELINE_FILTERS = ["all", "calls", "emails", "tasks", "transactions", "notes", "marketing"] as const;
 export type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
 
 export const TIMELINE_FILTER_LABELS: Record<TimelineFilter, string> = {
@@ -25,14 +26,16 @@ export const TIMELINE_FILTER_LABELS: Record<TimelineFilter, string> = {
   tasks: "Tasks",
   transactions: "Transactions",
   notes: "Notes",
+  marketing: "Marketing",
 };
 
 const FILTER_KINDS: Record<Exclude<TimelineFilter, "all">, TimelineKind[]> = {
   calls: ["call"],
-  emails: ["email"],
+  emails: ["email", "marketing"],
   tasks: ["task"],
   transactions: ["transaction", "inspection", "referral"],
   notes: ["note"],
+  marketing: ["marketing"],
 };
 
 export interface TimelineItem {
@@ -93,7 +96,12 @@ export async function loadRealtorTimeline(
   const associated = associatedTransactionWhere(realtorId);
 
   const [communications, tasks, attachments, inspections, referrals, history, logs, documents] = await Promise.all([
-    prisma.communication.findMany({ where: { realtorId }, orderBy: { occurredAt: "desc" }, take }),
+    prisma.communication.findMany({
+      where: { realtorId },
+      orderBy: { occurredAt: "desc" },
+      take,
+      include: { email: { select: { id: true, status: true, category: true, simulated: true, automation: { select: { name: true } }, campaign: { select: { name: true } } } } },
+    }),
     prisma.task.findMany({ where: { realtorId }, orderBy: { updatedAt: "desc" }, take }),
     prisma.transactionRealtor.findMany({
       where: { realtorId, transaction: { archivedAt: null } },
@@ -132,6 +140,19 @@ export async function loadRealtorTimeline(
 
   const items: TimelineItem[][] = [
     communications.map((c) => {
+      // An email the CRM sent: show what it was and where it got to.
+      if (c.email) {
+        const status = c.email.simulated ? "sent (simulated — not delivered)" : c.email.status.toLowerCase();
+        const origin = c.email.campaign?.name ?? c.email.automation?.name;
+        return {
+          id: `comm-${c.id}`,
+          kind: c.email.category === "MARKETING" ? ("marketing" as const) : ("email" as const),
+          at: c.occurredAt,
+          title: `${c.email.category === "MARKETING" ? "Marketing email" : "Email"} ${status}`,
+          detail: origin ? `${c.summary} · ${origin}` : c.summary,
+          href: `/email/messages/${c.email.id}`,
+        };
+      }
       const kind = communicationKind(c.channel);
       const verb = kind === "call" ? "Call" : kind === "email" ? "Email" : c.channel;
       return {

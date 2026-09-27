@@ -68,6 +68,31 @@ describe("loadRealtorTimeline", () => {
     expect(db.document.findMany).not.toHaveBeenCalled();
   });
 
+  it("shows sent emails in the realtor's activity with their delivery status, and filters marketing", async () => {
+    db.communication.findMany.mockResolvedValue([
+      {
+        id: "c9",
+        channel: "Email",
+        direction: "OUTBOUND",
+        summary: "Thank you for the Main St inspection",
+        occurredAt: new Date(2026, 8, 28),
+        email: { id: "m1", status: "DELIVERED", category: "RELATIONSHIP", simulated: false, automation: { name: "Realtor thank-you" }, campaign: null },
+      },
+      {
+        id: "c10",
+        channel: "Email",
+        direction: "OUTBOUND",
+        summary: "Now offering sewer scopes",
+        occurredAt: new Date(2026, 7, 12),
+        email: { id: "m2", status: "DELIVERED", category: "MARKETING", simulated: false, automation: null, campaign: { name: "Sewer scope launch" } },
+      },
+    ]);
+    const items = await loadRealtorTimeline("r1", { limit: 10, includeDocuments: false });
+    expect(items[0]).toMatchObject({ kind: "email", title: "Email delivered", detail: "Thank you for the Main St inspection · Realtor thank-you", href: "/email/messages/m1" });
+    expect(filterTimeline(items, "marketing").map((i) => i.id)).toEqual(["comm-c10"]);
+    expect(filterTimeline(items, "emails")).toHaveLength(2);
+  });
+
   it("finds referrals only through the linked referral source", async () => {
     await loadRealtorTimeline("r1", { limit: 5, includeDocuments: false });
     const referralQuery = db.transaction.findMany.mock.calls[0][0];

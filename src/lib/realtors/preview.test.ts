@@ -34,6 +34,7 @@ beforeEach(() => {
   db.transactionCustomer.groupBy.mockResolvedValue([]);
   db.invoiceItem.aggregate.mockResolvedValue({ _sum: { amount: new Prisma.Decimal("100") } });
   db.task.findFirst.mockResolvedValue({ id: "t1", title: "Follow up", dueAt: new Date("2026-10-03T12:00:00") });
+  db.emailMessage.findMany.mockResolvedValue([]);
   for (const model of ["communication", "task", "transactionRealtor", "inspection", "transaction", "realtorBrokerageHistory", "activityLog"]) {
     db[model].findMany.mockResolvedValue([]);
   }
@@ -61,7 +62,7 @@ describe("loadRealtorPreview", () => {
 
   it("never queries revenue without a role (no financial access)", async () => {
     const preview = await loadRealtorPreview("r1", undefined, null);
-    expect(preview!.permissions).toEqual({ canWrite: false, canViewFinancials: false });
+    expect(preview!.permissions).toEqual({ canWrite: false, canViewFinancials: false, canEmail: false });
     expect(preview!.metrics!.associatedRevenue).toBeNull();
     expect(db.invoiceItem.aggregate).not.toHaveBeenCalled();
   });
@@ -100,6 +101,16 @@ describe("loadRealtorPreview", () => {
     const preview = await loadRealtorPreview("r1", "OFFICE_STAFF", "u1");
     expect(preview!.metrics).not.toBeNull();
     expect(db.invoiceItem.aggregate).not.toHaveBeenCalled();
+  });
+});
+
+describe("prepared emails", () => {
+  it("lists automation-prepared drafts waiting for review, not campaign or sent mail", async () => {
+    db.emailMessage.findMany.mockResolvedValue([{ id: "e1", subject: "Thank you for the Main St inspection" }]);
+    const preview = await loadRealtorPreview("r1", "OFFICE_STAFF", "u1");
+    expect(db.emailMessage.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { realtorId: "r1", status: "DRAFT", campaignId: null } }));
+    expect(preview!.preparedEmails).toEqual([{ id: "e1", subject: "Thank you for the Main St inspection" }]);
+    expect(preview!.permissions.canEmail).toBe(true);
   });
 });
 

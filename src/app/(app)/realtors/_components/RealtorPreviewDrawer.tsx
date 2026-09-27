@@ -11,6 +11,7 @@ import { getRealtorPreview, saveRealtorPreviewSections } from "../actions";
 import { QuickActions } from "./QuickActions";
 import { TaskActions } from "./TaskActions";
 import { ProfileFields } from "./ProfileFields";
+import { EmailButton } from "@/components/email/EmailComposer";
 
 type LoadState = { status: "loading" } | { status: "ready"; preview: RealtorPreview } | { status: "missing" } | { status: "error" };
 
@@ -113,11 +114,48 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
                   {preview.nextAction.title}
                   <span className="text-slate-500"> — {preview.nextAction.dueAt ? formatShortDate(preview.nextAction.dueAt) : "no due date"}</span>
                 </p>
-                {permissions.canWrite && <TaskActions taskId={preview.nextAction.id} dueAt={preview.nextAction.dueAt} size="xs" onDone={onChanged} />}
+                <div className="flex flex-wrap items-start gap-2">
+                  {permissions.canWrite && <TaskActions taskId={preview.nextAction.id} dueAt={preview.nextAction.dueAt} size="xs" onDone={onChanged} />}
+                  {permissions.canEmail && preview.email && (
+                    <EmailButton
+                      context={{ kind: "realtor", id: preview.id }}
+                      templateKey="realtor_follow_up"
+                      label="Prepare follow-up"
+                      icon={false}
+                      onChanged={onChanged}
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    />
+                  )}
+                </div>
               </div>
             ) : (
               <p className="mt-1 text-sm text-slate-500">No upcoming follow-up.</p>
             )}
+          </div>
+        )}
+
+        {preview.preparedEmails.length > 0 && (
+          <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2.5">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-sky-800">
+              {preview.preparedEmails.length === 1 ? "Email ready for review" : `${preview.preparedEmails.length} emails ready for review`}
+            </h3>
+            <ul className="mt-1 space-y-1.5">
+              {preview.preparedEmails.map((d) => (
+                <li key={d.id} className="flex items-center justify-between gap-2 text-sm text-slate-900">
+                  <span className="min-w-0 truncate">{d.subject}</span>
+                  {permissions.canEmail && (
+                    <EmailButton
+                      context={{ kind: "realtor", id: preview.id }}
+                      draftId={d.id}
+                      label="Review & send"
+                      icon={false}
+                      onChanged={onChanged}
+                      className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -126,6 +164,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
           phone={preview.phone}
           email={preview.email}
           canWrite={permissions.canWrite}
+          canEmail={permissions.canEmail}
           showOpenRecord
           onChanged={onChanged}
           onCustomize={() => setCustomizing(true)}

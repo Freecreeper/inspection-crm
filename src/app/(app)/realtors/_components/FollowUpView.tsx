@@ -11,6 +11,7 @@ import {
   type FollowUpFilter,
 } from "@/lib/realtors/followUp";
 import { FollowUpTaskActions } from "./FollowUpTaskActions";
+import { EmailButton } from "@/components/email/EmailComposer";
 
 const FILTER_LABELS: Record<FollowUpFilter, string> = {
   all: "All tasks",
@@ -27,7 +28,7 @@ const MAX_IDLE_REALTORS = 50;
 // grouped by when they're due, not a pipeline of stages. "No upcoming
 // action" is simply realtors with no open task; nothing here is a
 // subjective score.
-export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilter; canWrite: boolean }) {
+export async function FollowUpView({ filter, canWrite, canEmail }: { filter: FollowUpFilter; canWrite: boolean; canEmail: boolean }) {
   const now = new Date();
   const buckets = bucketsForFilter(filter);
 
@@ -114,7 +115,7 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-start gap-2">
-                      <ContactLinks phone={r.phone} email={r.email} />
+                      <ContactLinks realtorId={r.id} phone={r.phone} email={r.email} canEmail={canEmail} followUp />
                       {canWrite && <FollowUpTaskActions taskId={task.id} dueAt={task.dueAt?.toISOString() ?? null} />}
                     </div>
                   </li>
@@ -150,7 +151,7 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
                         {r.brokerage && <span className="text-sm text-slate-500"> · {r.brokerage.name}</span>}
                         <p className="text-xs text-slate-500">{lastContact ? `Last contact: ${formatShortDate(lastContact)}` : "No contact logged"}</p>
                       </div>
-                      <ContactLinks phone={r.phone} email={r.email} />
+                      <ContactLinks realtorId={r.id} phone={r.phone} email={r.email} canEmail={canEmail} />
                     </li>
                   );
                 })}
@@ -170,7 +171,19 @@ export async function FollowUpView({ filter, canWrite }: { filter: FollowUpFilte
   );
 }
 
-function ContactLinks({ phone, email }: { phone: string | null; email: string | null }) {
+function ContactLinks({
+  realtorId,
+  phone,
+  email,
+  canEmail,
+  followUp = false,
+}: {
+  realtorId: string;
+  phone: string | null;
+  email: string | null;
+  canEmail: boolean;
+  followUp?: boolean;
+}) {
   const cls = "inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50";
   return (
     <>
@@ -181,7 +194,12 @@ function ContactLinks({ phone, email }: { phone: string | null; email: string | 
       ) : (
         <span className="px-1 py-1 text-xs text-slate-400">No phone</span>
       )}
-      {email ? (
+      {email && canEmail ? (
+        <>
+          <EmailButton context={{ kind: "realtor", id: realtorId }} className={cls} />
+          {followUp && <EmailButton context={{ kind: "realtor", id: realtorId }} templateKey="realtor_follow_up" label="Prepare follow-up" icon={false} className={cls} />}
+        </>
+      ) : email ? (
         <a href={`mailto:${email}`} className={cls}>
           <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Email
         </a>
