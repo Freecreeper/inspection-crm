@@ -301,7 +301,7 @@ export function TimeGrid({
                     </span>
                     <span className="block truncate font-medium">{e.title}</span>
                     {e.subtitle && p.height >= 60 && <span className="block truncate text-slate-600">{e.subtitle}</span>}
-                    {e.inspectorName && p.height >= 90 && <span className="block truncate text-slate-500">{e.type === "block" ? "" : "Inspector: "}{e.inspectorName}</span>}
+                    {e.inspectorName && e.type === "inspection" && p.height >= 90 && <span className="block truncate text-slate-500">Inspector: {e.inspectorName}</span>}
                     {variant === "day" && warn && p.height >= 75 && (
                       <span className="mt-0.5 block truncate text-amber-800">⚠ {e.warnings.map((w) => w.label).join(" · ")}</span>
                     )}

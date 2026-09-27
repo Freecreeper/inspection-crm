@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { PhoneField } from "@/components/PhoneField";
@@ -65,9 +65,15 @@ export function useConflictPreview(args: { inspectorId: string | null; day: stri
 }
 
 export function ConflictNotice({ conflicts, inspectorName, timeZone, proposed }: { conflicts: SerializedConflict[]; inspectorName: string | null; timeZone: string; proposed?: string | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const key = conflicts.map((c) => c.id).join(",");
+  // A long form can push the warning below the fold — bring it into view.
+  useEffect(() => {
+    if (key) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [key]);
   if (conflicts.length === 0) return null;
   return (
-    <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+    <div ref={ref} role="alert" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
       <p className="flex items-center gap-1.5 font-semibold">
         <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
         Scheduling conflict

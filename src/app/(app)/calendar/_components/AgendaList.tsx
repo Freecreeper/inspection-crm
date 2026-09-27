@@ -87,7 +87,7 @@ function AgendaCard({ event: e, timeZone, onClick }: { event: CalendarEvent; tim
           </p>
           <p className="mt-0.5 font-medium text-slate-900">{e.title}</p>
           {e.subtitle && <p className="text-sm text-slate-600">{e.subtitle}</p>}
-          {e.inspectorName && e.type !== "task" && <p className="text-sm text-slate-500">{e.type === "block" ? e.inspectorName : `Inspector: ${e.inspectorName}`}</p>}
+          {e.inspectorName && (e.type === "inspection" || e.type === "reportDue") && <p className="text-sm text-slate-500">Inspector: {e.inspectorName}</p>}
           {e.warnings.length > 0 && (
             <ul className="mt-1.5 space-y-0.5">
               {e.warnings.map((w) => (
