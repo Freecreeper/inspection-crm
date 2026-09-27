@@ -70,6 +70,69 @@ enum PreferredContactMethod {
   EMAIL
 }
 
+// ---------------------------------------------------------------------------
+// Email & communication automation (V1)
+// ---------------------------------------------------------------------------
+
+// An email's lifecycle. SENT means the provider accepted it; only a
+// provider delivery event moves it to DELIVERED.
+enum EmailStatus {
+  DRAFT
+  SCHEDULED
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  CANCELLED
+  SUPPRESSED
+  SKIPPED
+}
+
+// What started the email: an automation that sends on its own, an
+// automation that prepares a draft for a person to review and send, or a
+// person composing it.
+enum EmailSendMode {
+  AUTOMATIC
+  REVIEW
+  MANUAL
+}
+
+// Operational mail (confirmations, reminders, invoices, reports) is kept
+// strictly separate from relationship and marketing mail — preferences and
+// unsubscribes for one never silently apply to another.
+enum EmailCategory {
+  TRANSACTIONAL
+  RELATIONSHIP
+  MARKETING
+}
+
+enum EmailRecipientType {
+  CUSTOMER
+  REALTOR
+  OTHER
+}
+
+// Address-level suppression. ALL: undeliverable (hard bounce) — nothing is
+// sent. NON_TRANSACTIONAL: spam complaint / global opt-out — relationship
+// and marketing mail stop, operational mail continues. MARKETING: marketing
+// mail only.
+enum SuppressionScope {
+  ALL
+  NON_TRANSACTIONAL
+  MARKETING
+}
+
+enum CampaignStatus {
+  DRAFT
+  READY_FOR_REVIEW
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
 enum InspectionStatus {
   SCHEDULED
   IN_PROGRESS
@@ -180,6 +243,9 @@ model User {
   reportDefinitions       ReportDefinition[]
   narrativesCreated       Narrative[]
   reportVersionsFinalized ReportVersion[]    @relation("FinalizedByUser")
+  emailMessagesCreated    EmailMessage[]
+  campaignsCreated        EmailCampaign[]    @relation("CampaignCreatedBy")
+  campaignsApproved       EmailCampaign[]    @relation("CampaignApprovedBy")
 
   @@map("users")
 }
@@ -218,8 +284,10 @@ model Customer {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  leadOrigin   Lead?                 @relation("LeadConversion")
-  transactions TransactionCustomer[]
+  leadOrigin     Lead?                 @relation("LeadConversion")
+  transactions   TransactionCustomer[]
+  communications Communication[]
+  emailMessages  EmailMessage[]
 
   @@map("customers")
 }
@@ -333,26 +401,40 @@ model Brokerage {
 }
 
 model Realtor {
-  id                     String                  @id @default(cuid())
-  firstName              String
-  lastName               String
-  preferredName          String?
-  email                  String?
-  phone                  String?
-  preferredContactMethod PreferredContactMethod?
-  licenseNumber          String?
-  notes                  String?
-  brokerageId            String?
-  brokerage              Brokerage?              @relation(fields: [brokerageId], references: [id])
-  archivedAt             DateTime?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
+  id                        String                  @id @default(cuid())
+  firstName                 String
+  lastName                  String
+  preferredName             String?
+  email                     String?
+  phone                     String?
+  preferredContactMethod    PreferredContactMethod?
+  licenseNumber             String?
+  notes                     String?
+  // Optional relationship dates. Birthday has no year on purpose; career
+  // and relationship start are distinct facts and never assumed equal.
+  birthdayMonth             Int?
+  birthdayDay               Int?
+  careerStartDate           DateTime?               @db.Date
+  relationshipStartDate     DateTime?               @db.Date
+  // Communication preferences. Having an email address is not permission
+  // to receive every category — see src/lib/email/eligibility.ts.
+  relationshipEmailsEnabled Boolean                 @default(true)
+  marketingOptIn            Boolean                 @default(false)
+  marketingOptInSource      String?
+  marketingOptInAt          DateTime?
+  marketingUnsubscribedAt   DateTime?
+  brokerageId               String?
+  brokerage                 Brokerage?              @relation(fields: [brokerageId], references: [id])
+  archivedAt                DateTime?
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
 
   transactions    TransactionRealtor[]
   history         RealtorBrokerageHistory[]
   referralSources ReferralSource[]
   tasks           Task[]
   communications  Communication[]
+  emailMessages   EmailMessage[]
 
   @@index([lastName, firstName])
   @@index([brokerageId])
@@ -385,14 +467,23 @@ model Communication {
   // logged against the relationship itself, not only against a deal.
   realtorId     String?
   realtor       Realtor?     @relation(fields: [realtorId], references: [id])
+  customerId    String?
+  customer      Customer?    @relation(fields: [customerId], references: [id])
+  inspectionId  String?
+  inspection    Inspection?  @relation(fields: [inspectionId], references: [id])
   channel       String
   direction     String
   summary       String
   occurredAt    DateTime     @default(now())
   createdAt     DateTime     @default(now())
 
+  // Set when this entry is a sent email — the delivery lifecycle lives there.
+  email EmailMessage?
+
   @@index([transactionId])
   @@index([realtorId])
+  @@index([customerId])
+  @@index([inspectionId])
   @@map("communications")
 }
 
@@ -436,6 +527,7 @@ model Transaction {
   tasks          Task[]
   communications Communication[]
   documents      Document[]
+  emailMessages  EmailMessage[]
 
   @@index([status])
   @@index([createdAt])
@@ -550,6 +642,10 @@ model Inspection {
   temperatureF    Int?
   occupancyStatus String?
   utilitiesOn     Boolean?
+  // Bumped on every meaningful date/time/cancellation change. Queued
+  // reminders record the version they were written for and are dropped at
+  // send time if it no longer matches, so a stale time is never emailed.
+  scheduleVersion Int              @default(0)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -558,6 +654,8 @@ model Inspection {
   invoices           Invoice[]
   media              Media[]
   appointments       Appointment[]
+  communications     Communication[]
+  emailMessages      EmailMessage[]
 
   @@index([status])
   @@index([scheduledAt])
@@ -599,8 +697,9 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  items    InvoiceItem[]
-  payments Payment[]
+  items         InvoiceItem[]
+  payments      Payment[]
+  emailMessages EmailMessage[]
 
   @@index([status])
   @@index([transactionId])
@@ -881,6 +980,8 @@ model ReportDelivery {
   accessTokenHash String                @unique
   accessExpiresAt DateTime
 
+  emailMessages EmailMessage[]
+
   @@index([reportId])
   @@map("report_deliveries")
 }
@@ -958,17 +1059,24 @@ model ReportFieldCatalogEntry {
   @@map("report_field_catalog")
 }
 
+// Email automations are rows here, keyed by `key` (see
+// src/lib/email/automations/registry.ts). `actions` holds the per-rule
+// configuration (template, recipients, timing), validated in code.
 model Automation {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
+  key          String?       @unique
   name         String
+  description  String?
   triggerEvent String
   conditions   Json?
   actions      Json
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sendMode     EmailSendMode @default(AUTOMATIC)
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  events AutomationEvent[]
+  events        AutomationEvent[]
+  emailMessages EmailMessage[]
 
   @@map("automations")
 }
@@ -986,6 +1094,7 @@ model AutomationEvent {
   triggeredBy   User?      @relation("TriggeredByUser", fields: [triggeredById], references: [id])
 
   @@index([automationId])
+  @@index([firedAt])
   @@map("automation_events")
 }
 
@@ -1005,4 +1114,211 @@ model ActivityLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Email & communication automation (V1) — see docs/email.md
+// ---------------------------------------------------------------------------
+
+// Configurable email copy. Only allow-listed {{variables}} resolve (see
+// src/lib/email/variables.ts); nothing here is executed.
+model EmailTemplate {
+  id                 String             @id @default(cuid())
+  key                String             @unique
+  name               String
+  description        String?
+  category           EmailCategory
+  recipientType      EmailRecipientType
+  subject            String
+  body               String
+  active             Boolean            @default(true)
+  automationEligible Boolean            @default(false)
+  // Shipped defaults can be edited but not deleted.
+  isSystem           Boolean            @default(false)
+  createdById        String?
+  updatedById        String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  messages  EmailMessage[]
+  campaigns EmailCampaign[]
+
+  @@map("email_templates")
+}
+
+// One outbound email, from draft or skip through delivery. This table is
+// also the send queue (a transactional outbox): the worker claims QUEUED
+// rows with FOR UPDATE SKIP LOCKED. When an email is actually sent, a
+// Communication row is written so it joins the CRM's activity history.
+model EmailMessage {
+  id           String        @id @default(cuid())
+  status       EmailStatus
+  mode         EmailSendMode
+  category     EmailCategory
+  // The reason behind SKIPPED/SUPPRESSED/CANCELLED/FAILED/BOUNCED, in plain
+  // words for staff ("Customer email not provided").
+  statusReason String?
+
+  recipientType  EmailRecipientType
+  recipientName  String
+  recipientEmail String?
+
+  subject  String
+  bodyText String
+
+  templateId   String?
+  template     EmailTemplate? @relation(fields: [templateId], references: [id])
+  automationId String?
+  automation   Automation?    @relation(fields: [automationId], references: [id])
+  campaignId   String?
+  campaign     EmailCampaign? @relation(fields: [campaignId], references: [id])
+
+  customerId       String?
+  customer         Customer?       @relation(fields: [customerId], references: [id])
+  realtorId        String?
+  realtor          Realtor?        @relation(fields: [realtorId], references: [id])
+  transactionId    String?
+  transaction      Transaction?    @relation(fields: [transactionId], references: [id])
+  inspectionId     String?
+  inspection       Inspection?     @relation(fields: [inspectionId], references: [id])
+  invoiceId        String?
+  invoice          Invoice?        @relation(fields: [invoiceId], references: [id])
+  // The report link always points at this delivery's immutable version.
+  reportDeliveryId String?
+  reportDelivery   ReportDelivery? @relation(fields: [reportDeliveryId], references: [id])
+
+  // Prevents the same business event producing two emails (e.g.
+  // "inspection:<id>:confirmation:customer:<id>"). NULL for ad-hoc mail.
+  idempotencyKey String? @unique
+  // Conditions re-checked right before sending (still scheduled? same
+  // appointment version? balance still due?) — see src/lib/email/guards.ts.
+  guard          Json?
+
+  scheduledFor  DateTime?
+  queuedAt      DateTime?
+  sendingAt     DateTime?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  failedAt      DateTime?
+  bouncedAt     DateTime?
+  cancelledAt   DateTime?
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime?
+
+  provider          String?
+  providerMessageId String? @unique
+  messageStream     String?
+  // True when the environment only logged the send (EMAIL_DELIVERY_MODE=log):
+  // it went through the whole pipeline but nobody received it.
+  simulated         Boolean @default(false)
+
+  communicationId String?        @unique
+  communication   Communication? @relation(fields: [communicationId], references: [id])
+
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events EmailEvent[]
+
+  @@index([status, nextAttemptAt])
+  @@index([status, scheduledFor])
+  @@index([realtorId])
+  @@index([customerId])
+  @@index([transactionId])
+  @@index([inspectionId])
+  @@index([invoiceId])
+  @@index([campaignId])
+  @@index([automationId])
+  @@index([createdAt])
+  @@map("email_messages")
+}
+
+// Provider webhook events. eventKey is derived deterministically from the
+// payload so a re-delivered webhook is recognized and ignored.
+model EmailEvent {
+  id             String        @id @default(cuid())
+  emailMessageId String?
+  emailMessage   EmailMessage? @relation(fields: [emailMessageId], references: [id])
+  provider       String
+  eventKey       String        @unique
+  type           String
+  occurredAt     DateTime
+  detail         Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([emailMessageId])
+  @@map("email_events")
+}
+
+// A lightweight multi-recipient send for Realtor relationship/marketing
+// mail. Each recipient still gets their own EmailMessage.
+model EmailCampaign {
+  id           String         @id @default(cuid())
+  name         String
+  category     EmailCategory
+  templateId   String
+  template     EmailTemplate  @relation(fields: [templateId], references: [id])
+  subject      String
+  body         String
+  // Deterministic audience rules (src/lib/email/campaigns.ts) — never a
+  // free-form query.
+  audience     Json
+  status       CampaignStatus @default(DRAFT)
+  scheduledAt  DateTime?
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  approvedById String?
+  approvedBy   User?          @relation("CampaignApprovedBy", fields: [approvedById], references: [id])
+  startedAt    DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  createdById  String?
+  createdBy    User?          @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  messages EmailMessage[]
+
+  @@index([status, scheduledAt])
+  @@map("email_campaigns")
+}
+
+model EmailSuppression {
+  id          String           @id @default(cuid())
+  // Always stored lower-cased.
+  email       String
+  scope       SuppressionScope
+  reason      String
+  source      String
+  createdById String?
+  createdAt   DateTime         @default(now())
+
+  @@unique([email, scope])
+  @@map("email_suppressions")
+}
+
+// Single row (id "default"). Provider credentials are env-only and never
+// stored or shown here.
+model EmailSettings {
+  id                         String   @id @default("default")
+  companyName                String   @default("Our inspection company")
+  fromName                   String   @default("Inspection Team")
+  fromEmail                  String?
+  replyTo                    String?
+  signature                  String   @default("")
+  companyPhone               String?
+  companyWebsite             String?
+  // Required in marketing mail (physical postal address).
+  mailingAddress             String?
+  inspectionPrepInstructions String?
+  // When true (the default), marketing mail goes only to realtors who have
+  // explicitly opted in.
+  marketingRequiresOptIn     Boolean  @default(true)
+  campaignSendsPerMinute     Int      @default(60)
+  updatedById                String?
+  updatedAt                  DateTime @updatedAt
+
+  @@map("email_settings")
 }
