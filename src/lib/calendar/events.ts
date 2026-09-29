@@ -20,6 +20,9 @@ export interface CalendarQuery {
   end: DayKey; // exclusive
   layers: CalendarLayer[];
   inspectorId?: string | null;
+  // Tasks and follow-ups assigned to this user only (the Dashboard's "My"
+  // filter). The Calendar itself doesn't use it.
+  assigneeId?: string | null;
   role: Role | undefined;
   now?: Date;
 }
@@ -193,6 +196,7 @@ const loadTasks =
         completedAt: null,
         dueAt: { gte: startOfDayUtc(addDays(q.start, -1), ctx.config.timeZone), lt: startOfDayUtc(addDays(q.end, 1), ctx.config.timeZone) },
         realtorId: which === "realtors" ? { not: null } : null,
+        ...(q.assigneeId ? { assigneeId: q.assigneeId } : {}),
       },
       orderBy: { dueAt: "asc" },
       include: {
