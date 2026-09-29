@@ -217,7 +217,7 @@ export type QuickCreateResult<D> = { ok: true; data: SearchOption } | { ok: fals
 // Previously the only way to create a Customer was converting a Lead; the
 // Calendar spec adds this path so scheduling isn't abandoned. It checks for
 // likely existing customers first and never merges on its own.
-export async function createCustomerQuick(input: { firstName: string; lastName: string; email?: string; phone?: string; confirmDuplicates?: boolean }): Promise<QuickCreateResult<CustomerDuplicate>> {
+export async function createCustomerQuick(input: { firstName: string; lastName: string; email?: string; phone?: string; confirmDuplicates?: boolean; source?: "calendar" | "dashboard" }): Promise<QuickCreateResult<CustomerDuplicate>> {
   const { userId } = await requireSession("crm:write");
   const firstName = input.firstName?.trim() ?? "";
   const lastName = input.lastName?.trim() ?? "";
@@ -234,7 +234,7 @@ export async function createCustomerQuick(input: { firstName: string; lastName: 
   }
   const customer = await prisma.$transaction(async (tx) => {
     const created = await tx.customer.create({ data: { firstName, lastName, email, phone } });
-    await logActivity(tx, { actorId: userId, action: "customer.created", entityType: "Customer", entityId: created.id, after: { source: "calendar", firstName, lastName, email, phone } });
+    await logActivity(tx, { actorId: userId, action: "customer.created", entityType: "Customer", entityId: created.id, after: { source: input.source === "dashboard" ? "dashboard" : "calendar", firstName, lastName, email, phone } });
     return created;
   });
   revalidatePath("/customers");

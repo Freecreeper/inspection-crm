@@ -30,7 +30,7 @@ import { AgendaList } from "./AgendaList";
 import { PreviewDrawer, type Viewer } from "./PreviewDrawer";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { AddTaskDialog, BlockTimeDialog, CancelDialog, RescheduleDialog, whenLabel, type RescheduleTarget } from "./ChangeDialogs";
-import { Popover } from "./Popover";
+import { Popover } from "@/components/Popover";
 import { MiniMonths } from "./MiniMonths";
 import { WeekAgenda } from "./WeekAgenda";
 
