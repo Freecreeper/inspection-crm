@@ -22,6 +22,7 @@ import {
   FileText,
   BookOpen,
   BarChart3,
+  Receipt,
   Menu,
   X,
 } from "lucide-react";
@@ -63,6 +64,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Work",
     items: [
       { href: "/tasks", label: "Tasks", icon: CheckSquare },
+      { href: "/invoices", label: "Invoices", icon: Receipt },
       { href: "/email", label: "Email", icon: Send },
       { href: "/communications", label: "Communications", icon: Mail },
       { href: "/documents", label: "Documents", icon: FileText },
