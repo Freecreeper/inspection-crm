@@ -3,6 +3,7 @@
 
 import type { CalendarEvent } from "@/lib/calendar/types";
 import type { DayKey } from "@/lib/calendar/time";
+import type { ComposeContext } from "@/lib/email/composer";
 import type { AttentionCategory, KpiKey, Timeframe, WidgetKey } from "./registry";
 
 export type AttentionSeverity = "critical" | "warning" | "action" | "info";
@@ -75,6 +76,23 @@ export interface InvoiceRow {
   href: string;
 }
 
+// An email someone needs to act on: a prepared draft to review and send,
+// or an email that failed/bounced. `context` reopens it in the composer.
+export interface EmailActionRow {
+  id: string;
+  kind: "review" | "failed" | "bounced";
+  subject: string;
+  recipientName: string;
+  detail: string | null;
+  at: string;
+  context: ComposeContext | null;
+  href: string;
+}
+
+export interface TaskActionRow extends TaskRow {
+  realtorEmail: boolean;
+}
+
 export interface LeadRow {
   id: string;
   name: string;
@@ -99,6 +117,8 @@ export type WidgetData =
   | { key: "upcoming"; days: UpcomingDay[]; total: number; timeframe: Timeframe }
   | { key: "recentActivity"; entries: ActivityEntry[] }
   | { key: "myTasks"; rows: TaskRow[]; total: number }
+  // emails is null when the viewer can't see email at all.
+  | { key: "actionQueue"; emails: EmailActionRow[] | null; emailTotal: number; tasks: TaskActionRow[]; taskTotal: number }
   | { key: "reportsPending"; rows: ReportRow[]; total: number }
   | { key: "outstandingInvoices"; rows: InvoiceRow[]; total: number; balance: string }
   | { key: "realtorFollowUps"; rows: TaskRow[]; total: number }

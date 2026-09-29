@@ -60,7 +60,7 @@ export interface OpenTask {
   completedAt: Date | null;
   assigneeId: string | null;
   assignee: { name: string } | null;
-  realtor: { id: string; firstName: string; lastName: string; preferredName: string | null; phone: string | null } | null;
+  realtor: { id: string; firstName: string; lastName: string; preferredName: string | null; phone: string | null; email: string | null } | null;
   transaction: { id: string; property: { addressLine1: string; city: string } | null } | null;
 }
 
@@ -166,7 +166,7 @@ export function createDashboardContext(viewer: DashboardViewer, now = new Date()
           completedAt: true,
           assigneeId: true,
           assignee: { select: { name: true } },
-          realtor: { select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true } },
+          realtor: { select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true } },
           transaction: { select: { id: true, property: { select: { addressLine1: true, city: true } } } },
         },
       })

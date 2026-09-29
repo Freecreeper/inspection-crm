@@ -61,6 +61,9 @@ interface SendPlan {
   inspection: LoadedInspection;
   // The catch-up sweep re-runs constantly; it shouldn't re-log the same skip.
   quiet?: boolean;
+  // The caller's clock, so "is this send time still ahead?" is decided
+  // against the same instant as the rest of the hook.
+  now?: Date;
 }
 
 async function sendToRecipients(plan: SendPlan, db: Db) {
@@ -91,6 +94,7 @@ async function sendToRecipients(plan: SendPlan, db: Db) {
           guard: { checks: [plan.guard], extraVars: plan.extraVars },
           scheduledFor: plan.scheduledFor,
           createdById: plan.actorId,
+          now: plan.now,
         },
         db
       )
@@ -110,6 +114,7 @@ async function sendToRecipients(plan: SendPlan, db: Db) {
           guard: { checks: [plan.guard], extraVars: plan.extraVars },
           scheduledFor: plan.scheduledFor,
           createdById: plan.actorId,
+          now: plan.now,
         },
         db
       )
@@ -168,6 +173,7 @@ export async function scheduleInspectionReminders(inspectionId: string, opts: Ho
       guard: { kind: "inspectionScheduled", inspectionId: inspection.id, scheduleVersion: inspection.scheduleVersion },
       scheduledFor: sendAt,
       actorId: opts.actorId,
+      now,
       quiet: opts.quiet,
       recipients: inspectionRecipients(inspection, auto.config),
       inspection,
@@ -198,6 +204,7 @@ export async function onInspectionScheduled(inspectionId: string, opts: HookOpts
           realtorTemplateKey: auto.config.realtorTemplateKey,
           guard: { kind: "inspectionScheduled", inspectionId: inspection.id, scheduleVersion: inspection.scheduleVersion },
           actorId: opts.actorId,
+          now: opts.now,
           quiet: opts.quiet,
           recipients: inspectionRecipients(inspection, auto.config),
           inspection,
@@ -248,6 +255,7 @@ export async function onInspectionRescheduled(
           guard: { kind: "inspectionScheduled", inspectionId: inspection.id, scheduleVersion: inspection.scheduleVersion },
           extraVars: { "inspection.previousDate": formatDateLong(previousScheduledAt), "inspection.previousTime": formatTime(previousScheduledAt) },
           actorId: opts.actorId,
+          now: opts.now,
           recipients: inspectionRecipients(inspection, auto.config),
           inspection,
         },
@@ -278,6 +286,7 @@ export async function onInspectionCancelled(inspectionId: string, opts: { actorI
       realtorTemplateKey: auto.config.realtorCancelledTemplateKey,
       guard: { kind: "inspectionCancelled", inspectionId: inspection.id, scheduleVersion: inspection.scheduleVersion },
       actorId: opts.actorId,
+      now: opts.now,
       recipients: inspectionRecipients(inspection, auto.config),
       inspection,
     },

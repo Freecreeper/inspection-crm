@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { ForbiddenError } from "@/lib/rbac";
+import { can, ForbiddenError } from "@/lib/rbac";
+import { composeContextForMessage } from "@/lib/email/composer";
 import { loadCalendarEvents } from "@/lib/calendar/events";
 import { addDays, toDayKey } from "@/lib/calendar/time";
 import type { CalendarEvent } from "@/lib/calendar/types";
@@ -10,7 +11,7 @@ import { loadKpis, monthPeriod, weekPeriod } from "./metrics";
 import { effectiveOptions, visibleWidgets, type DashboardPreferences } from "./preferences";
 import { canUseWidget, type WidgetKey } from "./registry";
 import { createDashboardContext, type DashboardContext, type DashboardViewer, type OpenTask } from "./sources";
-import type { InvoiceRow, TaskRow, UpcomingDay, WidgetData, WidgetResult } from "./types";
+import type { EmailActionRow, InvoiceRow, TaskRow, UpcomingDay, WidgetData, WidgetResult } from "./types";
 
 // The Dashboard's read side. The page resolves the user's preferences
 // (already permission-filtered), then loads only the visible widgets, in
@@ -33,6 +34,53 @@ function taskRow(t: OpenTask, ctx: DashboardContext): TaskRow {
     href: t.realtor ? `/realtors/${t.realtor.id}` : t.transaction ? `/transactions/${t.transaction.id}` : "/tasks",
     realtor: t.realtor ? { id: t.realtor.id, name: realtorDisplayName(t.realtor), phone: t.realtor.phone } : null,
   };
+}
+
+// Emails someone has to act on: automation/staff drafts waiting to be
+// reviewed and sent (never sent from here without opening them), and
+// operational or relationship email that failed or bounced recently.
+// Campaign mail is managed on the campaign itself.
+export const EMAIL_ACTION_LIMIT = 6;
+export const EMAIL_FAILURE_WINDOW_DAYS = 14;
+
+const reviewWhere = { status: "DRAFT", campaignId: null } as const;
+
+async function loadEmailActions(ctx: DashboardContext): Promise<{ rows: EmailActionRow[]; total: number }> {
+  const since = new Date(ctx.now.getTime() - EMAIL_FAILURE_WINDOW_DAYS * 86_400_000);
+  const failedWhere = { status: { in: ["FAILED" as const, "BOUNCED" as const] }, campaignId: null, updatedAt: { gte: since } };
+  const select = {
+    id: true,
+    status: true,
+    subject: true,
+    recipientName: true,
+    statusReason: true,
+    createdAt: true,
+    updatedAt: true,
+    realtorId: true,
+    customerId: true,
+    inspectionId: true,
+    transactionId: true,
+    automation: { select: { name: true } },
+  } as const;
+  const [failed, drafts, failedCount, draftCount] = await Promise.all([
+    prisma.emailMessage.findMany({ where: failedWhere, orderBy: { updatedAt: "desc" }, take: EMAIL_ACTION_LIMIT, select }),
+    prisma.emailMessage.findMany({ where: reviewWhere, orderBy: { createdAt: "asc" }, take: EMAIL_ACTION_LIMIT, select }),
+    prisma.emailMessage.count({ where: failedWhere }),
+    prisma.emailMessage.count({ where: reviewWhere }),
+  ]);
+  const row = (m: (typeof failed)[number], kind: EmailActionRow["kind"]): EmailActionRow => ({
+    id: m.id,
+    kind,
+    subject: m.subject || "(no subject)",
+    recipientName: m.recipientName,
+    detail: kind === "review" ? (m.automation?.name ?? "Draft") : (m.statusReason ?? (kind === "bounced" ? "Bounced" : "Failed")),
+    at: (kind === "review" ? m.createdAt : m.updatedAt).toISOString(),
+    context: composeContextForMessage(m),
+    href: `/email/messages/${m.id}`,
+  });
+  // Failures first (something went wrong), then the review queue, oldest first.
+  const rows = [...failed.map((m) => row(m, m.status === "BOUNCED" ? "bounced" : "failed")), ...drafts.map((m) => row(m, "review"))].slice(0, EMAIL_ACTION_LIMIT);
+  return { rows, total: failedCount + draftCount };
 }
 
 const byTime = (a: CalendarEvent, b: CalendarEvent) =>
@@ -84,6 +132,17 @@ export async function loadWidget(key: WidgetKey, ctx: DashboardContext, prefs: D
 
     case "recentActivity":
       return { key, entries: await loadRecentActivity(ctx) };
+
+    case "actionQueue": {
+      const [tasks, emails] = await Promise.all([
+        ctx.openTasks(),
+        // Email is only loaded for roles that may see it.
+        can(ctx.viewer.role, "email:view") ? loadEmailActions(ctx) : null,
+      ]);
+      const mineOrAll = tasks.filter((t) => !mine || t.assigneeId === me);
+      const rows = mineOrAll.slice(0, LIST_LIMIT).map((t) => ({ ...taskRow(t, ctx), realtorEmail: Boolean(t.realtor?.email) }));
+      return { key, emails: emails?.rows ?? null, emailTotal: emails?.total ?? 0, tasks: rows, taskTotal: mineOrAll.length };
+    }
 
     case "myTasks": {
       const tasks = (await ctx.openTasks()).filter((t) => !mine || t.assigneeId === me);

@@ -19,6 +19,8 @@ export const ACTIVITY_ACTIONS: Record<string, { label: string; permission?: Perm
   "inspection.rescheduled": { label: "Inspection rescheduled" },
   "inspection.cancelled": { label: "Inspection cancelled" },
   "inspection.agreement_signed": { label: "Agreement signed" },
+  // Shown too, or an undone signature would leave the feed saying "signed".
+  "inspection.agreement_unsigned": { label: "Agreement marked unsigned" },
   "task.completed": { label: "Task completed" },
   "invoice.payment_recorded": { label: "Payment received", permission: "financial:read" },
   "customer.created": { label: "Customer added" },

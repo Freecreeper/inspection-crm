@@ -19,6 +19,7 @@ import { CustomizePanel, type SaveStatus } from "./CustomizePanel";
 import { GlobalSearch } from "./GlobalSearch";
 import { NewCustomerDialog, NewMenu, type NewAction } from "./NewMenu";
 import {
+  ActionQueueWidget,
   ActivityWidget,
   AttentionWidget,
   FollowUpsWidget,
@@ -230,6 +231,20 @@ export function DashboardApp({
         return <UpcomingWidget data={result} today={today} />;
       case "recentActivity":
         return <ActivityWidget data={result} today={today} timeZone={timeZone} />;
+      case "actionQueue":
+        return (
+          <ActionQueueWidget
+            data={result}
+            today={today}
+            timeZone={timeZone}
+            scope={scope}
+            canUpdateTasks={viewer.canUpdateTasks}
+            canSendEmail={viewer.canEmail}
+            onAddTask={() => onNew("task")}
+            onOpen={openPreview}
+            onChanged={refresh}
+          />
+        );
       case "myTasks":
         return <TasksWidget data={result} title={scope === "mine" ? "My Tasks" : "Open Tasks"} today={today} canComplete={viewer.canUpdateTasks} onOpen={openPreview} onChanged={refresh} />;
       case "reportsPending":

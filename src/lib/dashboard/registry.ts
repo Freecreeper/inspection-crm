@@ -14,6 +14,7 @@ import { can, type Permission } from "@/lib/rbac";
 export const WIDGET_KEYS = [
   "today",
   "needsAttention",
+  "actionQueue",
   "snapshot",
   "upcoming",
   "recentActivity",
@@ -66,6 +67,14 @@ export const WIDGETS: readonly WidgetDef[] = [
     permissions: ["dashboard:view"],
     span: "full",
     scope: { mine: "My items", all: "All items" },
+  },
+  {
+    key: "actionQueue",
+    label: "Email & Task Actions",
+    description: "Emails to review, send, or retry and tasks due now — act on them right here.",
+    permissions: ["dashboard:view"],
+    span: "full",
+    scope: { mine: "My tasks", all: "All tasks" },
   },
   {
     key: "snapshot",
@@ -265,7 +274,7 @@ export interface RoleDefault {
 }
 
 const OWNER_DEFAULT: RoleDefault = {
-  visible: ["today", "needsAttention", "snapshot", "upcoming", "recentActivity"],
+  visible: ["today", "needsAttention", "actionQueue", "snapshot", "upcoming", "recentActivity"],
   kpis: ["inspectionsMonth", "revenueMonth", "avgInspectionValue", "referralsMonth"],
   scope: {},
 };
@@ -273,14 +282,16 @@ const OWNER_DEFAULT: RoleDefault = {
 export const ROLE_DEFAULTS: Record<Role, RoleDefault> = {
   OWNER_ADMIN: OWNER_DEFAULT,
   OFFICE_STAFF: {
-    visible: ["today", "needsAttention", "snapshot", "upcoming", "myTasks", "recentActivity"],
+    // Email & Task Actions covers the office's open tasks (with Complete,
+    // Reschedule, Email) plus the email queue, so it replaces Tasks here.
+    visible: ["today", "needsAttention", "actionQueue", "snapshot", "upcoming", "recentActivity"],
     kpis: ["inspectionsWeek", "unsignedAgreements", "outstandingBalance", "reportsAwaiting"],
-    scope: { myTasks: "all" },
+    scope: { myTasks: "all", actionQueue: "all" },
   },
   INSPECTOR: {
     visible: ["today", "needsAttention", "myTasks", "reportsPending", "upcoming"],
     kpis: ["inspectionsWeek", "inspectionsMonth", "reportsAwaiting", "overdueTasks"],
-    scope: { today: "mine", needsAttention: "mine", upcoming: "mine", myTasks: "mine", reportsPending: "mine", realtorFollowUps: "mine" },
+    scope: { today: "mine", needsAttention: "mine", upcoming: "mine", myTasks: "mine", reportsPending: "mine", realtorFollowUps: "mine", actionQueue: "mine" },
   },
   REPORTING_ANALYST: OWNER_DEFAULT,
 };

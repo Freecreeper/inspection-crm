@@ -213,6 +213,8 @@ describe("Recent Activity", () => {
     const where = db.activityLog.findMany.mock.calls[0][0].where;
     expect(where.action.in).not.toContain("invoice.payment_recorded");
     expect(where.action.in).toContain("inspection.scheduled");
+    // Undoing a signature is shown as well as signing.
+    expect(where.action.in).toEqual(expect.arrayContaining(["inspection.agreement_signed", "inspection.agreement_unsigned"]));
   });
 
   it("an entry whose record is gone still renders", async () => {
@@ -286,5 +288,79 @@ describe("Needs Attention loading", () => {
     db.invoice.findMany.mockResolvedValue([row("PAID", [{ amount: new Prisma.Decimal("475") }])]);
     const after = await loadWidget("needsAttention", createDashboardContext(admin, NOW), prefsWith(["needsAttention"]));
     expect(after).toMatchObject({ items: [] });
+  });
+});
+
+describe("Email & Task Actions", () => {
+  const email = (id: string, status: string, over: Record<string, unknown> = {}) => ({
+    id,
+    status,
+    subject: `Subject ${id}`,
+    recipientName: "Ava Chen",
+    statusReason: status === "FAILED" ? "Provider timeout" : null,
+    createdAt: new Date("2026-09-27T12:00:00Z"),
+    updatedAt: new Date("2026-09-28T12:00:00Z"),
+    realtorId: null,
+    customerId: "c1",
+    inspectionId: "i1",
+    transactionId: "t1",
+    automation: { name: "Inspection confirmation" },
+    ...over,
+  });
+  const task = (id: string, assigneeId: string, over: Record<string, unknown> = {}) => ({
+    id,
+    title: `Task ${id}`,
+    dueAt: new Date("2026-09-28T16:00:00Z"),
+    completedAt: null,
+    assigneeId,
+    assignee: { name: assigneeId },
+    realtor: null,
+    transaction: null,
+    ...over,
+  });
+
+  it("lists failed/bounced email first, then drafts to review, with the context that reopens each in the composer", async () => {
+    db.emailMessage.findMany.mockImplementation(async (args: { where: { status: unknown } }) =>
+      args.where.status === "DRAFT"
+        ? [email("d1", "DRAFT", { realtorId: "r1", customerId: null, inspectionId: null, transactionId: null, automation: { name: "Realtor thank-you" } })]
+        : [email("f1", "FAILED"), email("b1", "BOUNCED", { statusReason: "Hard bounce" })]
+    );
+    db.emailMessage.count.mockResolvedValueOnce(2).mockResolvedValueOnce(4);
+    const result = await loadWidget("actionQueue", createDashboardContext(admin, NOW), prefsWith(["actionQueue"]));
+    expect(result).toMatchObject({
+      key: "actionQueue",
+      emailTotal: 6,
+      emails: [
+        { id: "f1", kind: "failed", detail: "Provider timeout", context: { kind: "inspection", id: "i1" }, href: "/email/messages/f1" },
+        { id: "b1", kind: "bounced", detail: "Hard bounce" },
+        { id: "d1", kind: "review", detail: "Realtor thank-you", context: { kind: "realtor", id: "r1" } },
+      ],
+    });
+    // Drafts: the same queue as Email → Review. Failures: recent, not campaign mail.
+    expect(db.emailMessage.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { status: "DRAFT", campaignId: null }, take: 6 }));
+    expect(db.emailMessage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { status: { in: ["FAILED", "BOUNCED"] }, campaignId: null, updatedAt: { gte: new Date("2026-09-15T15:00:00Z") } } })
+    );
+  });
+
+  it("roles without email access get tasks only — email isn't queried", async () => {
+    denied.add("INSPECTOR:email:view");
+    db.task.findMany.mockResolvedValue([task("t1", "u-jordan")]);
+    const result = await loadWidget("actionQueue", createDashboardContext({ userId: "u-jordan", role: "INSPECTOR" }, NOW), defaultPreferences("INSPECTOR"));
+    expect(result).toMatchObject({ emails: null, emailTotal: 0, tasks: [{ id: "t1" }], taskTotal: 1 });
+    expect(db.emailMessage.findMany).not.toHaveBeenCalled();
+    expect(db.emailMessage.count).not.toHaveBeenCalled();
+  });
+
+  it("'My tasks' shows only the viewer's; a Realtor task knows whether the Realtor can be emailed", async () => {
+    db.emailMessage.findMany.mockResolvedValue([]);
+    db.emailMessage.count.mockResolvedValue(0);
+    db.task.findMany.mockResolvedValue([
+      task("mine", "u-admin", { realtor: { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: null, phone: null, email: "sarah@example.com" } }),
+      task("theirs", "u-pat"),
+    ]);
+    const prefs = prefsWith(["actionQueue"], { options: { actionQueue: { scope: "mine" } } });
+    const result = await loadWidget("actionQueue", createDashboardContext(admin, NOW), prefs);
+    expect(result).toMatchObject({ taskTotal: 1, tasks: [{ id: "mine", realtorEmail: true, overdue: true, realtor: { id: "r1", name: "Sarah Jones" } }] });
   });
 });
