@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, Check, ChevronDown, ChevronUp, GripVertical, Lock, RotateCcw } from "lucide-react";
 import { Drawer } from "@/components/Drawer";
 import { KPI_LIMIT, TIMEFRAME_LABELS, type KpiDef, type KpiKey, type OptionalAttentionCategory, type Scope, type Timeframe, type WidgetDef, type WidgetKey } from "@/lib/dashboard/registry";
+import { moveShownWidget, setWidgetShown } from "@/lib/dashboard/layout";
 import { effectiveOptions, samePreferences, type DashboardPreferences } from "@/lib/dashboard/preferences";
 
 export type SaveStatus = { kind: "idle" } | { kind: "saving" } | { kind: "saved"; message?: string } | { kind: "error"; message: string };
@@ -53,31 +54,35 @@ export function CustomizePanel({
 
   const defs = new Map(widgets.map((w) => [w.key, w]));
   const rows = prefs.widgets.filter((w) => defs.has(w.key));
+  const shown = rows.filter((w) => w.visible);
+  const hidden = rows.filter((w) => !w.visible);
   const isDefault = samePreferences(prefs, defaults);
   const snapshotAvailable = defs.has("snapshot");
   const attentionAvailable = defs.has("needsAttention");
 
+  const focusLater = (ids: string[]) =>
+    requestAnimationFrame(() => {
+      for (const id of ids) {
+        const el = document.getElementById(id) as HTMLButtonElement | HTMLInputElement | null;
+        if (el && !el.disabled) return el.focus();
+      }
+    });
+
   function move(key: WidgetKey, to: number, focusDirection?: "up" | "down") {
-    const from = prefs.widgets.findIndex((w) => w.key === key);
-    if (from < 0 || to < 0 || to >= prefs.widgets.length || from === to) return;
-    const next = [...prefs.widgets];
-    const [entry] = next.splice(from, 1);
-    next.splice(to, 0, entry);
+    const next = moveShownWidget(prefs.widgets, key, to);
+    if (next === prefs.widgets) return;
     onChange({ ...prefs, widgets: next });
-    setAnnouncement(`${defs.get(key)?.label} moved to position ${to + 1} of ${next.length}.`);
-    if (focusDirection) {
-      // Keep keyboard focus on the moved row's control; at the ends the
-      // pressed button disables itself, so fall back to its partner.
-      requestAnimationFrame(() => {
-        const primary = document.getElementById(`move-${focusDirection}-${key}`) as HTMLButtonElement | null;
-        const other = document.getElementById(`move-${focusDirection === "up" ? "down" : "up"}-${key}`) as HTMLButtonElement | null;
-        (primary && !primary.disabled ? primary : other)?.focus();
-      });
-    }
+    setAnnouncement(`${defs.get(key)?.label} moved to position ${to + 1} of ${shown.length}.`);
+    // Keep keyboard focus on the moved row; at the ends the pressed button
+    // disables itself, so fall back to its partner.
+    if (focusDirection) focusLater([`move-${focusDirection}-${key}`, `move-${focusDirection === "up" ? "down" : "up"}-${key}`]);
   }
 
   function setVisible(key: WidgetKey, visible: boolean) {
-    onChange({ ...prefs, widgets: prefs.widgets.map((w) => (w.key === key ? { ...w, visible } : w)) });
+    onChange({ ...prefs, widgets: setWidgetShown(prefs.widgets, key, visible) });
+    setAnnouncement(`${defs.get(key)?.label} ${visible ? `shown, at position ${shown.length + 1}` : "hidden"}.`);
+    // The row moves between the Shown and Hidden lists; keep focus on it.
+    focusLater([`widget-visible-${key}`]);
   }
 
   function setOption(key: WidgetKey, patch: { scope?: Scope; timeframe?: Timeframe }) {
@@ -118,9 +123,10 @@ export function CustomizePanel({
           <h3 id="customize-widgets" className={heading}>
             Widgets
           </h3>
-          <p className={hint}>Show or hide sections, and set their order. Drag a row, or use the arrows. Phones use the same order.</p>
-          <ol className="mt-3 space-y-1.5">
-            {rows.map((row, index) => {
+          <p className={hint}>Untick to hide a section. Drag a row, or use the arrows, to set the order. Phones use the same order.</p>
+          <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">Shown, in order</h4>
+          <ol className="mt-1.5 space-y-1.5" aria-label="Shown widgets, in order">
+            {shown.map((row, index) => {
               const def = defs.get(row.key)!;
               const opts = effectiveOptions(prefs, row.key);
               const checkboxId = `widget-visible-${row.key}`;
@@ -141,7 +147,7 @@ export function CustomizePanel({
                   onDragLeave={() => setOverKey((k) => (k === row.key ? null : k))}
                   onDrop={(e) => {
                     e.preventDefault();
-                    if (dragKey && dragKey !== row.key) move(dragKey, prefs.widgets.findIndex((w) => w.key === row.key));
+                    if (dragKey && dragKey !== row.key) move(dragKey, index);
                     setDragKey(null);
                     setOverKey(null);
                   }}
@@ -153,25 +159,19 @@ export function CustomizePanel({
                 >
                   <div className="flex items-center gap-2">
                     <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-slate-400" aria-hidden="true" />
-                    <input
-                      id={checkboxId}
-                      type="checkbox"
-                      checked={row.visible}
-                      onChange={(e) => setVisible(row.key, e.target.checked)}
-                      className="h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600"
-                    />
+                    <input id={checkboxId} type="checkbox" checked onChange={() => setVisible(row.key, false)} className="h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600" />
                     <label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer py-1">
-                      <span className={`block text-sm font-medium ${row.visible ? "text-slate-900" : "text-slate-500"}`}>{def.label}</span>
+                      <span className="block text-sm font-medium text-slate-900">{def.label}</span>
                       <span className="block text-xs text-slate-500">{def.description}</span>
                     </label>
                     <button id={`move-up-${row.key}`} type="button" className={iconButton} disabled={index === 0} onClick={() => move(row.key, index - 1, "up")} aria-label={`Move ${def.label} up`}>
                       <ChevronUp className="h-4 w-4" aria-hidden="true" />
                     </button>
-                    <button id={`move-down-${row.key}`} type="button" className={iconButton} disabled={index === rows.length - 1} onClick={() => move(row.key, index + 1, "down")} aria-label={`Move ${def.label} down`}>
+                    <button id={`move-down-${row.key}`} type="button" className={iconButton} disabled={index === shown.length - 1} onClick={() => move(row.key, index + 1, "down")} aria-label={`Move ${def.label} down`}>
                       <ChevronDown className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
-                  {row.visible && (def.scope || def.timeframes) && (
+                  {(def.scope || def.timeframes) && (
                     <div className="ml-12 mt-1 flex flex-wrap gap-2 pb-1">
                       {def.scope && (
                         <select aria-label={`${def.label}: whose items`} value={opts.scope} onChange={(e) => setOption(row.key, { scope: e.target.value as Scope })} className={selectClass}>
@@ -193,7 +193,29 @@ export function CustomizePanel({
                 </li>
               );
             })}
+            {shown.length === 0 && <li className="rounded-md border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500">Nothing shown — tick a widget below.</li>}
           </ol>
+          {hidden.length > 0 && (
+            <>
+              <h4 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Hidden — tick to add</h4>
+              <ul className="mt-1.5 space-y-1" aria-label="Hidden widgets">
+                {hidden.map((row) => {
+                  const def = defs.get(row.key)!;
+                  const checkboxId = `widget-visible-${row.key}`;
+                  return (
+                    <li key={row.key} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-slate-50">
+                      <span className="w-4 shrink-0" aria-hidden="true" />
+                      <input id={checkboxId} type="checkbox" checked={false} onChange={() => setVisible(row.key, true)} className="h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600" />
+                      <label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer py-1">
+                        <span className="block text-sm font-medium text-slate-700">{def.label}</span>
+                        <span className="block text-xs text-slate-500">{def.description}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </section>
 
         {snapshotAvailable && (

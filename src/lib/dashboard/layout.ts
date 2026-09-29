@@ -22,6 +22,29 @@ export function layoutRows(keys: WidgetKey[]): WidgetKey[][] {
   return rows;
 }
 
+type Entry = { key: WidgetKey; visible: boolean };
+
+// Customize keeps one simple model: the shown widgets in display order,
+// then the hidden ones. Showing a widget adds it to the end of what's
+// shown; hiding one moves it to the top of the hidden list. Reordering
+// only ever happens among shown widgets, so every Move up/down is visible.
+export function setWidgetShown(widgets: Entry[], key: WidgetKey, visible: boolean): Entry[] {
+  const shown = widgets.filter((w) => w.visible && w.key !== key);
+  const hidden = widgets.filter((w) => !w.visible && w.key !== key);
+  return [...shown, { key, visible }, ...hidden];
+}
+
+export function moveShownWidget(widgets: Entry[], key: WidgetKey, toIndex: number): Entry[] {
+  const shown = widgets.filter((w) => w.visible);
+  const hidden = widgets.filter((w) => !w.visible);
+  const from = shown.findIndex((w) => w.key === key);
+  if (from < 0 || toIndex < 0 || toIndex >= shown.length || from === toIndex) return widgets;
+  const next = [...shown];
+  const [entry] = next.splice(from, 1);
+  next.splice(toIndex, 0, entry);
+  return [...next, ...hidden];
+}
+
 const usdWhole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 

@@ -95,7 +95,7 @@ describe("Customize Dashboard", () => {
     await user.click(screen.getByRole("button", { name: "Move Recent Activity up" }));
     expect(screen.getByTestId("order").textContent).toBe("today,needsAttention,upcoming,recentActivity,snapshot");
     // The move is announced for screen readers.
-    expect(screen.getByText("Recent Activity moved to position 4 of 10.")).toBeTruthy();
+    expect(screen.getByText("Recent Activity moved to position 4 of 5.")).toBeTruthy();
     // The first row can't move further up.
     expect((screen.getByRole("button", { name: "Move Today up" }) as HTMLButtonElement).disabled).toBe(true);
   });
@@ -105,8 +105,15 @@ describe("Customize Dashboard", () => {
     render(<Harness />);
     await user.click(screen.getByRole("checkbox", { name: /Recent Activity/ }));
     expect(screen.getByTestId("order").textContent).not.toContain("recentActivity");
-    await user.click(screen.getByRole("checkbox", { name: /Lead Activity/ }));
-    expect(screen.getByTestId("order").textContent).toContain("leadActivity");
+    // Hidden widgets sit in their own list; ticking one adds it to the end.
+    const hiddenList = screen.getByRole("list", { name: "Hidden widgets" });
+    expect(within(hiddenList).getByRole("checkbox", { name: /Recent Activity/ })).toBeTruthy();
+    await user.click(within(hiddenList).getByRole("checkbox", { name: /Lead Activity/ }));
+    expect(screen.getByTestId("order").textContent).toBe("today,needsAttention,snapshot,upcoming,leadActivity");
+    const shownList = screen.getByRole("list", { name: "Shown widgets, in order" });
+    expect(within(shownList).getByRole("button", { name: "Move Lead Activity up" })).toBeTruthy();
+    // Hidden widgets have no move buttons — nothing to reorder invisibly.
+    expect(screen.queryByRole("button", { name: "Move Recent Activity up" })).toBeNull();
   });
 
   it(`KPIs: remove one, add another, and no more than ${KPI_LIMIT}`, async () => {

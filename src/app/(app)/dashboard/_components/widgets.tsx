@@ -19,7 +19,7 @@ import { completeTask } from "../../tasks/actions";
 
 export type OpenPreview = (target: { type: "inspection" | "task" | "event"; id: string; title: string; event?: CalendarEvent }) => void;
 
-const linkClass = "inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:underline focus-visible:outline-2 focus-visible:outline-emerald-600";
+const linkClass = "inline-flex min-h-9 items-center gap-1 text-sm font-medium text-emerald-700 hover:underline focus-visible:outline-2 focus-visible:outline-emerald-600";
 const actionClass =
   "inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
 const rowButton = "w-full rounded-md text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
@@ -48,7 +48,7 @@ export function WidgetCard({
         {meta}
       </header>
       <div className="flex-1 px-4 pb-3">{children}</div>
-      {footer && <div className="border-t border-slate-100 px-4 py-2.5">{footer}</div>}
+      {footer && <div className="border-t border-slate-100 px-4 py-1">{footer}</div>}
     </section>
   );
 }

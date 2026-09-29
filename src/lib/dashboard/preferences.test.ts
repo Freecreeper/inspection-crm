@@ -17,7 +17,7 @@ vi.mock("@/lib/rbac", async (importOriginal) => {
 
 import { defaultPreferences, effectiveOptions, resolvePreferences, samePreferences, validatePreferences, visibleWidgets, type DashboardPreferences } from "./preferences";
 import { KPI_LIMIT, WIDGET_KEYS, availableKpis, availableWidgets } from "./registry";
-import { layoutRows } from "./layout";
+import { layoutRows, moveShownWidget, setWidgetShown } from "./layout";
 
 beforeEach(() => denied.clear());
 
@@ -87,6 +87,24 @@ describe("customizing (validated, then stored)", () => {
     expect(rows.flat()).toEqual([...order]);
     // Wide screens pair consecutive half-width widgets; a lone one takes the row.
     expect(rows).toEqual([["today"], ["needsAttention"], ["upcoming", "recentActivity"], ["snapshot"], ["myTasks"]]);
+  });
+
+  it("reordering happens among shown widgets only, so every move is visible", () => {
+    // A stored layout with hidden widgets interleaved (older data).
+    const widgets = [
+      { key: "today" as const, visible: true },
+      { key: "outstandingInvoices" as const, visible: false },
+      { key: "realtorFollowUps" as const, visible: true },
+    ];
+    expect(moveShownWidget(widgets, "realtorFollowUps", 0).map((w) => w.key)).toEqual(["realtorFollowUps", "today", "outstandingInvoices"]);
+    expect(moveShownWidget(widgets, "today", -1)).toBe(widgets);
+    // Showing a widget adds it to the end of what's shown; hiding moves it out.
+    expect(setWidgetShown(widgets, "outstandingInvoices", true)).toEqual([
+      { key: "today", visible: true },
+      { key: "realtorFollowUps", visible: true },
+      { key: "outstandingInvoices", visible: true },
+    ]);
+    expect(setWidgetShown(widgets, "today", false).map((w) => `${w.key}:${w.visible}`)).toEqual(["realtorFollowUps:true", "today:false", "outstandingInvoices:false"]);
   });
 
   it("a user can pick authorized KPIs, and the selection is kept", () => {
