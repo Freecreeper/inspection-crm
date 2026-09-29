@@ -41,11 +41,17 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
   drawer with readiness; click-to-schedule with server-backed typeahead and duplicate-checked create-while-
   scheduling; drag-or-button rescheduling with confirmation; server-side inspector conflict detection under a
   lock; one business time zone everywhere; and the existing email automations for confirm/change/cancel.
+- **Dashboard (V1)** — see [docs/dashboard.md](docs/dashboard.md): the operational starting point — Today,
+  Needs Attention (deterministic rules), Business Snapshot KPIs with written definitions, Upcoming, Recent
+  Activity, plus optional Tasks / Reports / Invoices / Follow-ups / Leads widgets; global record search and
+  "+ New"; per-user customization (show/hide, reorder, up to 6 KPIs, approved filters, restore default)
+  saved server-side and always filtered by RBAC.
 - Staff auth (Auth.js, credentials + JWT) and RBAC (`src/lib/rbac.ts`), enforced in every mutating
   server action across all four pillars — not just hidden in the UI
 
 **PARTIALLY IMPLEMENTED**
-- Invoices: balances, payment recording, and reminders on the transaction page; no invoice creation UI yet
+- Invoices: balances, payment recording, and reminders on the transaction page, and a read-only
+  `/invoices` list (outstanding / billed this month); no invoice creation UI yet
   (`Service`/`InspectionService` remain data-model only)
 - `CustomFieldDefinition`/`CustomFieldValue`, `ReportDefinition` (saved custom reports use this —
   the schema's other intended purpose, business-user-defined custom fields on core entities, is
