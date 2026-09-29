@@ -43,7 +43,8 @@ model: (1) CRM/operations, (2) relationship management, (3) inspection report ge
   lock; one business time zone everywhere; and the existing email automations for confirm/change/cancel.
 - **Dashboard (V1)** — see [docs/dashboard.md](docs/dashboard.md): the operational starting point — Today,
   Needs Attention (deterministic rules), Business Snapshot KPIs with written definitions, Upcoming, Recent
-  Activity, plus optional Tasks / Reports / Invoices / Follow-ups / Leads widgets; global record search and
+  Activity, Email & Task Actions (retry / review-and-send / discard email; complete / reschedule / email tasks),
+  plus optional Tasks / Reports / Invoices / Follow-ups / Leads widgets; global record search and
   "+ New"; per-user customization (show/hide, reorder, up to 6 KPIs, approved filters, restore default)
   saved server-side and always filtered by RBAC.
 - Staff auth (Auth.js, credentials + JWT) and RBAC (`src/lib/rbac.ts`), enforced in every mutating

@@ -24,9 +24,9 @@ beforeEach(() => denied.clear());
 const owner = () => defaultPreferences("OWNER_ADMIN");
 
 describe("role defaults", () => {
-  it("owner: Today → Needs Attention → Business Snapshot → Upcoming → Recent Activity, with the four headline KPIs", () => {
+  it("owner: Today → Needs Attention → Email & Task Actions → Business Snapshot → Upcoming → Recent Activity, with the four headline KPIs", () => {
     const p = owner();
-    expect(visibleWidgets(p)).toEqual(["today", "needsAttention", "snapshot", "upcoming", "recentActivity"]);
+    expect(visibleWidgets(p)).toEqual(["today", "needsAttention", "actionQueue", "snapshot", "upcoming", "recentActivity"]);
     expect(p.kpis).toEqual(["inspectionsMonth", "revenueMonth", "avgInspectionValue", "referralsMonth"]);
     // Every other authorized widget is listed (hidden) so Customize can offer it.
     expect(p.widgets.map((w) => w.key).sort()).toEqual([...WIDGET_KEYS].sort());
@@ -35,15 +35,18 @@ describe("role defaults", () => {
   it("inspector: their own work first, filtered to them, and no financial KPIs", () => {
     const p = defaultPreferences("INSPECTOR");
     expect(visibleWidgets(p)).toEqual(["today", "needsAttention", "myTasks", "reportsPending", "upcoming"]);
+    // Available to add, and already set to their own tasks.
+    expect(p.widgets.find((w) => w.key === "actionQueue")).toEqual({ key: "actionQueue", visible: false });
+    expect(effectiveOptions(p, "actionQueue").scope).toBe("mine");
     expect(effectiveOptions(p, "today").scope).toBe("mine");
     expect(effectiveOptions(p, "upcoming").scope).toBe("mine");
     expect(p.kpis.some((k) => ["revenueMonth", "avgInspectionValue", "outstandingBalance", "unpaidInvoices"].includes(k))).toBe(false);
   });
 
-  it("office: operations first, open tasks for everyone, operational KPIs", () => {
+  it("office: operations first, everyone's emails and tasks to act on, operational KPIs", () => {
     const p = defaultPreferences("OFFICE_STAFF");
-    expect(visibleWidgets(p)).toEqual(["today", "needsAttention", "snapshot", "upcoming", "myTasks", "recentActivity"]);
-    expect(effectiveOptions(p, "myTasks").scope).toBe("all");
+    expect(visibleWidgets(p)).toEqual(["today", "needsAttention", "actionQueue", "snapshot", "upcoming", "recentActivity"]);
+    expect(effectiveOptions(p, "actionQueue").scope).toBe("all");
     expect(p.kpis).toEqual(["inspectionsWeek", "unsignedAgreements", "outstandingBalance", "reportsAwaiting"]);
   });
 
@@ -71,7 +74,7 @@ describe("customizing (validated, then stored)", () => {
 
   it("a user can reorder widgets and the order survives a round trip", () => {
     const p = owner();
-    const order = ["today", "needsAttention", "upcoming", "recentActivity", "snapshot"];
+    const order = ["today", "needsAttention", "upcoming", "recentActivity", "actionQueue", "snapshot"];
     const reordered: DashboardPreferences = {
       ...p,
       widgets: [...order.map((key) => p.widgets.find((w) => w.key === key)!), ...p.widgets.filter((w) => !order.includes(w.key))],

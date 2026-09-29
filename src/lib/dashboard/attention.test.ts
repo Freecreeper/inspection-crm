@@ -209,7 +209,7 @@ describe("task and Realtor follow-up rules (one Task table)", () => {
   });
 
   it("a Realtor follow-up is a Task linked to a Realtor — due today or overdue, with Contact", () => {
-    const realtor = { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: null, phone: "8285550111" };
+    const realtor = { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: null, phone: "8285550111", email: null };
     expect(taskAttention([task({ realtor, dueAt: new Date("2026-09-29T16:00:00Z") })], TODAY, TZ)).toEqual([
       expect.objectContaining({ category: "realtorFollowUp", title: "Realtor follow-up due today", subject: "Sarah Jones", actionLabel: "Contact", severity: "info" }),
     ]);

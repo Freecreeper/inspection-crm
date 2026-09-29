@@ -51,6 +51,7 @@ Dashboard itself (it refreshes). There is no Dashboard cache.
 | --- | --- | --- | --- | --- |
 | `today` | Today | `calendar:view` | full | My inspections / All inspections |
 | `needsAttention` | Needs Attention | `dashboard:view` (+ per category) | full | My items / All items; optional categories |
+| `actionQueue` | Email & Task Actions | `dashboard:view` (emails: `email:view`) | full | My tasks / All tasks |
 | `snapshot` | Business Snapshot | `dashboard:view` (+ per KPI) | full | KPI selection |
 | `upcoming` | Upcoming | `calendar:view` | half | My schedule / All inspectors; next 7 / 14 days |
 | `recentActivity` | Recent Activity | `activity:view` | half | — |
@@ -68,6 +69,21 @@ report deadlines, Realtor follow-ups and dates). Inspections show time,
 address, services, inspector, and readiness (✓ Ready or the first warning).
 Every item opens the Calendar's own preview drawer (Call, Email, Mark
 signed, Reschedule, Cancel, Open inspection — as the role allows).
+
+**Email & Task Actions** is the work queue, with the actions in the card:
+
+- *Emails* (roles with `email:view`; business-wide): recent failed or
+  bounced email first (non-campaign, last 14 days), then drafts waiting for
+  review (the same queue as Email → Review), 6 shown with the total.
+  **Retry** re-runs the email's rules on the server and says what happened
+  (e.g. "Customer email not provided"); **Review & send** opens the draft in
+  the standard composer — nothing is sent without opening it; **Discard**
+  asks first; a bounced email links to the message (the address needs
+  fixing, not a retry). Sending actions need `email:send`.
+- *Tasks* due this week or overdue (My / All): **Complete**, **Reschedule**
+  (inline date), and for Realtor follow-ups **Call** and **Email** (with the
+  follow-up template). Task actions need `task:update`; **Add task** opens
+  the shared task dialog.
 
 **Upcoming** counts inspections per day after today, with how many need
 attention, linking to the Calendar day.
@@ -125,7 +141,8 @@ billed invoices using exactly these definitions; `/inspections` gains
 ## Recent Activity
 
 Merged by time from what's already recorded, last 7 days, 8 shown (up to 25):
-`ActivityLog` (inspection scheduled/rescheduled/cancelled, agreement signed,
+`ActivityLog` (inspection scheduled/rescheduled/cancelled, agreement signed or
+marked unsigned,
 task and Realtor follow-up completed, payment received — financial roles
 only — customer/Realtor added, transaction started), `ReportVersion`
 (finalized/amended), successful `ReportDelivery`, and sent/delivered
@@ -184,11 +201,13 @@ keeps order, visibility, KPIs, and options consistent.
 
 | Role | Widgets (in order) | KPIs |
 | --- | --- | --- |
-| Owner/Admin (and Reporting Analyst) | Today, Needs Attention, Business Snapshot, Upcoming, Recent Activity | Inspections this month, Revenue this month, Avg inspection value, Referrals this month |
-| Office staff | Today, Needs Attention, Business Snapshot, Upcoming, Open Tasks, Recent Activity | Inspections this week, Unsigned agreements, Outstanding balance, Reports awaiting completion |
-| Inspector | Today, Needs Attention, My Tasks, Reports Needing Completion, Upcoming — all "My" | Inspections this week, Inspections this month, Reports awaiting completion, Overdue tasks |
+| Owner/Admin (and Reporting Analyst) | Today, Needs Attention, Email & Task Actions, Business Snapshot, Upcoming, Recent Activity | Inspections this month, Revenue this month, Avg inspection value, Referrals this month |
+| Office staff | Today, Needs Attention, Email & Task Actions (all tasks), Business Snapshot, Upcoming, Recent Activity | Inspections this week, Unsigned agreements, Outstanding balance, Reports awaiting completion |
+| Inspector | Today, Needs Attention, My Tasks, Reports Needing Completion, Upcoming — all "My" (Email & Task Actions available, set to "My tasks") | Inspections this week, Inspections this month, Reports awaiting completion, Overdue tasks |
 
-Defaults are filtered by the user's current permissions; if a default KPI
+Users who have already saved a layout keep it: widgets added later (such as
+Email & Task Actions) appear in Customize → Hidden, one tick away, rather
+than being forced onto their Dashboard. Defaults are filtered by the user's current permissions; if a default KPI
 isn't allowed, the snapshot is topped up from a non-financial fallback list.
 
 ## RBAC — customization never grants access

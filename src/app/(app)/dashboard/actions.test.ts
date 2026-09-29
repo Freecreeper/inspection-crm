@@ -38,12 +38,12 @@ describe("saving preferences", () => {
     const result = await saveDashboardPreferences({ ...p, widgets: p.widgets.map((w) => (w.key === "recentActivity" ? { ...w, visible: false } : w)) });
     expect(result.ok).toBe(true);
     expect(db.user.update).toHaveBeenCalledWith({ where: { id: "u-a" }, data: { dashboardPreferences: expect.objectContaining({ version: 1 }) } });
-    expect(visibleWidgets(nextVisit("u-a"))).toEqual(["today", "needsAttention", "snapshot", "upcoming"]);
+    expect(visibleWidgets(nextVisit("u-a"))).toEqual(["today", "needsAttention", "actionQueue", "snapshot", "upcoming"]);
   });
 
   it("widget order and KPI selection persist", async () => {
     const p = defaultPreferences("OWNER_ADMIN");
-    const order = ["today", "needsAttention", "upcoming", "recentActivity", "snapshot"];
+    const order = ["today", "needsAttention", "upcoming", "recentActivity", "snapshot", "actionQueue"];
     await saveDashboardPreferences({
       ...p,
       widgets: [...order.map((k) => p.widgets.find((w) => w.key === k)!), ...p.widgets.filter((w) => !order.includes(w.key))],

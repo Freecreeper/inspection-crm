@@ -2,15 +2,17 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, Circle, CircleCheck, CircleDot, OctagonAlert, Phone } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Circle, CircleCheck, CircleDot, Mail, OctagonAlert, Phone, Plus } from "lucide-react";
+import { EmailButton } from "@/components/email/EmailComposer";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { formatDay, formatTime, type DayKey } from "@/lib/calendar/time";
 import { formatUsd } from "@/lib/dashboard/layout";
 import { KPI_BY_KEY, TIMEFRAME_LABELS, type KpiKey } from "@/lib/dashboard/registry";
-import type { ActivityEntry, AttentionItem, AttentionSeverity, InvoiceRow, KpiValue, LeadRow, ReportRow, TaskRow, UpcomingDay, WidgetData } from "@/lib/dashboard/types";
+import type { ActivityEntry, AttentionItem, AttentionSeverity, EmailActionRow, InvoiceRow, KpiValue, LeadRow, ReportRow, TaskActionRow, TaskRow, UpcomingDay, WidgetData } from "@/lib/dashboard/types";
 import { telHref } from "@/lib/realtors/display";
 import { EVENT_KIND, EventIcon } from "../../calendar/_components/eventStyle";
-import { completeTask } from "../../tasks/actions";
+import { completeTask, rescheduleTask } from "../../tasks/actions";
+import { discardDraft, retryEmail } from "../../email/actions";
 
 // Presentational Dashboard widgets. Each shows the few facts needed for the
 // next decision and makes the rest one interaction away: a row opens the
@@ -660,6 +662,286 @@ export function LeadsWidget({ data, today }: { data: Extract<WidgetData, { key: 
           </ul>
         </>
       )}
+    </WidgetCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Email & Task Actions — the work queue, with the actions in the card
+// ---------------------------------------------------------------------------
+
+const smallAction =
+  "inline-flex min-h-8 items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50";
+
+const EMAIL_KIND: Record<EmailActionRow["kind"], { label: string; className: string }> = {
+  failed: { label: "Failed", className: "text-amber-800" },
+  bounced: { label: "Bounced", className: "text-amber-800" },
+  review: { label: "To review", className: "text-slate-600" },
+};
+
+function useRun(onChanged: () => void) {
+  const [pending, start] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const run = (fn: () => Promise<{ ok: boolean; error?: string } | void>, done?: string) =>
+    start(async () => {
+      setMessage(null);
+      try {
+        const result = await fn();
+        if (result && result.ok === false) return setMessage(result.error ?? "That didn't work.");
+        if (done) setMessage(done);
+        onChanged();
+      } catch {
+        setMessage("You may not have permission to do that.");
+      }
+    });
+  return { pending, message, run };
+}
+
+function EmailActionItem({ row, today, timeZone, canSend, onChanged }: { row: EmailActionRow; today: DayKey; timeZone: string; canSend: boolean; onChanged: () => void }) {
+  const { pending, message, run } = useRun(onChanged);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const kind = EMAIL_KIND[row.kind];
+  return (
+    <li className="py-2">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+        <div className="min-w-0 flex-1">
+          <Link href={row.href} className="block truncate text-sm font-medium text-slate-900 hover:underline">
+            {row.subject}
+          </Link>
+          <p className="text-xs text-slate-500">
+            <span className={`font-medium ${kind.className}`}>
+              {row.kind !== "review" && <AlertTriangle className="mr-0.5 inline h-3 w-3 align-[-1px]" aria-hidden="true" />}
+              {kind.label}
+            </span>
+            {" · "}To {row.recipientName}
+            {row.detail && ` · ${row.detail}`}
+            {" · "}
+            {whenLabel(row.at, today, timeZone)}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-1.5">
+          {row.kind === "review" &&
+            (canSend && row.context ? (
+              <>
+                <EmailButton context={row.context} draftId={row.id} label="Review & send" icon={false} className={smallAction} onChanged={onChanged} />
+                {confirmDiscard ? (
+                  <span className="inline-flex items-center gap-1" role="group" aria-label="Confirm discard">
+                    <button type="button" disabled={pending} onClick={() => run(() => discardDraft(row.id), "Draft discarded.")} className={smallAction}>
+                      Discard draft
+                    </button>
+                    <button type="button" onClick={() => setConfirmDiscard(false)} className="px-1 text-xs text-slate-500 hover:underline">
+                      Keep
+                    </button>
+                  </span>
+                ) : (
+                  <button type="button" onClick={() => setConfirmDiscard(true)} className={smallAction} aria-label={`Discard: ${row.subject}`}>
+                    Discard
+                  </button>
+                )}
+              </>
+            ) : (
+              <Link href={row.href} className={smallAction}>
+                Open
+              </Link>
+            ))}
+          {row.kind === "failed" &&
+            (canSend ? (
+              <button type="button" disabled={pending} onClick={() => run(() => retryEmail(row.id), "Queued to send again.")} className={smallAction} aria-label={`Retry: ${row.subject}`}>
+                {pending ? "Retrying…" : "Retry"}
+              </button>
+            ) : (
+              <Link href={row.href} className={smallAction}>
+                Open
+              </Link>
+            ))}
+          {row.kind === "bounced" && (
+            <Link href={row.href} className={smallAction} aria-label={`Review: ${row.subject}`}>
+              Review
+            </Link>
+          )}
+        </div>
+      </div>
+      {message && (
+        <p role="status" className="mt-1 text-xs text-slate-600">
+          {message}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function TaskActionItem({
+  row,
+  today,
+  canUpdate,
+  canEmail,
+  onOpen,
+  onChanged,
+}: {
+  row: TaskActionRow;
+  today: DayKey;
+  canUpdate: boolean;
+  canEmail: boolean;
+  onOpen: OpenPreview;
+  onChanged: () => void;
+}) {
+  const { pending, message, run } = useRun(onChanged);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [day, setDay] = useState("");
+  const realtor = row.realtor;
+  return (
+    <li className="py-2">
+      <div className="flex items-start gap-2.5">
+        {canUpdate && <CompleteButton row={row} onDone={onChanged} />}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+            <button type="button" onClick={() => onOpen({ type: "task", id: row.id, title: row.title })} className={`min-w-0 flex-1 px-1 ${rowButton}`}>
+              <span className="block text-sm font-medium text-slate-900">{row.title}</span>
+              <span className="flex flex-wrap gap-x-2 text-xs text-slate-500">
+                <DueLabel row={row} today={today} />
+                {row.context && <span className="truncate">{row.context}</span>}
+                {row.assigneeName && <span>{row.assigneeName}</span>}
+              </span>
+            </button>
+            <div className="flex shrink-0 flex-wrap gap-1.5">
+              {realtor?.phone && (
+                <a href={telHref(realtor.phone)} className={smallAction} aria-label={`Call ${realtor.name}`}>
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              )}
+              {canEmail && realtor && row.realtorEmail && (
+                <EmailButton context={{ kind: "realtor", id: realtor.id }} templateKey="realtor_follow_up" label="Email" className={smallAction} onChanged={onChanged} />
+              )}
+              {canUpdate && !rescheduling && (
+                <button type="button" onClick={() => setRescheduling(true)} className={smallAction} aria-label={`Reschedule: ${row.title}`}>
+                  Reschedule
+                </button>
+              )}
+            </div>
+          </div>
+          {rescheduling && (
+            <form
+              className="mt-1.5 flex flex-wrap items-center gap-2 px-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!day) return;
+                run(() => rescheduleTask(row.id, day), `Moved to ${formatDay(day, "short")}.`);
+                setRescheduling(false);
+              }}
+            >
+              <label className="text-xs text-slate-600">
+                <span className="sr-only">New due date for {row.title}</span>
+                <input type="date" required min={today} value={day} onChange={(e) => setDay(e.target.value)} className="rounded-md border border-slate-300 px-2 py-1 text-sm" />
+              </label>
+              <button type="submit" disabled={pending || !day} className={smallAction}>
+                Save
+              </button>
+              <button type="button" onClick={() => setRescheduling(false)} className="px-1 text-xs text-slate-500 hover:underline">
+                Cancel
+              </button>
+            </form>
+          )}
+          {message && (
+            <p role="status" className="mt-1 px-1 text-xs text-slate-600">
+              {message}
+            </p>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export function ActionQueueWidget({
+  data,
+  today,
+  timeZone,
+  scope,
+  canUpdateTasks,
+  canSendEmail,
+  onAddTask,
+  onOpen,
+  onChanged,
+}: {
+  data: Extract<WidgetData, { key: "actionQueue" }>;
+  today: DayKey;
+  timeZone: string;
+  scope: "mine" | "all";
+  canUpdateTasks: boolean;
+  canSendEmail: boolean;
+  onAddTask: () => void;
+  onOpen: OpenPreview;
+  onChanged: () => void;
+}) {
+  const emails = data.emails;
+  return (
+    <WidgetCard
+      id="actionQueue"
+      title="Email & Task Actions"
+      meta={
+        <span className="flex items-center gap-3 text-xs text-slate-500">
+          {emails && (
+            <span>
+              {data.emailTotal} email{data.emailTotal === 1 ? "" : "s"}
+            </span>
+          )}
+          <span>
+            {data.taskTotal} {scope === "mine" ? "of my " : ""}task{data.taskTotal === 1 ? "" : "s"}
+          </span>
+          {canUpdateTasks && (
+            <button type="button" onClick={onAddTask} className={smallAction}>
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add task
+            </button>
+          )}
+        </span>
+      }
+      footer={
+        <div className="flex flex-wrap gap-x-5">
+          {emails && (
+            <Link href="/email/review" className={linkClass}>
+              Email review queue <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          )}
+          <Link href="/tasks" className={linkClass}>
+            All tasks <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+      }
+    >
+      <div className={`grid gap-x-6 gap-y-4 ${emails ? "lg:grid-cols-2" : ""}`}>
+        {emails && (
+          <section aria-labelledby="action-queue-emails">
+            <h3 id="action-queue-emails" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+              <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Emails
+            </h3>
+            {emails.length === 0 ? (
+              <Empty>No emails waiting for review, and nothing failed.</Empty>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {emails.map((row) => (
+                  <EmailActionItem key={row.id} row={row} today={today} timeZone={timeZone} canSend={canSendEmail} onChanged={onChanged} />
+                ))}
+              </ul>
+            )}
+            {data.emailTotal > emails.length && <p className="pt-1 text-xs text-slate-500">+{data.emailTotal - emails.length} more in Email</p>}
+          </section>
+        )}
+        <section aria-labelledby="action-queue-tasks">
+          <h3 id="action-queue-tasks" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" /> Tasks due this week or overdue
+          </h3>
+          {data.tasks.length === 0 ? (
+            <Empty>No open tasks due this week.</Empty>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {data.tasks.map((row) => (
+                <TaskActionItem key={row.id} row={row} today={today} canUpdate={canUpdateTasks} canEmail={canSendEmail} onOpen={onOpen} onChanged={onChanged} />
+              ))}
+            </ul>
+          )}
+          {data.taskTotal > data.tasks.length && <p className="pt-1 text-xs text-slate-500">+{data.taskTotal - data.tasks.length} more in Tasks</p>}
+        </section>
+      </div>
     </WidgetCard>
   );
 }
