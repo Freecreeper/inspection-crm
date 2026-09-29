@@ -241,6 +241,10 @@ model User {
   // This user's Calendar preferences: default view, visible layers, and
   // inspector filter (src/lib/calendar/preferences.ts). NULL = defaults.
   calendarPreferences    Json?
+  // This user's Dashboard layout: widget order/visibility, Business Snapshot
+  // KPIs, and a few approved per-widget options — a versioned, allow-listed
+  // document (src/lib/dashboard/preferences.ts). NULL = the role default.
+  dashboardPreferences   Json?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -280,6 +284,7 @@ model Lead {
   updatedAt           DateTime        @updatedAt
 
   @@index([status])
+  @@index([createdAt])
   @@map("leads")
 }
 
@@ -1021,6 +1026,7 @@ model ReportDelivery {
   emailMessages EmailMessage[]
 
   @@index([reportId])
+  @@index([status])
   @@map("report_deliveries")
 }
 

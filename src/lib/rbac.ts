@@ -38,6 +38,16 @@ export const PERMISSIONS = {
   "inspection:cancel": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR"],
   "calendar:block_time": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR"],
   "task:update": ["OWNER_ADMIN", "OFFICE_STAFF"],
+  // Dashboard (V1). Every staff role gets a Dashboard; what's on it is
+  // decided per widget and per KPI by the permissions above (financial
+  // figures by financial:read, email health by email:view, …) — so
+  // narrowing one of those narrows the Dashboard with it. Customization
+  // never grants access.
+  "dashboard:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  // The cross-system Recent Activity feed (audit log, deliveries, sent mail).
+  "activity:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  // Global record search in the Dashboard header.
+  "search:global": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
   // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
   // here rather than a bare "is there a session" check in the download route,
   // so a future per-transaction assignment restriction is a one-line change
