@@ -1,0 +1,66 @@
+# Production stack for crm.n3rdlabs.dev on the netcup box. deploy/deploy.sh always runs it as
+# project "inspection-crm" with ~/inspection-crm/shared/.env, so the database and storage volumes
+# outlive every release directory. The app listens on 127.0.0.1:3400 only; Caddy fronts it.
+#
+# shared/.env holds POSTGRES_PASSWORD and AUTH_SECRET, and is also handed to the app and worker
+# whole, so optional settings from .env.example (APP_TIMEZONE, EMAIL_DELIVERY_MODE, POSTMARK_*,
+# CALENDAR_*) take effect by adding them there and redeploying.
+x-app: &app
+  image: inspection-crm-app:latest
+  restart: unless-stopped
+  init: true
+  depends_on:
+    db:
+      condition: service_healthy
+  env_file:
+    - ${CRM_ENV_FILE:?deploy.sh sets CRM_ENV_FILE}
+  environment:
+    DATABASE_URL: postgresql://inspection_crm:${POSTGRES_PASSWORD}@db:5432/inspection_crm?schema=public
+    AUTH_URL: https://crm.n3rdlabs.dev
+    AUTH_TRUST_HOST: "true"
+    APP_BASE_URL: https://crm.n3rdlabs.dev
+  volumes:
+    - storage:/app/storage
+  logging:
+    driver: json-file
+    options: { max-size: 5m, max-file: "3" }
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: inspection_crm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in shared/.env}
+      POSTGRES_DB: inspection_crm
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inspection_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options: { max-size: 5m, max-file: "3" }
+
+  app:
+    <<: *app
+    build: ..
+    ports:
+      - "127.0.0.1:3400:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  # Sends queued email (simulated unless EMAIL_DELIVERY_MODE=live; see docs/email.md).
+  worker:
+    <<: *app
+    command: ["node_modules/.bin/tsx", "--tsconfig", "tsconfig.json", "scripts/email-worker.ts"]
+
+volumes:
+  db-data:
+  storage:

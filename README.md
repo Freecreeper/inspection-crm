@@ -146,6 +146,45 @@ CI (`.github/workflows/ci.yml`) runs all of the above against an ephemeral Postg
 container on every push/PR, using `npm ci` against the committed `package-lock.json`, plus
 `prisma validate`, `prisma migrate deploy`, and a seed smoke test.
 
+## Production (crm.n3rdlabs.dev)
+
+Every push to `master` that passes CI deploys, within about a minute of CI finishing. The netcup
+box pulls rather than GitHub pushing: a crontab entry runs `~/inspection-crm/bin/autodeploy` (a
+copy of `deploy/autodeploy.sh`) every minute. When `master` has moved and the CI run for the new
+commit succeeded (read from the public Actions API, so no keys or secrets exist anywhere), it exports
+the commit to `~/inspection-crm/releases/<time>-<sha>` and runs `deploy/deploy.sh`: build the image,
+apply migrations, re-run the (create-only) seed, then swap the app and email-worker containers.
+
+A failed build or migration leaves the running version up. A commit whose CI or deploy failed is
+held (`~/inspection-crm/held`) so it is not rebuilt every minute; the next push moves on, and
+`~/inspection-crm/bin/autodeploy --force` ships the tip right away without waiting for CI. Every
+deploy is logged in `~/inspection-crm/deploy.log`.
+
+On the box (`~/inspection-crm`):
+
+- `source/` — a clone of this repo; only ever fetched, never checked out over.
+- `shared/.env` — `POSTGRES_PASSWORD` and `AUTH_SECRET` (mode 600, not in git). It is also passed
+  to the app and worker whole, so `APP_TIMEZONE`, `EMAIL_DELIVERY_MODE`, `POSTMARK_*` and the
+  `CALENDAR_*` settings from `.env.example` go here (then redeploy). Email is simulated until
+  `EMAIL_DELIVERY_MODE=live`.
+- `current` — symlink to the live release.
+- Docker Compose project `inspection-crm` (`deploy/compose.yml`): Postgres in the
+  `inspection-crm_db-data` volume, `storage/` (uploads, photos, PDFs) in `inspection-crm_storage`,
+  and the app on `127.0.0.1:3400`, which Caddy serves as crm.n3rdlabs.dev. Both volumes survive
+  redeploys but live only on that box; nothing backs them up off it yet (see "Local filesystem
+  storage" above).
+
+Production never gets the demo logins. To add an owner-admin login, or reset its password:
+
+```bash
+cd ~/inspection-crm && CRM_ENV_FILE=$PWD/shared/.env docker compose --project-name inspection-crm \
+  --env-file shared/.env -f current/deploy/compose.yml run --rm --no-deps app \
+  npx tsx scripts/create-admin.ts you@example.com "Your Name"
+```
+
+If `deploy/autodeploy.sh` changes, copy it to `~/inspection-crm/bin/autodeploy` by hand. Cron runs
+that fixed copy, so a bad edit to the poller cannot stop the deploy that would fix it.
+
 ## Project layout
 
 - `prisma/schema.prisma` — the full data model (§3–§8 of the architecture proposal).

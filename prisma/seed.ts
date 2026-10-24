@@ -6,30 +6,37 @@ import { ensureDefaultTemplates } from "../src/lib/email/defaults";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  const adminPasswordHash = await bcrypt.hash("changeme123", 10);
-  await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      email: "admin@example.com",
-      name: "Admin Owner",
-      passwordHash: adminPasswordHash,
-      role: "OWNER_ADMIN",
-    },
-  });
+// The demo logins share a published password, so they are for local development only.
+// Production (deploy/deploy.sh re-runs this seed on every release to pick up new catalog
+// entries and templates) gets its logins from scripts/create-admin.ts instead.
+const seedDemoUsers = process.env.NODE_ENV !== "production";
 
-  const inspectorPasswordHash = await bcrypt.hash("changeme123", 10);
-  await prisma.user.upsert({
-    where: { email: "inspector@example.com" },
-    update: {},
-    create: {
-      email: "inspector@example.com",
-      name: "Jordan Inspector",
-      passwordHash: inspectorPasswordHash,
-      role: "INSPECTOR",
-    },
-  });
+async function main() {
+  if (seedDemoUsers) {
+    const adminPasswordHash = await bcrypt.hash("changeme123", 10);
+    await prisma.user.upsert({
+      where: { email: "admin@example.com" },
+      update: {},
+      create: {
+        email: "admin@example.com",
+        name: "Admin Owner",
+        passwordHash: adminPasswordHash,
+        role: "OWNER_ADMIN",
+      },
+    });
+
+    const inspectorPasswordHash = await bcrypt.hash("changeme123", 10);
+    await prisma.user.upsert({
+      where: { email: "inspector@example.com" },
+      update: {},
+      create: {
+        email: "inspector@example.com",
+        name: "Jordan Inspector",
+        passwordHash: inspectorPasswordHash,
+        role: "INSPECTOR",
+      },
+    });
+  }
 
   // Company-configurable classification terminology (§ "Finding classification") —
   // a starting set, not a fixed severity scale.
@@ -203,7 +210,11 @@ async function main() {
   // Automation rows are created on first use by the app itself.
   await ensureDefaultTemplates(prisma);
 
-  console.log("Seed complete: admin@example.com / inspector@example.com, password 'changeme123'.");
+  console.log(
+    seedDemoUsers
+      ? "Seed complete: admin@example.com / inspector@example.com, password 'changeme123'."
+      : "Seed complete (no demo logins in production; use scripts/create-admin.ts).",
+  );
 }
 
 main()
