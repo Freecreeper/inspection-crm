@@ -83,6 +83,10 @@ export function EmailComposer({
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // The draft this composer is editing: a prepared one it was opened with,
+  // or the one "Save draft" created. Every later save updates it, and Send
+  // sends it — never a second copy alongside a draft left in the queue.
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   // Keyed on the context's kind/id (not the object), so a parent that
@@ -119,6 +123,7 @@ export function EmailComposer({
   const recipient = data?.recipients.find((r) => r.key === recipientKey) ?? null;
   const templates = useMemo(() => (data?.templates ?? []).filter((t) => !recipient || t.recipientType === recipient.type || t.recipientType === "OTHER"), [data, recipient]);
   const title = recipient ? `Email ${recipient.name}` : "Email";
+  const currentDraftId = savedDraftId ?? data?.draft?.id ?? null;
 
   function chooseTemplate(nextId: string) {
     const t = data?.templates.find((x) => x.id === nextId);
@@ -133,7 +138,7 @@ export function EmailComposer({
   function runPreview() {
     setError(null);
     startTransition(async () => {
-      const result = await previewComposedEmail({ context, recipientKey, templateId, subject, body, draftId: data?.draft?.id ?? null });
+      const result = await previewComposedEmail({ context, recipientKey, templateId, subject, body, draftId: currentDraftId });
       if (result.ok) setPreview(result.data);
       else setError(result.error);
     });
@@ -143,7 +148,7 @@ export function EmailComposer({
     setError(null);
     startTransition(async () => {
       try {
-        const result = await submitComposedEmail({ context, recipientKey, templateId, subject, body, draftId: data?.draft?.id ?? null, action });
+        const result = await submitComposedEmail({ context, recipientKey, templateId, subject, body, draftId: currentDraftId, action });
         if (!result.ok) {
           setError(result.error);
           return;
@@ -151,6 +156,7 @@ export function EmailComposer({
         router.refresh();
         onChanged?.();
         if (action === "draft") {
+          setSavedDraftId(result.data.id);
           setNotice("Draft saved.");
           return;
         }
@@ -162,9 +168,9 @@ export function EmailComposer({
   }
 
   function discard() {
-    if (!data?.draft) return;
+    if (!currentDraftId) return;
     startTransition(async () => {
-      const result = await discardDraft(data.draft!.id);
+      const result = await discardDraft(currentDraftId);
       if (!result.ok) return setError(result.error);
       router.refresh();
       onChanged?.();
@@ -270,7 +276,7 @@ export function EmailComposer({
               <button type="button" onClick={runPreview} disabled={pending || !recipientKey} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                 Preview
               </button>
-              {data.draft && data.canSend && (
+              {currentDraftId && data.canSend && (
                 <button type="button" onClick={discard} disabled={pending} className="rounded-md px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100">
                   Discard draft
                 </button>
