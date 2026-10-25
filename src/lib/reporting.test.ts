@@ -19,6 +19,8 @@ const mockPrisma = prisma as unknown as {
 };
 
 const TRANSACTION_CATALOG = [
+  { entity: "Transaction", fieldKey: "createdAt", label: "Created", dataType: "date", aggregable: false, joinPath: null, active: true },
+  { entity: "Transaction", fieldKey: "closingDate", label: "Closing date", dataType: "date", aggregable: false, joinPath: null, active: true },
   { entity: "Transaction", fieldKey: "status", label: "Status", dataType: "string", aggregable: false, joinPath: null, active: true },
   { entity: "Transaction", fieldKey: "id", label: "Transaction count", dataType: "string", aggregable: true, joinPath: null, active: true },
   { entity: "Transaction", fieldKey: "city", label: "Property city", dataType: "string", aggregable: false, joinPath: "property", active: true },
@@ -178,5 +180,39 @@ describe("query-string codec round-trip", () => {
   it("returns null for a missing or invalid entity", () => {
     expect(searchParamsToConfig({})).toBeNull();
     expect(searchParamsToConfig({ entity: "NotARealEntity" })).toBeNull();
+  });
+});
+
+describe("runReport — date filters are business days", () => {
+  beforeEach(() => {
+    vi.stubEnv("APP_TIMEZONE", "America/New_York");
+    mockPrisma.transaction.findMany.mockResolvedValue([]);
+    mockPrisma.transaction.count.mockResolvedValue(0);
+  });
+  const run = (operator: string, value: string, fieldKey = "createdAt") =>
+    runReport({ entity: "Transaction", columns: [{ fieldKey: "status" }], filters: [{ fieldKey, operator: operator as never, value }], groupBy: [], aggregations: [] });
+  const where = () => mockPrisma.transaction.findMany.mock.calls.at(-1)![0].where;
+
+  it("'equals 2026-10-24' is that whole day in New York, not one UTC millisecond", async () => {
+    await run("equals", "2026-10-24");
+    expect(where()).toEqual({ createdAt: { gte: new Date("2026-10-24T04:00:00Z"), lt: new Date("2026-10-25T04:00:00Z") } });
+  });
+
+  it("before/after/on-or-before map to day boundaries; 'not on' excludes the day", async () => {
+    await run("gt", "2026-10-24");
+    expect(where()).toEqual({ createdAt: { gte: new Date("2026-10-25T04:00:00Z") } });
+    await run("lte", "2026-10-24");
+    expect(where()).toEqual({ createdAt: { lt: new Date("2026-10-25T04:00:00Z") } });
+    await run("not", "2026-10-24");
+    expect(where()).toEqual({ AND: [{ NOT: { createdAt: { gte: new Date("2026-10-24T04:00:00Z"), lt: new Date("2026-10-25T04:00:00Z") } } }] });
+  });
+
+  it("date-only columns (closing date) use the calendar date itself", async () => {
+    await run("equals", "2026-10-24", "closingDate");
+    expect(where()).toEqual({ closingDate: { gte: new Date("2026-10-24T00:00:00Z"), lt: new Date("2026-10-25T00:00:00Z") } });
+  });
+
+  it("a malformed date is a validation error, not a 500", async () => {
+    await expect(run("equals", "10/24/2026")).rejects.toThrow("Enter dates as YYYY-MM-DD.");
   });
 });

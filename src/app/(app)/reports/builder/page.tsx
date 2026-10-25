@@ -110,7 +110,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
                     <option value="isNull">is unknown</option>
                     <option value="isNotNull">is known</option>
                   </select>
-                  <input name={`f${i}_value`} defaultValue={existing?.value ?? ""} placeholder="Value" className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+                  <input name={`f${i}_value`} defaultValue={existing?.value ?? ""} placeholder="Value (dates: YYYY-MM-DD)" className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
                 </div>
               );
             })}
