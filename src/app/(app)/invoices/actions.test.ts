@@ -13,7 +13,7 @@ import { auth } from "@/lib/auth";
 import { recordPayment } from "./actions";
 
 type Fn = ReturnType<typeof vi.fn>;
-const db = prisma as unknown as Record<string, Record<string, Fn>>;
+const db = prisma as unknown as Record<string, Record<string, Fn>> & { $queryRaw: Fn };
 const invoice = (payments: string[] = []) => ({
   id: "inv-1",
   transactionId: "t1",
@@ -26,6 +26,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(auth).mockResolvedValue({ user: { id: "u1", role: "OFFICE_STAFF" } } as never);
   db.emailMessage.updateMany.mockResolvedValue({ count: 1 });
+  // The invoice row lock (SELECT … FOR UPDATE) finds the invoice.
+  db.$queryRaw.mockResolvedValue([{ id: "inv-1" }]);
 });
 
 describe("recordPayment", () => {
@@ -58,5 +60,25 @@ describe("recordPayment", () => {
     expect(await recordPayment("inv-1", { amount: "-5", method: "CARD" })).toMatchObject({ ok: false });
     expect(await recordPayment("inv-1", { amount: "abc", method: "CARD" })).toMatchObject({ ok: false });
     expect(db.payment.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses NaN, Infinity and other values Decimal would accept (a NaN payment silently cleared A/R)", async () => {
+    db.invoice.findUnique.mockResolvedValue(invoice());
+    for (const amount of ["NaN", "nan", "Infinity", "-Infinity", "1e3", "0", "0.001", "12.345", "", "   "]) {
+      expect(await recordPayment("inv-1", { amount, method: "CARD" }), amount).toMatchObject({ ok: false });
+    }
+    expect(db.payment.create).not.toHaveBeenCalled();
+    expect(await recordPayment("inv-1", { amount: "$1,234.5", method: "CARD" })).toMatchObject({ ok: false }); // over the balance
+    expect(await recordPayment("inv-1", { amount: " $ 450 ", method: "CARD" })).toEqual({ ok: true });
+  });
+
+  it("checks the balance under a lock on the invoice row, inside the same transaction as the write", async () => {
+    const order: string[] = [];
+    db.$queryRaw.mockImplementation(async () => (order.push("lock"), [{ id: "inv-1" }]));
+    db.invoice.findUnique.mockImplementation(async () => (order.push("read"), invoice()));
+    db.payment.create.mockImplementation(async () => order.push("write"));
+    await recordPayment("inv-1", { amount: "100", method: "CASH" });
+    expect(order).toEqual(["lock", "read", "write"]);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 });

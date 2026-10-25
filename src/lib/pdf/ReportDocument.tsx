@@ -101,9 +101,13 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
           {section.notApplicable ? (
             <Text style={styles.p}>Not applicable to this property.</Text>
           ) : (
+            // Components may run across pages (a whole component held on
+            // one page overprinted anything taller than the page). Headings
+            // ask for room after them so they're never stranded at a page
+            // bottom, and each photo stays with its caption.
             section.components.map((component, cIdx) => (
-              <View key={cIdx} wrap={false}>
-                <Text style={styles.h3}>
+              <View key={cIdx}>
+                <Text style={styles.h3} minPresenceAhead={40}>
                   {component.name} — <Text style={styles.label}>{component.inspectionStatus.replace(/_/g, " ")}</Text>
                 </Text>
                 {component.limitationNote && <Text style={styles.p}>Note: {component.limitationNote}</Text>}
@@ -113,7 +117,9 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
                   const photos = photosByFinding.get(key) ?? [];
                   return (
                     <View key={fIdx} style={styles.finding}>
-                      <Text style={styles.h3}>{finding.title}</Text>
+                      <Text style={styles.h3} minPresenceAhead={40}>
+                        {finding.title}
+                      </Text>
                       <View style={{ flexDirection: "row", marginBottom: 2 }}>
                         {finding.category && <Text style={styles.badge}>{finding.category}</Text>}
                         {finding.safetyRelated && <Text style={styles.badge}>Safety</Text>}
@@ -129,7 +135,7 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
                       {photos.length > 0 && (
                         <View style={styles.photoRow}>
                           {photos.map((photo, pIdx) => (
-                            <View key={pIdx}>
+                            <View key={pIdx} wrap={false}>
                               <Image src={photo.dataUri} style={styles.photo} />
                               {photo.caption && <Text style={styles.label}>{photo.caption}</Text>}
                             </View>

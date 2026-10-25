@@ -35,6 +35,12 @@ export async function convertLead(leadId: string) {
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: leadId } });
 
   const result = await prisma.$transaction(async (tx) => {
+    // Claim the lead first, atomically. A second click (or a second tab)
+    // finds it already converted and goes to that conversion instead of
+    // creating another customer and transaction.
+    const { count } = await tx.lead.updateMany({ where: { id: leadId, status: { not: "CONVERTED" } }, data: { status: "CONVERTED", convertedAt: new Date() } });
+    if (count === 0) return null;
+
     const customer = await tx.customer.create({
       data: {
         firstName: lead.firstName,
@@ -44,10 +50,7 @@ export async function convertLead(leadId: string) {
       },
     });
 
-    await tx.lead.update({
-      where: { id: leadId },
-      data: { status: "CONVERTED", convertedCustomerId: customer.id, convertedAt: new Date() },
-    });
+    await tx.lead.update({ where: { id: leadId }, data: { convertedCustomerId: customer.id } });
 
     const transaction = await tx.transaction.create({
       data: { referralSourceId: lead.referralSourceId, status: "LEAD_IN_PROGRESS" },
@@ -67,6 +70,15 @@ export async function convertLead(leadId: string) {
 
     return { customerId: customer.id, transactionId: transaction.id };
   });
+
+  if (!result) {
+    // Re-read: the conversion that won may have committed after our first read.
+    const converted = await prisma.lead.findUnique({ where: { id: leadId }, select: { convertedCustomerId: true } });
+    const existing = converted?.convertedCustomerId
+      ? await prisma.transactionCustomer.findFirst({ where: { customerId: converted.convertedCustomerId }, orderBy: { createdAt: "asc" }, select: { transactionId: true } })
+      : null;
+    redirect(existing ? `/transactions/${existing.transactionId}` : `/leads/${leadId}`);
+  }
 
   revalidatePath("/leads");
   redirect(`/transactions/${result.transactionId}`);

@@ -95,7 +95,8 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
         where: { id: message.reportDeliveryId },
         data: { status: "SENT", deliveredAt: now },
       });
-      await db.inspectionReport.update({ where: { id: delivery.reportId }, data: { status: "DELIVERED", deliveredAt: now } });
+      // An amendment opened since this was queued stays open.
+      await db.inspectionReport.updateMany({ where: { id: delivery.reportId, status: { in: ["FINALIZED", "DELIVERED"] } }, data: { status: "DELIVERED", deliveredAt: now } });
     } else {
       await db.reportDelivery.updateMany({ where: { id: message.reportDeliveryId, status: "PENDING" }, data: { status: "FAILED" } });
     }

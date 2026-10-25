@@ -33,3 +33,15 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" 
 export function formatMoney(value: Prisma.Decimal | string | number): string {
   return usd.format(Number(value.toString()));
 }
+
+// Money as typed by staff: digits, optional cents, optional $ and commas.
+// Anything else (including "NaN" or "Infinity", which Decimal would accept
+// and every comparison would then wave through) is refused.
+const AMOUNT = /^\d{1,8}(\.\d{1,2})?$/;
+
+export function parsePaymentAmount(raw: string): Prisma.Decimal | null {
+  const cleaned = raw.trim().replace(/[$,\s]/g, "");
+  if (!AMOUNT.test(cleaned)) return null;
+  const amount = new Prisma.Decimal(cleaned);
+  return amount.isFinite() && amount.greaterThan(0) ? amount : null;
+}

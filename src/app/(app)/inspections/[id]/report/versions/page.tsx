@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
@@ -51,9 +52,9 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
 
       {canAmend && (
         <form action={amendAction}>
-          <button type="submit" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100">
+          <SubmitButton className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100">
             Amend this report
-          </button>
+          </SubmitButton>
         </form>
       )}
 
@@ -121,9 +122,9 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
             ) : (
               <p className="text-xs text-slate-500">Report emails are turned off in Email → Automations; this creates a link to share yourself.</p>
             )}
-            <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <SubmitButton className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
               Deliver report
-            </button>
+            </SubmitButton>
           </form>
         </section>
       )}
