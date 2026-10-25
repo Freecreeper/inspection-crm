@@ -1,3 +1,4 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 
 const STANDARD_REPORTS = [
@@ -7,7 +8,8 @@ const STANDARD_REPORTS = [
   { href: "/reports/standard/findings-by-category", label: "Findings by Category" },
 ];
 
-export default function ReportsDashboardPage() {
+export default async function ReportsDashboardPage() {
+  await requireReportAccess();
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-xl font-semibold text-slate-900">Reports</h1>

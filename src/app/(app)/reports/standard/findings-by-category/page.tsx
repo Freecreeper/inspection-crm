@@ -1,9 +1,11 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { runReport } from "@/lib/reporting";
 import { ReportTable } from "../../ReportTable";
 
 export default async function FindingsByCategoryPage() {
+  await requireReportAccess();
   const [result, categories] = await Promise.all([
     runReport({
       entity: "Finding",

@@ -1,9 +1,11 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { runReport } from "@/lib/reporting";
 import { ReportTable } from "../../ReportTable";
 
 export default async function LeadsByReferralSourcePage() {
+  await requireReportAccess();
   const [result, sources] = await Promise.all([
     runReport({
       entity: "Lead",

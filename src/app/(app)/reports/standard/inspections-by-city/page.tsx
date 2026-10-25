@@ -1,3 +1,4 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ReportTable } from "../../ReportTable";
@@ -9,6 +10,7 @@ import { ReportTable } from "../../ReportTable";
 // this is a fixed, developer-authored report, so a direct query + in-app
 // aggregation is the correct tool here, not a workaround.
 export default async function InspectionsByCityPage() {
+  await requireReportAccess();
   const inspections = await prisma.inspection.findMany({
     include: { property: { select: { city: true } } },
     take: 1000,

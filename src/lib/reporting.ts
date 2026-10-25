@@ -102,7 +102,9 @@ async function loadCatalog(entity: ReportableEntity): Promise<Map<string, Catalo
   return map;
 }
 
-class ReportValidationError extends Error {}
+// Thrown for a config the catalog doesn't allow; the export route turns it
+// into a 400 rather than a server error.
+export class ReportValidationError extends Error {}
 
 function coerceValue(dataType: string, raw: string | undefined): unknown {
   if (raw === undefined) return undefined;
@@ -248,10 +250,17 @@ export async function runReport(config: ReportConfig): Promise<ReportResult> {
     orderBy = { [entry.fieldKey]: config.sortDirection ?? "asc" };
   }
 
+  // Never fall back to "every column": an empty select would make Prisma
+  // return all scalar fields, bypassing the catalog (e.g. lockbox codes in
+  // inspection access notes).
+  if (Object.keys(select).length === 0 && Object.keys(include).length === 0) {
+    throw new ReportValidationError("Pick at least one column.");
+  }
+
   const [rows, totalCount] = await Promise.all([
     delegate.findMany({
       where,
-      select: Object.keys(select).length || Object.keys(include).length ? { ...select, ...include } : undefined,
+      select: { ...select, ...include },
       orderBy,
       skip: (page - 1) * pageSize,
       take: Math.min(pageSize, MAX_ROWS),

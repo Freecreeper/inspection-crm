@@ -1,12 +1,12 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import { deleteSavedReport } from "../actions";
 
 export default async function SavedReportsPage() {
-  const session = await auth();
+  const { userId } = await requireReportAccess();
   const reports = await prisma.reportDefinition.findMany({
-    where: { OR: [{ ownerId: session?.user?.id }, { shared: true }] },
+    where: { OR: [{ ownerId: userId }, { shared: true }] },
     include: { owner: true },
     orderBy: { updatedAt: "desc" },
   });
@@ -41,7 +41,7 @@ export default async function SavedReportsPage() {
                 <td className="px-4 py-2 text-slate-600">{r.owner.name}</td>
                 <td className="px-4 py-2 text-slate-600">{r.shared ? "Shared" : "Private"}</td>
                 <td className="px-4 py-2 text-right">
-                  {r.ownerId === session?.user?.id && (
+                  {r.ownerId === userId && (
                     <form action={deleteSavedReport.bind(null, r.id)}>
                       <button type="submit" className="text-xs text-red-600 hover:underline">
                         Delete
