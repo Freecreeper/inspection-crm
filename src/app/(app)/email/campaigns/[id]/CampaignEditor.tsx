@@ -1,10 +1,19 @@
 "use client";
+import { businessTimeZone, formatBusinessDateTimeWithZone } from "@/lib/businessTime";
+import { zonedDateTimeToUtc } from "@/lib/calendar/time";
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CampaignStatus, EmailCategory } from "@prisma/client";
 import type { Audience, AudiencePreview } from "@/lib/email/campaigns";
 import { approveCampaign, cancelCampaign, getAudiencePreview, saveCampaign, submitCampaignForReview } from "../../actions";
+
+// The picker's value is a wall time in the business time zone (the server
+// reads it the same way), shown back with the zone so nobody is surprised.
+function sendAtLabel(value: string): string {
+  const [day, time] = value.split("T");
+  return day && time ? formatBusinessDateTimeWithZone(zonedDateTimeToUtc(day, time.slice(0, 5), businessTimeZone())) : value;
+}
 
 const input = "mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
 
@@ -244,7 +253,7 @@ export function CampaignEditor({
           <p className="font-medium text-slate-900">
             {confirming.eligible.length === 0
               ? "No one in this audience can receive it right now."
-              : `Send “${initial.subject}” to ${confirming.eligible.length} ${confirming.eligible.length === 1 ? "realtor" : "realtors"} ${sendAt ? `at ${new Date(sendAt).toLocaleString()}` : "now"}?`}
+              : `Send “${initial.subject}” to ${confirming.eligible.length} ${confirming.eligible.length === 1 ? "realtor" : "realtors"} ${sendAt ? `at ${sendAtLabel(sendAt)}` : "now"}?`}
           </p>
           <p className="mt-1 text-slate-600">
             {confirming.excluded.length} excluded. Eligibility is checked again for each recipient at send time. This can&apos;t be undone once emails go out.

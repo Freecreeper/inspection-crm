@@ -1,4 +1,4 @@
-import type { Prisma, Role } from "@prisma/client";
+import { Prisma, type Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { assertCan } from "@/lib/rbac";
 import { getCalendarConfig, type CalendarConfig } from "@/lib/calendar/config";
@@ -71,16 +71,33 @@ export interface DashboardContext {
   today: DayKey;
   startOfToday: Date;
   inspectionEvents: () => Promise<CalendarEvent[]>;
-  unfinishedReports: () => Promise<UnfinishedReport[]>;
-  unfinishedReportCount: () => Promise<number>;
+  // Scoped loaders take the inspector/assignee for "My" views (null = all),
+  // so the scope is applied in the query, before any limit — never by
+  // filtering a capped list afterwards.
+  unfinishedReports: (inspectorId?: string | null) => Promise<UnfinishedReport[]>;
+  unfinishedReportCount: (inspectorId?: string | null) => Promise<number>;
   collectibleInvoices: () => Promise<CollectibleInvoice[]>;
+  // Count and balance of every collectible invoice, computed in SQL.
+  collectibleTotals: () => Promise<{ count: number; balance: Prisma.Decimal }>;
   // Open tasks that are overdue or due within the next week.
-  openTasks: () => Promise<OpenTask[]>;
+  openTasks: (scope?: { assigneeId?: string | null; realtorOnly?: boolean }) => Promise<OpenTask[]>;
+  openTaskCount: (scope?: { assigneeId?: string | null; realtorOnly?: boolean }) => Promise<number>;
 }
 
 function lazy<T>(load: () => Promise<T>): () => Promise<T> {
   let promise: Promise<T> | null = null;
   return () => (promise ??= load());
+}
+
+// lazy(), memoized per argument (e.g. per inspector).
+function lazyBy<A, T>(load: (arg: A) => Promise<T>, keyOf: (arg: A) => string): (arg: A) => Promise<T> {
+  const cache = new Map<string, Promise<T>>();
+  return (arg: A) => {
+    const key = keyOf(arg);
+    let p = cache.get(key);
+    if (!p) cache.set(key, (p = load(arg)));
+    return p;
+  };
 }
 
 export const TASK_WINDOW_DAYS = 7;
@@ -101,9 +118,9 @@ export function createDashboardContext(viewer: DashboardViewer, now = new Date()
       loadCalendarEvents({ start: today, end: addDays(today, INSPECTION_WINDOW_DAYS), layers: ["inspections"], role: viewer.role, now })
     ),
 
-    unfinishedReports: lazy(() =>
+    unfinishedReports: lazyBy((inspectorId?: string | null) =>
       prisma.inspection.findMany({
-        where: unfinishedReportWhere(),
+        where: unfinishedReportWhere(inspectorId),
         orderBy: [{ completedAt: "asc" }, { scheduledAt: "asc" }],
         take: 50,
         select: {
@@ -115,9 +132,25 @@ export function createDashboardContext(viewer: DashboardViewer, now = new Date()
           property: { select: { addressLine1: true, city: true } },
           reports: { select: { id: true, status: true }, orderBy: { createdAt: "desc" }, take: 1 },
         },
-      })
+      }), (id) => id ?? "*"
     ),
-    unfinishedReportCount: lazy(() => prisma.inspection.count({ where: unfinishedReportWhere() })),
+    unfinishedReportCount: lazyBy((inspectorId?: string | null) => prisma.inspection.count({ where: unfinishedReportWhere(inspectorId) }), (id) => id ?? "*"),
+
+    collectibleTotals: lazy(async () => {
+      assertCan(viewer.role, "financial:read");
+      // Balance = line items − payments, per invoice, over every collectible
+      // invoice (no row cap), so the KPI is exact however many there are.
+      const [row] = await prisma.$queryRaw<{ count: bigint; balance: Prisma.Decimal | null }[]>`
+        SELECT COUNT(*) AS "count", COALESCE(SUM(b."balance"), 0) AS "balance"
+        FROM (
+          SELECT COALESCE((SELECT SUM(it."amount") FROM "invoice_items" it WHERE it."invoiceId" = i."id"), 0)
+               - COALESCE((SELECT SUM(p."amount") FROM "payments" p WHERE p."invoiceId" = i."id"), 0) AS "balance"
+          FROM "invoices" i
+          WHERE i."status" IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE')
+        ) b
+        WHERE b."balance" > 0`;
+      return { count: Number(row?.count ?? 0), balance: new Prisma.Decimal(row?.balance?.toString() ?? 0) };
+    }),
 
     collectibleInvoices: lazy(async () => {
       // Defense in depth: callers already check, but money never leaves
@@ -154,9 +187,9 @@ export function createDashboardContext(viewer: DashboardViewer, now = new Date()
         .filter((inv) => isInvoiceCollectible(inv.status as never, inv.balance));
     }),
 
-    openTasks: lazy(() =>
+    openTasks: lazyBy(({ assigneeId, realtorOnly }: { assigneeId?: string | null; realtorOnly?: boolean } = {}) =>
       prisma.task.findMany({
-        where: { completedAt: null, dueAt: { lt: startOfDayUtc(addDays(today, TASK_WINDOW_DAYS + 1), config.timeZone) } },
+        where: openTaskWhere(assigneeId, realtorOnly),
         orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
         take: 200,
         select: {
@@ -169,7 +202,19 @@ export function createDashboardContext(viewer: DashboardViewer, now = new Date()
           realtor: { select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true } },
           transaction: { select: { id: true, property: { select: { addressLine1: true, city: true } } } },
         },
-      })
+      }), taskKey
     ),
+    openTaskCount: lazyBy(({ assigneeId, realtorOnly }: { assigneeId?: string | null; realtorOnly?: boolean } = {}) => prisma.task.count({ where: openTaskWhere(assigneeId, realtorOnly) }), taskKey),
   };
+
+  function openTaskWhere(assigneeId?: string | null, realtorOnly?: boolean): Prisma.TaskWhereInput {
+    return {
+      completedAt: null,
+      dueAt: { lt: startOfDayUtc(addDays(today, TASK_WINDOW_DAYS + 1), config.timeZone) },
+      ...(assigneeId ? { assigneeId } : {}),
+      ...(realtorOnly ? { realtorId: { not: null } } : {}),
+    };
+  }
 }
+
+const taskKey = (s: { assigneeId?: string | null; realtorOnly?: boolean } = {}) => `${s.assigneeId ?? "*"}|${s.realtorOnly ? "r" : "all"}`;

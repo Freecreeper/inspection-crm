@@ -135,23 +135,22 @@ export async function loadWidget(key: WidgetKey, ctx: DashboardContext, prefs: D
 
     case "actionQueue": {
       const [tasks, emails] = await Promise.all([
-        ctx.openTasks(),
+        ctx.openTasks({ assigneeId: mine ? me : null }),
         // Email is only loaded for roles that may see it.
         can(ctx.viewer.role, "email:view") ? loadEmailActions(ctx) : null,
       ]);
-      const mineOrAll = tasks.filter((t) => !mine || t.assigneeId === me);
-      const rows = mineOrAll.slice(0, LIST_LIMIT).map((t) => ({ ...taskRow(t, ctx), realtorEmail: Boolean(t.realtor?.email) }));
-      return { key, emails: emails?.rows ?? null, emailTotal: emails?.total ?? 0, tasks: rows, taskTotal: mineOrAll.length };
+      const rows = tasks.slice(0, LIST_LIMIT).map((t) => ({ ...taskRow(t, ctx), realtorEmail: Boolean(t.realtor?.email) }));
+      return { key, emails: emails?.rows ?? null, emailTotal: emails?.total ?? 0, tasks: rows, taskTotal: await ctx.openTaskCount({ assigneeId: mine ? me : null }) };
     }
 
     case "myTasks": {
-      const tasks = (await ctx.openTasks()).filter((t) => !mine || t.assigneeId === me);
-      return { key, rows: tasks.slice(0, LIST_LIMIT).map((t) => taskRow(t, ctx)), total: tasks.length };
+      const scope = { assigneeId: mine ? me : null };
+      const [tasks, total] = await Promise.all([ctx.openTasks(scope), ctx.openTaskCount(scope)]);
+      return { key, rows: tasks.slice(0, LIST_LIMIT).map((t) => taskRow(t, ctx)), total };
     }
 
     case "reportsPending": {
-      const rows = (await ctx.unfinishedReports()).filter((r) => !mine || r.inspectorId === me);
-      const total = mine ? rows.length : await ctx.unfinishedReportCount();
+      const [rows, total] = await Promise.all([ctx.unfinishedReports(mine ? me : null), ctx.unfinishedReportCount(mine ? me : null)]);
       return {
         key,
         total,
@@ -188,8 +187,9 @@ export async function loadWidget(key: WidgetKey, ctx: DashboardContext, prefs: D
     }
 
     case "realtorFollowUps": {
-      const tasks = (await ctx.openTasks()).filter((t) => t.realtor && (!mine || t.assigneeId === me));
-      return { key, rows: tasks.slice(0, LIST_LIMIT).map((t) => taskRow(t, ctx)), total: tasks.length };
+      const scope = { assigneeId: mine ? me : null, realtorOnly: true };
+      const [tasks, total] = await Promise.all([ctx.openTasks(scope), ctx.openTaskCount(scope)]);
+      return { key, rows: tasks.slice(0, LIST_LIMIT).map((t) => taskRow(t, ctx)), total };
     }
 
     case "leadActivity": {

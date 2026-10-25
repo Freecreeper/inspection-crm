@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma, type PaymentMethod, type Role } from "@prisma/client";
+import type { PaymentMethod, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";

@@ -1,5 +1,6 @@
 "use server";
 
+import { isDayKey, isTimeOfDay, zonedDateTimeToUtc } from "@/lib/calendar/time";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { EmailCategory, EmailRecipientType, EmailSendMode, Prisma, Role } from "@prisma/client";
@@ -13,6 +14,7 @@ import { listComposeRecipients, parseComposeContext, type ComposeContext, type C
 import { enqueueEmail } from "@/lib/email/queue";
 import { redactSendTime, renderSubjectAndBody, unfilledPlaceholder } from "@/lib/email/render";
 import { getEmailSettings } from "@/lib/email/settings";
+import { getEmailConfig } from "@/lib/email/config";
 import { ensureEmailSystem, runEmailTick } from "@/lib/email/system";
 import { AUTOMATIONS, parseAutomationConfig, type AutomationKey } from "@/lib/email/automations/registry";
 import { AudienceSchema, previewAudience, type AudiencePreview } from "@/lib/email/campaigns";
@@ -538,8 +540,14 @@ export async function submitCampaignForReview(id: string): Promise<Result> {
 // materializes recipients at the scheduled time, re-checking eligibility.
 export async function approveCampaign(id: string, input: { sendAt: string | null }): Promise<Result> {
   const { userId } = await requirePermission("email:campaign_approve");
-  const sendAt = input.sendAt ? new Date(input.sendAt) : new Date();
-  if (Number.isNaN(sendAt.getTime())) return { ok: false, error: "Pick a valid send time." };
+  // The picker sends a wall time ("2026-12-01T09:00"); it means that time in
+  // the business zone, whatever zone the server runs in.
+  let sendAt = new Date();
+  if (input.sendAt) {
+    const [day, time] = input.sendAt.split("T");
+    if (!day || !time || !isDayKey(day) || !isTimeOfDay(time.slice(0, 5))) return { ok: false, error: "Pick a valid send time." };
+    sendAt = zonedDateTimeToUtc(day, time.slice(0, 5), getEmailConfig().timeZone);
+  }
   const placeholder = await campaignPlaceholder(id);
   if (placeholder) return { ok: false, error: `This campaign still contains the placeholder ${placeholder}.` };
   const { count } = await prisma.emailCampaign.updateMany({

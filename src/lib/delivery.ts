@@ -19,7 +19,13 @@ export async function resolveDeliveryByToken(rawToken: string) {
   });
   if (!delivery) return null;
   if (delivery.accessExpiresAt < new Date()) return null;
-  return delivery;
+  if (delivery.revokedAt) return null;
+  // A later finalized version means this copy is out of date. Only the
+  // version number is read (no live report content), so the immutable-
+  // snapshot rule above still holds.
+  const newest = await prisma.reportVersion.findFirst({ where: { reportId: delivery.reportId }, orderBy: { versionNumber: "desc" }, select: { versionNumber: true } });
+  const supersededBy = newest && newest.versionNumber > delivery.version.versionNumber ? newest.versionNumber : null;
+  return { ...delivery, supersededBy };
 }
 
 export async function markDeliveryViewed(deliveryId: string): Promise<void> {

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { getCalendarConfig } from "@/lib/calendar/config";
+import { addDays, dayKeyToDateOnly, isDayKey, startOfDayUtc } from "@/lib/calendar/time";
 
 // The Reporting Query Service (§9) — the boundary between the Custom Report
 // Builder UI and the database. Every field, filter, and aggregation a caller
@@ -114,7 +116,9 @@ function coerceValue(dataType: string, raw: string | undefined): unknown {
     case "boolean":
       return raw === "true";
     case "date":
-      return new Date(raw);
+      // Dates are handled as whole days in dateRange(); this is only
+      // reached for operators that don't take a value.
+      return raw;
     default:
       return raw;
   }
@@ -145,7 +149,55 @@ function buildFieldCondition(operator: FilterOperator, dataType: string, raw: st
   }
 }
 
+// Columns stored as a calendar date (@db.Date) rather than an instant.
+const DATE_ONLY_FIELDS = new Set(["closingDate", "inspectionDeadline"]);
+
+// A date filter names a calendar day ("2026-10-24") in the business time
+// zone, not an instant: "equals" is that whole day, "after" starts the next
+// day, and so on. Returns the field condition, or `not` for "not on".
+function dateCondition(operator: FilterOperator, raw: string | undefined, fieldKey: string): { field?: Record<string, unknown>; not?: Record<string, unknown> } {
+  if (operator === "isNull") return { field: { equals: null } };
+  if (operator === "isNotNull") return { field: { not: null } };
+  const day = raw?.trim() ?? "";
+  if (!isDayKey(day)) throw new ReportValidationError("Enter dates as YYYY-MM-DD.");
+  const timeZone = getCalendarConfig().timeZone;
+  const start = (d: string) => (DATE_ONLY_FIELDS.has(fieldKey) ? dayKeyToDateOnly(d) : startOfDayUtc(d, timeZone));
+  const thisDay = { gte: start(day), lt: start(addDays(day, 1)) };
+  switch (operator) {
+    case "equals":
+      return { field: thisDay };
+    case "not":
+      return { not: thisDay };
+    case "gt":
+      return { field: { gte: start(addDays(day, 1)) } };
+    case "gte":
+      return { field: { gte: start(day) } };
+    case "lt":
+      return { field: { lt: start(day) } };
+    case "lte":
+      return { field: { lt: start(addDays(day, 1)) } };
+    default:
+      throw new ReportValidationError(`That filter doesn't apply to dates.`);
+  }
+}
+
 function applyFilter(where: Record<string, unknown>, filter: ReportFilter, entry: CatalogEntry): void {
+  if (entry.dataType === "date") {
+    const { field, not } = dateCondition(filter.operator, filter.value, entry.fieldKey);
+    const clause = field ? { [entry.fieldKey]: field } : { NOT: { [entry.fieldKey]: not } };
+    if (entry.joinPath) {
+      const existing = (where[entry.joinPath] as Record<string, unknown> | undefined) ?? {};
+      const is = { ...(existing.is as Record<string, unknown> | undefined) };
+      if (field) is[entry.fieldKey] = field;
+      else is.AND = [...((is.AND as unknown[]) ?? []), clause];
+      where[entry.joinPath] = { ...existing, is };
+    } else if (field) {
+      where[entry.fieldKey] = field;
+    } else {
+      where.AND = [...((where.AND as unknown[]) ?? []), clause];
+    }
+    return;
+  }
   const condition = buildFieldCondition(filter.operator, entry.dataType, filter.value);
   if (entry.joinPath) {
     const existing = (where[entry.joinPath] as Record<string, unknown> | undefined) ?? {};

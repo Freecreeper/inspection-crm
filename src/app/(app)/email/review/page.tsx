@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -35,7 +36,7 @@ export default async function NeedsReviewPage() {
                 <p className="text-sm text-slate-600">
                   To {d.recipientName} · {CATEGORY_LABELS[d.category]} · {d.automation?.name ?? "Draft"}
                 </p>
-                <p className="text-xs text-slate-500">Prepared {d.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                <p className="text-xs text-slate-500">Prepared {d.createdAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}</p>
               </div>
               {canSend && context && <EmailButton context={context} draftId={d.id} label="Review & send" />}
             </li>

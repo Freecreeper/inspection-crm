@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -47,7 +48,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
           <p className="text-sm text-slate-600">
             {CAMPAIGN_STATUS_LABELS[campaign.status]} · {describeAudience(audience, brokerageNames)}
             {campaign.approvedBy && ` · approved by ${campaign.approvedBy.name}`}
-            {campaign.scheduledAt && ` · sends ${campaign.scheduledAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
+            {campaign.scheduledAt && ` · sends ${campaign.scheduledAt.toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
           </p>
         )}
       </div>

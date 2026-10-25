@@ -71,12 +71,20 @@ describe("loadReferredTransactions", () => {
 
 describe("monthlyCounts", () => {
   it("buckets dates into the last N calendar months, oldest first", () => {
-    const now = new Date(2026, 8, 26);
-    const counts = monthlyCounts([new Date(2026, 8, 1), new Date(2026, 8, 20), new Date(2026, 6, 4), new Date(2025, 0, 1)], now, 3);
+    const now = new Date("2026-09-26T16:00:00Z");
+    const counts = monthlyCounts([new Date("2026-09-01T16:00:00Z"), new Date("2026-09-20T16:00:00Z"), new Date("2026-07-04T16:00:00Z"), new Date("2025-01-01T16:00:00Z")], now, 3, "America/New_York");
     expect(counts.map((c) => [c.month, c.count])).toEqual([
       ["2026-07", 1],
       ["2026-08", 0],
       ["2026-09", 2],
+    ]);
+  });
+
+  it("uses the business time zone, not the server's: 9 PM Sep 30 in New York is September", () => {
+    const counts = monthlyCounts([new Date("2026-10-01T01:00:00Z")], new Date("2026-10-15T16:00:00Z"), 2, "America/New_York");
+    expect(counts).toEqual([
+      { month: "2026-09", label: "Sep 26", count: 1 },
+      { month: "2026-10", label: "Oct 26", count: 0 },
     ]);
   });
 });

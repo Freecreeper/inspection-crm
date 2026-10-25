@@ -1,3 +1,4 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 import { SubmitButton } from "@/components/SubmitButton";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +42,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </p>
         </form>
       ) : (
-        <p className="mt-6 text-sm text-slate-600">Converted on {lead.convertedAt?.toLocaleDateString()}.</p>
+        <p className="mt-6 text-sm text-slate-600">Converted on {lead.convertedAt ? formatBusinessDate(lead.convertedAt) : "an unknown date"}.</p>
       )}
     </div>
   );

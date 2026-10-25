@@ -234,16 +234,15 @@ describe("createRealtorTask", () => {
   });
 
   it("creates an ordinary Task linked to the realtor (no separate follow-up system)", async () => {
+    vi.stubEnv("APP_TIMEZONE", "America/New_York");
     db.realtor.findUnique.mockResolvedValue({ archivedAt: null });
     const result = await createRealtorTask("r1", { title: " Follow up ", dueDate: "2026-10-03" });
 
     expect(result).toEqual({ ok: true, data: undefined });
     const data = db.task.create.mock.calls[0][0].data;
     expect(data).toMatchObject({ title: "Follow up", realtorId: "r1", assigneeId: "user-1" });
-    // Local noon, so the calendar day survives any timezone.
-    expect(data.dueAt.getFullYear()).toBe(2026);
-    expect(data.dueAt.getMonth()).toBe(9);
-    expect(data.dueAt.getDate()).toBe(3);
+    // Noon on that day in the business time zone, whatever zone the server is in.
+    expect(data.dueAt.toISOString()).toBe("2026-10-03T16:00:00.000Z");
   });
 
   it("validates title and date", async () => {

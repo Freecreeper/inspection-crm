@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +35,7 @@ export default async function CampaignsPage() {
                 {c.name}
               </Link>
               <p className="text-xs text-slate-500">
-                {CATEGORY_LABELS[c.category]} · created by {c.createdBy?.name ?? "—"} {c.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                {CATEGORY_LABELS[c.category]} · created by {c.createdBy?.name ?? "—"} {c.createdAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}
                 {c._count.messages > 0 && ` · ${c._count.messages} recipients recorded`}
               </p>
             </div>

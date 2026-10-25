@@ -9,6 +9,7 @@ import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
+import { logActivity } from "@/lib/activity";
 import { validateMediaUpload, safeFileName } from "@/lib/media";
 import { validateFinalizeReport } from "@/lib/validation";
 import { generateReportNumber, syncReportSummary, isReportEditable } from "@/lib/reportEngine";
@@ -467,6 +468,19 @@ export async function amendReport(reportId: string) {
 // isn't wired to a real provider (no POSTMARK_API_TOKEN configured); this
 // records the delivery and issues a token-scoped link for staff to share
 // manually, and says so in the UI rather than claiming an email went out.
+// Withdraws a delivered link (sent to the wrong person, or superseded). The
+// link stops working at once; a queued email for it is cancelled by its
+// send-time guard.
+export async function revokeDelivery(deliveryId: string) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "report:deliver");
+  const delivery = await prisma.reportDelivery.findUnique({ where: { id: deliveryId }, select: { report: { select: { inspectionId: true } } } });
+  if (!delivery) return;
+  const { count } = await prisma.reportDelivery.updateMany({ where: { id: deliveryId, revokedAt: null }, data: { revokedAt: new Date() } });
+  if (count) await logActivity(prisma, { actorId: session?.user?.id, action: "report.delivery_revoked", entityType: "ReportDelivery", entityId: deliveryId });
+  revalidatePath(`/inspections/${delivery.report.inspectionId}/report/versions`);
+}
+
 // How long a repeat of the same delivery (same report version, recipient,
 // and method) counts as the same click rather than a new delivery.
 const DELIVERY_REPEAT_WINDOW_MS = 10 * 60_000;

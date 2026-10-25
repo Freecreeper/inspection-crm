@@ -1,3 +1,4 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -57,7 +58,7 @@ export default async function ReportPreviewPage({ params }: { params: Promise<{ 
           <dt>Inspector</dt>
           <dd>{inspection.inspector?.name || "Not recorded"}</dd>
           <dt>Inspection date</dt>
-          <dd>{(inspection.completedAt ?? inspection.scheduledAt)?.toLocaleDateString() ?? "Not recorded"}</dd>
+          <dd>{(() => { const d = inspection.completedAt ?? inspection.scheduledAt; return d ? formatBusinessDate(d) : "Not recorded"; })()}</dd>
         </dl>
         {report.introduction && <p className="mt-4 text-sm text-slate-700">{report.introduction}</p>}
       </section>

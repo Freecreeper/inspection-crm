@@ -346,21 +346,33 @@ describe("Email & Task Actions", () => {
   it("roles without email access get tasks only — email isn't queried", async () => {
     denied.add("INSPECTOR:email:view");
     db.task.findMany.mockResolvedValue([task("t1", "u-jordan")]);
+    db.task.count.mockResolvedValue(1);
     const result = await loadWidget("actionQueue", createDashboardContext({ userId: "u-jordan", role: "INSPECTOR" }, NOW), defaultPreferences("INSPECTOR"));
     expect(result).toMatchObject({ emails: null, emailTotal: 0, tasks: [{ id: "t1" }], taskTotal: 1 });
     expect(db.emailMessage.findMany).not.toHaveBeenCalled();
     expect(db.emailMessage.count).not.toHaveBeenCalled();
   });
 
-  it("'My tasks' shows only the viewer's; a Realtor task knows whether the Realtor can be emailed", async () => {
+  it("'My tasks' is filtered in the query (before any limit); a Realtor task knows whether the Realtor can be emailed", async () => {
     db.emailMessage.findMany.mockResolvedValue([]);
     db.emailMessage.count.mockResolvedValue(0);
-    db.task.findMany.mockResolvedValue([
-      task("mine", "u-admin", { realtor: { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: null, phone: null, email: "sarah@example.com" } }),
-      task("theirs", "u-pat"),
-    ]);
+    db.task.findMany.mockResolvedValue([task("mine", "u-admin", { realtor: { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: null, phone: null, email: "sarah@example.com" } })]);
+    db.task.count.mockResolvedValue(1);
     const prefs = prefsWith(["actionQueue"], { options: { actionQueue: { scope: "mine" } } });
     const result = await loadWidget("actionQueue", createDashboardContext(admin, NOW), prefs);
+    expect(db.task.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ assigneeId: "u-admin", completedAt: null }) }));
+    expect(db.task.count).toHaveBeenCalledWith({ where: expect.objectContaining({ assigneeId: "u-admin" }) });
     expect(result).toMatchObject({ taskTotal: 1, tasks: [{ id: "mine", realtorEmail: true, overdue: true, realtor: { id: "r1", name: "Sarah Jones" } }] });
+  });
+});
+
+describe("'My' scope is applied in the query, before the limit", () => {
+  it("an inspector's unfinished reports and count are queried for that inspector", async () => {
+    db.inspection.findMany.mockResolvedValue([]);
+    db.inspection.count.mockResolvedValue(3);
+    const result = await loadWidget("reportsPending", createDashboardContext({ userId: "u-jordan", role: "INSPECTOR" }, NOW), defaultPreferences("INSPECTOR"));
+    expect(db.inspection.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ status: "COMPLETED", inspectorId: "u-jordan" }), take: 50 }));
+    expect(db.inspection.count).toHaveBeenCalledWith({ where: expect.objectContaining({ inspectorId: "u-jordan" }) });
+    expect(result).toMatchObject({ total: 3 });
   });
 });

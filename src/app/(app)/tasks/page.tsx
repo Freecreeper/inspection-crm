@@ -1,3 +1,4 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createTask, completeTask } from "./actions";
@@ -68,7 +69,7 @@ export default async function TasksPage() {
                         {task.assignee?.name || <span className="text-slate-400">Unassigned</span>}
                       </td>
                       <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-red-600" : "text-slate-600"}`}>
-                        {task.dueAt ? task.dueAt.toLocaleDateString() : <span className="text-slate-400">No due date</span>}
+                        {task.dueAt ? formatBusinessDate(task.dueAt) : <span className="text-slate-400">No due date</span>}
                       </td>
                       <td className="px-4 py-2 text-right">
                         <form action={completeAction}>

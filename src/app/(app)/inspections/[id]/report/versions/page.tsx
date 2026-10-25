@@ -1,9 +1,10 @@
+import { formatBusinessDateTime } from "@/lib/businessTime";
 import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { amendReport, createDelivery } from "../../../report-actions";
+import { amendReport, createDelivery, revokeDelivery } from "../../../report-actions";
 import { getAutomation } from "@/lib/email/automations/registry";
 import { describeEmailDelivery } from "@/lib/email/config";
 
@@ -72,15 +73,24 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
                 )}
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Finalized {v.finalizedAt.toLocaleString()} by {v.createdBy?.name ?? "Unknown"}
+                Finalized {formatBusinessDateTime(v.finalizedAt)} by {v.createdBy?.name ?? "Unknown"}
               </p>
               {v.reasonForRevision && <p className="mt-1 text-xs text-slate-600">Reason: {v.reasonForRevision}</p>}
               {v.deliveries.length > 0 && (
                 <ul className="mt-2 space-y-1 text-xs text-slate-600">
                   {v.deliveries.map((d) => (
-                    <li key={d.id}>
-                      → {d.recipientName} ({d.recipientType}) — <span className="font-mono">{d.status}</span>
-                      <span className="text-slate-400"> · {d.deliveryMethod === "email" ? "by email" : "link"}</span>
+                    <li key={d.id} className="flex flex-wrap items-center gap-x-2">
+                      <span>
+                        → {d.recipientName} ({d.recipientType}) — <span className="font-mono">{d.revokedAt ? "REVOKED" : d.status}</span>
+                        <span className="text-slate-400"> · {d.deliveryMethod === "email" ? "by email" : "link"}</span>
+                      </span>
+                      {!d.revokedAt && (
+                        <form action={revokeDelivery.bind(null, d.id)}>
+                          <SubmitButton className="text-red-600 hover:underline" confirm={`Revoke ${d.recipientName}'s link? It stops working immediately.`}>
+                            Revoke link
+                          </SubmitButton>
+                        </form>
+                      )}
                     </li>
                   ))}
                 </ul>

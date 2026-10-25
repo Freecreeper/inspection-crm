@@ -77,23 +77,19 @@ describe("KPIs", () => {
     expect(JSON.stringify(db.transaction.count.mock.calls)).not.toContain("realtors");
   });
 
-  it("Outstanding balance and unpaid count come from collectible invoices with a balance", async () => {
-    const inv = (id: string, status: string, total: string, paid: string[]) => ({
-      id,
-      invoiceNumber: id,
-      status,
-      dueAt: null,
-      transactionId: "tx",
-      items: [{ amount: new Prisma.Decimal(total) }],
-      payments: paid.map((p) => ({ amount: new Prisma.Decimal(p) })),
-      transaction: { customers: [] },
-    });
-    db.invoice.findMany.mockResolvedValue([inv("a", "SENT", "475", []), inv("b", "PARTIALLY_PAID", "600", ["200"]), inv("c", "SENT", "300", ["300"])]);
+  it("Outstanding balance and unpaid count are exact SQL totals over every collectible invoice (no row cap)", async () => {
+    const raw = (prisma as unknown as { $queryRaw: Fn }).$queryRaw;
+    raw.mockResolvedValue([{ count: BigInt(2), balance: new Prisma.Decimal("875.00") }]);
     expect(await loadKpis(ctx(), ["outstandingBalance", "unpaidInvoices"])).toEqual([
       { key: "outstandingBalance", value: 875 },
       { key: "unpaidInvoices", value: 2 },
     ]);
-    expect(db.invoice.findMany).toHaveBeenCalledTimes(1);
+    // One aggregate query serves both, and it only counts positive balances.
+    expect(raw).toHaveBeenCalledTimes(1);
+    const sql = (raw.mock.calls[0][0] as string[]).join("?");
+    expect(sql).toMatch(/WHERE b\."balance" > 0/);
+    expect(sql).not.toMatch(/LIMIT/i);
+    expect(db.invoice.findMany).not.toHaveBeenCalled();
   });
 
   it("operational KPIs use their documented windows", async () => {

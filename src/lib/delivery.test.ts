@@ -7,6 +7,7 @@ vi.mock("@/lib/prisma", async () => {
 
 import { prisma } from "@/lib/prisma";
 import { resolveDeliveryByToken, markDeliveryViewed } from "./delivery";
+import { evaluateGuard } from "./email/guards";
 
 const mockPrisma = prisma as unknown as {
   reportDelivery: { findUnique: ReturnType<typeof vi.fn>; updateMany: ReturnType<typeof vi.fn> };
@@ -78,5 +79,41 @@ describe("markDeliveryViewed", () => {
       where: { id: "delivery-1", status: { not: "VIEWED" } },
       data: { status: "VIEWED" },
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Revocation and superseded versions (audit findings #9, #73)
+// ---------------------------------------------------------------------------
+
+type Fn = ReturnType<typeof vi.fn>;
+const db = prisma as unknown as Record<string, Record<string, Fn>>;
+const future = new Date(Date.now() + 86_400_000);
+const delivery = (over: Record<string, unknown> = {}) => ({ id: "d1", reportId: "rep-1", accessExpiresAt: future, revokedAt: null, version: { versionNumber: 1, snapshot: {} }, ...over });
+
+beforeEach(() => vi.clearAllMocks());
+
+describe("report links", () => {
+  it("a revoked link stops working", async () => {
+    db.reportDelivery.findUnique.mockResolvedValue(delivery({ revokedAt: new Date() }));
+    expect(await resolveDeliveryByToken("token")).toBeNull();
+  });
+
+  it("an older version's link still opens, but says a newer version exists", async () => {
+    db.reportDelivery.findUnique.mockResolvedValue(delivery());
+    db.reportVersion.findFirst.mockResolvedValue({ versionNumber: 2 });
+    expect(await resolveDeliveryByToken("token")).toMatchObject({ id: "d1", supersededBy: 2 });
+    db.reportVersion.findFirst.mockResolvedValue({ versionNumber: 1 });
+    expect(await resolveDeliveryByToken("token")).toMatchObject({ supersededBy: null });
+  });
+
+  it("a queued report email is cancelled if its link was revoked or a newer version was finalized", async () => {
+    const guard = { checks: [{ kind: "reportDeliveryValid" as const, reportDeliveryId: "d1" }] };
+    db.reportDelivery.findUnique.mockResolvedValue({ versionId: "v1", revokedAt: new Date(), report: { versions: [{ id: "v1" }] } });
+    expect(await evaluateGuard(guard, prisma as never)).toEqual({ ok: false, reason: "The report link was revoked" });
+    db.reportDelivery.findUnique.mockResolvedValue({ versionId: "v1", revokedAt: null, report: { versions: [{ id: "v2" }] } });
+    expect(await evaluateGuard(guard, prisma as never)).toEqual({ ok: false, reason: "A newer version of this report was finalized" });
+    db.reportDelivery.findUnique.mockResolvedValue({ versionId: "v2", revokedAt: null, report: { versions: [{ id: "v2" }] } });
+    expect(await evaluateGuard(guard, prisma as never)).toEqual({ ok: true });
   });
 });

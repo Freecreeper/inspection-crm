@@ -102,14 +102,16 @@ describe("rescheduleTask", () => {
     expect(mockPrisma.task.update).not.toHaveBeenCalled();
   });
 
-  it("moves the due date to local noon of the chosen day and audits the change", async () => {
+  it("moves the due date to noon of the chosen day in the business time zone and audits the change", async () => {
+    vi.stubEnv("APP_TIMEZONE", "America/New_York");
     mockAuth.mockResolvedValue({ user: { id: "user-1", role: "OFFICE_STAFF" } } as never);
     mockPrisma.task.findUnique.mockResolvedValue({ id: "task-1", dueAt: null, completedAt: null });
     mockPrisma.task.update.mockResolvedValue({ transactionId: null, realtorId: "r1" });
 
     expect(await rescheduleTask("task-1", "2026-10-10")).toEqual({ ok: true });
     const dueAt: Date = mockPrisma.task.update.mock.calls[0][0].data.dueAt;
-    expect([dueAt.getFullYear(), dueAt.getMonth(), dueAt.getDate(), dueAt.getHours()]).toEqual([2026, 9, 10, 12]);
+    // Noon EDT on Oct 10 — the same instant whether the server runs in UTC or New York.
+    expect(dueAt.toISOString()).toBe("2026-10-10T16:00:00.000Z");
     expect(mockPrisma.activityLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ action: "task.rescheduled" }) });
   });
 

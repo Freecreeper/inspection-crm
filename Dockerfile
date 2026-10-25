@@ -5,7 +5,7 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends openssl ca-certificates tzdata \
   && rm -rf /var/lib/apt/lists/*
 
 # prisma.config.ts reads DATABASE_URL eagerly, so install/generate/build need a placeholder.

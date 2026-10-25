@@ -8,7 +8,7 @@ vi.mock("@/lib/prisma", async () => {
 import { prisma } from "@/lib/prisma";
 import { primeEmailDb, TEMPLATES, type MockDb } from "@/test-utils/emailFixtures";
 import type { EmailProvider, SendResult } from "./providers";
-import { MAX_ATTEMPTS, processClaimedMessage, recoverInterruptedSends } from "./worker";
+import { MAX_ATTEMPTS, processClaimedMessage, recoverInterruptedSends, sendDueEmails } from "./worker";
 
 const db = prisma as unknown as MockDb;
 const NOW = new Date("2026-09-27T12:00:00Z");
@@ -197,5 +197,57 @@ describe("report-ready email", () => {
     expect(db.reportDelivery.update).toHaveBeenCalledWith({ where: { id: "del-1" }, data: { status: "SENT", deliveredAt: NOW } });
     // ...but only a finalized report: an amendment opened meanwhile stays open.
     expect(db.inspectionReport.updateMany).toHaveBeenCalledWith({ where: { id: "rep-1", status: { in: ["FINALIZED", "DELIVERED"] } }, data: { status: "DELIVERED", deliveredAt: NOW } });
+  });
+});
+
+describe("claiming due email", () => {
+  it("compares against the worker's clock, not Postgres now() (TIMESTAMP columns hold UTC)", async () => {
+    const raw = (db as unknown as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+    raw.mockResolvedValue([]);
+    await sendDueEmails({ db: db as never, provider: fakeProvider({ ok: true, providerMessageId: "x" } as SendResult), now: NOW });
+    expect(raw).toHaveBeenCalled();
+    for (const [sql] of raw.mock.calls) {
+      const q = sql as { strings: string[]; values: unknown[] };
+      expect(q.strings.join("?")).not.toMatch(/now\(\)/i);
+      expect(q.values).toContain(NOW);
+    }
+  });
+});
+
+describe("send-time recipient and link", () => {
+  it("automation email goes to the customer's current address, not the one it was queued with", async () => {
+    message = { ...message, mode: "AUTOMATIC", category: "TRANSACTIONAL", recipientType: "CUSTOMER", realtorId: null, customerId: "c1", recipientEmail: "old@example.com" };
+    db.customer.findUnique.mockResolvedValue({ email: "new@example.com" });
+    const provider = fakeProvider({ ok: true, providerMessageId: "pm-3" });
+    await processClaimedMessage("m1", provider, db as never, NOW);
+    expect(provider.send.mock.calls[0][0].to).toBe("new@example.com");
+    expect(message.recipientEmail).toBe("new@example.com");
+  });
+
+  it("a removed address skips the email instead of sending to the old one", async () => {
+    message = { ...message, mode: "AUTOMATIC", category: "TRANSACTIONAL", recipientType: "CUSTOMER", realtorId: null, customerId: "c1", recipientEmail: "old@example.com" };
+    db.customer.findUnique.mockResolvedValue({ email: null });
+    const provider = fakeProvider({ ok: true, providerMessageId: "pm-4" });
+    const outcome = await processClaimedMessage("m1", provider, db as never, NOW);
+    expect(provider.send).not.toHaveBeenCalled();
+    expect(outcome.status).toBe("SKIPPED");
+  });
+
+  it("an email a person addressed by hand keeps the address they chose", async () => {
+    message = { ...message, mode: "MANUAL", recipientType: "CUSTOMER", realtorId: null, customerId: "c1", recipientEmail: "chosen@example.com" };
+    db.customer.findUnique.mockResolvedValue({ email: "profile@example.com" });
+    const provider = fakeProvider({ ok: true, providerMessageId: "pm-5" });
+    await processClaimedMessage("m1", provider, db as never, NOW);
+    expect(provider.send.mock.calls[0][0].to).toBe("chosen@example.com");
+  });
+
+  it("a report email that's skipped at send time doesn't replace the customer's existing link", async () => {
+    const tpl = TEMPLATES.find((t) => t.key === "report_ready")!;
+    message = { ...message, mode: "AUTOMATIC", category: "TRANSACTIONAL", recipientType: "OTHER", realtorId: null, template: { ...tpl, body: `${tpl.body} {{inspection.unknownField}}` }, templateId: tpl.id, reportDeliveryId: "del-1" };
+    db.reportDelivery.findUnique.mockResolvedValue({ id: "del-1", recipientName: "John Smith", report: { reportNumber: "RPT-1", inspectionId: "i1" }, version: { versionNumber: 2 }, reportId: "rep-1" });
+    const provider = fakeProvider({ ok: true, providerMessageId: "pm-6" });
+    const outcome = await processClaimedMessage("m1", provider, db as never, NOW);
+    expect(outcome.status).toBe("SKIPPED");
+    expect(db.reportDelivery.update.mock.calls.some((c) => c[0].data?.accessTokenHash)).toBe(false);
   });
 });

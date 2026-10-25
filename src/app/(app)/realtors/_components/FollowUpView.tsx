@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatShortDate } from "@/lib/dates";
 import { realtorDisplayName, telHref } from "@/lib/realtors/display";
 import {
+  bucketDueWhere,
   FOLLOW_UP_BUCKET_LABELS,
   FOLLOW_UP_BUCKET_ORDER,
   bucketsForFilter,
@@ -21,7 +22,8 @@ const FILTER_LABELS: Record<FollowUpFilter, string> = {
   none: "No upcoming action",
 };
 
-const MAX_TASKS = 200;
+// Per bucket: each bucket shows up to this many, with its true total.
+const MAX_PER_BUCKET = 100;
 const MAX_IDLE_REALTORS = 50;
 
 // An action queue over the ordinary Task table (tasks with a realtorId) —
@@ -32,19 +34,27 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
   const now = new Date();
   const buckets = bucketsForFilter(filter);
 
-  const [tasks, idleRealtors, idleCount] = await Promise.all([
-    filter === "none"
-      ? Promise.resolve([])
-      : prisma.task.findMany({
-          where: { completedAt: null, realtorId: { not: null }, realtor: { archivedAt: null } },
-          orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
-          take: MAX_TASKS,
-          include: {
-            realtor: {
-              select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true, brokerage: { select: { name: true } } },
+  const openFollowUp = { completedAt: null, realtorId: { not: null }, realtor: { archivedAt: null } } as const;
+  const [perBucket, idleRealtors, idleCount] = await Promise.all([
+    Promise.all(
+      buckets.map(async (bucket) => {
+        const where = { ...openFollowUp, ...bucketDueWhere(bucket, now) };
+        const [rows, total] = await Promise.all([
+          prisma.task.findMany({
+            where,
+            orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+            take: MAX_PER_BUCKET,
+            include: {
+              realtor: {
+                select: { id: true, firstName: true, lastName: true, preferredName: true, phone: true, email: true, brokerage: { select: { name: true } } },
+              },
             },
-          },
-        }),
+          }),
+          prisma.task.count({ where }),
+        ]);
+        return { bucket, rows, total };
+      })
+    ),
     filter === "none" || filter === "all"
       ? prisma.realtor.findMany({
           where: { archivedAt: null, tasks: { none: { completedAt: null } } },
@@ -58,6 +68,9 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
       : Promise.resolve(0),
   ]);
 
+  const tasks = perBucket.flatMap((b) => b.rows);
+  const totals = new Map(perBucket.map((b) => [b.bucket, b.total]));
+
   // "Last contact" for everyone on screen, in one grouped query.
   const realtorIds = [...new Set([...tasks.map((t) => t.realtorId!), ...idleRealtors.map((r) => r.id)])];
   const lastContacts = realtorIds.length
@@ -65,7 +78,7 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
     : [];
   const lastContactBy = new Map(lastContacts.map((c) => [c.realtorId, c._max.occurredAt]));
 
-  const groups = groupFollowUps(tasks, now);
+  const groups = Object.fromEntries(perBucket.map((b) => [b.bucket, b.rows])) as ReturnType<typeof groupFollowUps<(typeof tasks)[number]>>;
   const visibleBuckets = FOLLOW_UP_BUCKET_ORDER.filter((b) => buckets.includes(b) && groups[b].length > 0);
 
   return (
@@ -90,8 +103,13 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
           <section key={bucket} aria-labelledby={`bucket-${bucket}`}>
             <h2 id={`bucket-${bucket}`} className="flex items-baseline gap-2 text-sm font-semibold text-slate-900">
               {FOLLOW_UP_BUCKET_LABELS[bucket]}
-              <span className="text-xs font-normal text-slate-500">{groups[bucket].length}</span>
+              <span className="text-xs font-normal text-slate-500">{totals.get(bucket) ?? groups[bucket].length}</span>
             </h2>
+            {(totals.get(bucket) ?? 0) > groups[bucket].length && (
+              <p className="mt-0.5 text-xs text-slate-500">
+                Showing the first {groups[bucket].length} of {totals.get(bucket)} — the oldest due first.
+              </p>
+            )}
             <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
               {groups[bucket].map((task) => {
                 const r = task.realtor!;

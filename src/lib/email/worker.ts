@@ -27,14 +27,17 @@ export function retryDelayMs(attemptsSoFar: number): number {
 // Claims up to `limit` due emails for this worker. FOR UPDATE SKIP LOCKED
 // means two workers can never claim the same row; the status flip to
 // SENDING happens in the same statement.
-async function claimBatch(db: Db, limit: number, campaign: "only" | "none"): Promise<string[]> {
+// The worker's own clock is passed in (not Postgres now()): the columns are
+// TIMESTAMP without time zone, written by Prisma as UTC, and comparing them
+// with now() would go through the database session's time zone.
+async function claimBatch(db: Db, limit: number, campaign: "only" | "none", now: Date): Promise<string[]> {
   if (limit <= 0) return [];
   const campaignFilter = campaign === "only" ? Prisma.sql`AND "campaignId" IS NOT NULL` : Prisma.sql`AND "campaignId" IS NULL`;
   const rows = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
-    UPDATE "email_messages" SET "status" = 'SENDING', "sendingAt" = now(), "attempts" = "attempts" + 1, "updatedAt" = now()
+    UPDATE "email_messages" SET "status" = 'SENDING', "sendingAt" = ${now}, "attempts" = "attempts" + 1, "updatedAt" = ${now}
     WHERE "id" IN (
       SELECT "id" FROM "email_messages"
-      WHERE "status" = 'QUEUED' AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= now()) ${campaignFilter}
+      WHERE "status" = 'QUEUED' AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= ${now}) ${campaignFilter}
       ORDER BY "queuedAt" ASC NULLS FIRST, "createdAt" ASC
       LIMIT ${limit}
       FOR UPDATE SKIP LOCKED
@@ -112,22 +115,37 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
   const guardResult = await evaluateGuard(guard, db);
   if (!guardResult.ok) return finish({ status: "CANCELLED", statusReason: guardResult.reason, cancelledAt: now });
 
-  const [settings, realtor] = await Promise.all([
+  const [settings, realtor, customer] = await Promise.all([
     getEmailSettings(db),
     message.realtorId
       ? db.realtor.findUnique({
           where: { id: message.realtorId },
-          select: { archivedAt: true, relationshipEmailsEnabled: true, marketingOptIn: true, marketingUnsubscribedAt: true },
+          select: { email: true, archivedAt: true, relationshipEmailsEnabled: true, marketingOptIn: true, marketingUnsubscribedAt: true },
         })
       : null,
+    message.customerId && message.recipientType === "CUSTOMER" ? db.customer.findUnique({ where: { id: message.customerId }, select: { email: true } }) : null,
   ]);
+
+  // Automation email goes to the person's address as it is now, not as it
+  // was when the email was queued (a corrected address must not keep
+  // receiving reminders at the old one). Messages a person addressed by hand,
+  // and report deliveries (whose recipient staff chose explicitly), keep the
+  // address they were given.
+  let recipientEmail = message.recipientEmail;
+  if (message.mode !== "MANUAL" && !message.reportDeliveryId) {
+    const current = message.recipientType === "CUSTOMER" && customer ? customer.email : message.recipientType === "REALTOR" && realtor ? realtor.email : undefined;
+    if (current !== undefined && (current ?? null) !== recipientEmail) {
+      recipientEmail = current ?? null;
+      await db.emailMessage.update({ where: { id }, data: { recipientEmail } });
+    }
+  }
 
   // Preferences and suppressions can change between queueing and sending.
   const eligibility = await checkEligibility(
     {
       category: message.category,
       recipientType: message.recipientType,
-      email: message.recipientEmail,
+      email: recipientEmail,
       realtor: message.recipientType === "REALTOR" ? realtor : null,
       marketingRequiresOptIn: settings.marketingRequiresOptIn,
     },
@@ -156,10 +174,13 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
   const sourceSubject = automaticFromTemplate ? message.template!.subject : message.subject;
   const sourceBody = automaticFromTemplate ? message.template!.body : message.bodyText;
 
-  if (sourceBody.includes("report.secureLink")) {
-    const link = await mintReportLink(message, db);
-    if (link) vars["report.secureLink"] = link;
-  }
+  // The secure report link replaces the previous one when it's created, so
+  // it's created last: only once every other check has passed and the email
+  // is about to go out. A retry that's skipped can't kill a link the
+  // customer already has.
+  const LINK_PLACEHOLDER = "\u0000report-link\u0000";
+  const needsLink = sourceBody.includes("report.secureLink");
+  if (needsLink && message.reportDeliveryId) vars["report.secureLink"] = LINK_PLACEHOLDER;
   const rendered = renderSubjectAndBody(sourceSubject, sourceBody, vars, { resolveSendTime: true });
   if (rendered.unknown.length || rendered.missing.length) {
     const fields = [...rendered.unknown.map((k) => `{{${k}}}`), describeVariables(rendered.missing)].filter(Boolean).join(", ");
@@ -169,6 +190,14 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
   const fromEmail = settings.fromEmail ?? getEmailConfig().defaultFromEmail;
   if (!fromEmail) return finish({ status: "FAILED", failedAt: now, statusReason: "No From address configured (Email settings or EMAIL_FROM)." });
 
+  let mintedLink: string | null = null;
+  if (rendered.body.includes(LINK_PLACEHOLDER) || rendered.subject.includes(LINK_PLACEHOLDER)) {
+    mintedLink = await mintReportLink(message, db);
+    if (!mintedLink) return finish({ status: "SKIPPED", statusReason: "The report link couldn't be created." });
+    rendered.body = rendered.body.split(LINK_PLACEHOLDER).join(mintedLink);
+    rendered.subject = rendered.subject.split(LINK_PLACEHOLDER).join(mintedLink);
+  }
+
   const config = getEmailConfig();
   const footer = footerFor(message, settings.mailingAddress);
   const text = rendered.body + footer.text;
@@ -177,9 +206,9 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
 
   const result = await provider.send({
     from: `${settings.fromName} <${fromEmail}>`,
-    to: redirected ? config.redirectTo! : message.recipientEmail!,
+    to: redirected ? config.redirectTo! : recipientEmail!,
     replyTo: settings.replyTo,
-    subject: redirected ? `[Redirected from ${message.recipientEmail}] ${rendered.subject}` : rendered.subject,
+    subject: redirected ? `[Redirected from ${recipientEmail}] ${rendered.subject}` : rendered.subject,
     text,
     html: textToHtml(text),
     stream,
@@ -212,7 +241,7 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
           messageStream: stream,
           simulated: provider.simulated,
           // The stored copy never carries the live report link.
-          bodyText: automaticFromTemplate ? rendered.body.replace(vars["report.secureLink"] ?? "\u0000", "[secure link — created when sent]") : message.bodyText,
+          bodyText: automaticFromTemplate ? (mintedLink ? rendered.body.split(mintedLink).join("[secure link — created when sent]") : rendered.body) : message.bodyText,
           subject: rendered.subject,
           communicationId: communication.id,
         },
@@ -222,11 +251,11 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
     return { status: "SENT" };
   }
 
-  if (result.suppressed && message.recipientEmail) {
+  if (result.suppressed && recipientEmail) {
     await db.emailSuppression.upsert({
-      where: { email_scope: { email: normalizeEmail(message.recipientEmail), scope: "ALL" } },
+      where: { email_scope: { email: normalizeEmail(recipientEmail), scope: "ALL" } },
       update: {},
-      create: { email: normalizeEmail(message.recipientEmail), scope: "ALL", reason: result.error, source: "provider-send" },
+      create: { email: normalizeEmail(recipientEmail), scope: "ALL", reason: result.error, source: "provider-send" },
     });
     return finish({ status: "SUPPRESSED", statusReason: result.error });
   }
@@ -281,8 +310,8 @@ export async function sendDueEmails(opts: { db?: Db; provider?: EmailProvider; n
   const recentCampaignSends = await db.emailMessage.count({
     where: { campaignId: { not: null }, sentAt: { gte: new Date(now.getTime() - 60_000) } },
   });
-  const operational = await claimBatch(db, batchSize, "none");
-  const campaign = await claimBatch(db, Math.min(batchSize, settings.campaignSendsPerMinute - recentCampaignSends), "only");
+  const operational = await claimBatch(db, batchSize, "none", now);
+  const campaign = await claimBatch(db, Math.min(batchSize, settings.campaignSendsPerMinute - recentCampaignSends), "only", now);
 
   const outcomes: Outcome[] = [];
   for (const id of [...operational, ...campaign]) {

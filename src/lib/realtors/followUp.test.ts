@@ -1,8 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { bucketsForFilter, followUpBucket, groupFollowUps, parseFollowUpFilter } from "./followUp";
+import { zonedDateTimeToUtc } from "@/lib/calendar/time";
 
-const NOW = new Date("2026-09-26T15:00:00");
-const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h);
+// Days are business days (APP_TIMEZONE), whatever zone the test machine
+// or server runs in.
+beforeAll(() => vi.stubEnv("APP_TIMEZONE", "America/New_York"));
+afterAll(() => vi.unstubAllEnvs());
+const pad = (n: number) => String(n).padStart(2, "0");
+const at = (y: number, m: number, d: number, h = 12) => zonedDateTimeToUtc(`${y}-${pad(m)}-${pad(d)}`, `${pad(h)}:00`, "America/New_York");
+const NOW = at(2026, 9, 26, 15);
 
 describe("followUpBucket", () => {
   it("buckets by calendar day relative to today", () => {
@@ -46,5 +52,24 @@ describe("filters", () => {
   it("'this week' includes anything already due", () => {
     expect(bucketsForFilter("week")).toEqual(["overdue", "today", "thisWeek"]);
     expect(bucketsForFilter("none")).toEqual([]);
+  });
+});
+
+describe("bucketDueWhere — each bucket is its own query (no global cap hiding today's work)", () => {
+  it("bucket boundaries are business-day midnights and match followUpBucket", async () => {
+    const { bucketDueWhere, followUpBucket } = await import("./followUp");
+    vi.stubEnv("APP_TIMEZONE", "America/New_York");
+    const now = new Date("2026-10-25T15:00:00Z"); // 11 AM EDT
+    const midnight = new Date("2026-10-25T04:00:00Z");
+    expect(bucketDueWhere("overdue", now)).toEqual({ dueAt: { lt: midnight } });
+    expect(bucketDueWhere("today", now)).toEqual({ dueAt: { gte: midnight, lt: new Date("2026-10-26T04:00:00Z") } });
+    expect(bucketDueWhere("unscheduled", now)).toEqual({ dueAt: null });
+    // Every sample lands in the bucket whose condition contains it.
+    for (const due of ["2026-10-24T16:00:00Z", "2026-10-25T16:00:00Z", "2026-10-29T16:00:00Z", "2026-11-12T17:00:00Z"]) {
+      const d = new Date(due);
+      const { dueAt } = bucketDueWhere(followUpBucket(d, now), now) as { dueAt: { gte?: Date; lt?: Date } };
+      expect((!dueAt.gte || d >= dueAt.gte) && (!dueAt.lt || d < dueAt.lt), due).toBe(true);
+    }
+    vi.unstubAllEnvs();
   });
 });

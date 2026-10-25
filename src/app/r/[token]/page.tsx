@@ -1,3 +1,4 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 import { notFound } from "next/navigation";
 import { resolveDeliveryByToken, markDeliveryViewed } from "@/lib/delivery";
 import type { ReportSnapshot } from "@/lib/reportEngine";
@@ -31,8 +32,13 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
           {snapshot.property.zip}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Version {snapshot.versionNumber} — finalized {new Date(snapshot.finalizedAt).toLocaleDateString()}
+          Version {snapshot.versionNumber} — finalized {formatBusinessDate(snapshot.finalizedAt)}
         </p>
+        {delivery.supersededBy && (
+          <p role="status" className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            This report has been revised: version {delivery.supersededBy} replaces this one. Ask your inspector for the updated report.
+          </p>
+        )}
         {snapshot.customerFacingNotes && <p className="mt-4 text-sm text-slate-700">{snapshot.customerFacingNotes}</p>}
         <a
           href={`/r/${token}/pdf`}
