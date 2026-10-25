@@ -231,6 +231,14 @@ model User {
   passwordHash           String
   role                   Role     @default(OFFICE_STAFF)
   active                 Boolean  @default(true)
+  // Bumped on sign-out, password change/reset, and deactivation. A session
+  // carries the version it was issued with and stops working when it no
+  // longer matches (src/lib/security/session.ts), so those actions revoke
+  // every existing session, not just the browser that performed them.
+  sessionVersion         Int      @default(0)
+  // Set for temporary passwords (new user, admin reset). The user is sent to
+  // the change-password page until they pick their own.
+  mustChangePassword     Boolean  @default(false)
   // Which sections this user wants on the Realtor preview drawer, as an
   // allow-listed array of section keys (src/lib/realtors/previewLayout.ts).
   // NULL means "use the defaults".
@@ -1365,4 +1373,17 @@ model EmailSettings {
   updatedAt                  DateTime @updatedAt
 
   @@map("email_settings")
+}
+
+// Failed sign-in counters, keyed by "email:<address>" and "ip:<address>", so
+// password guessing is throttled across every app process without Redis
+// (src/lib/security/loginThrottle.ts). Rows are tiny and self-expiring.
+model LoginAttempt {
+  key         String    @id
+  windowStart DateTime
+  count       Int       @default(0)
+  lockedUntil DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("login_attempts")
 }

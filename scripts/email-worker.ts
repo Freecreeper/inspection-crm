@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { assertEnvironment } from "../src/lib/security/env";
 import { runEmailTick } from "../src/lib/email/system";
 import { describeEmailDelivery } from "../src/lib/email/config";
 
@@ -8,6 +9,9 @@ const INTERVAL_MS = Math.max(2_000, Number(process.env.EMAIL_WORKER_INTERVAL_MS 
 let stopping = false;
 
 async function main() {
+  // Same startup checks as the app: never send customer mail with an unsafe
+  // or localhost configuration.
+  assertEnvironment("worker");
   console.info(`[email-worker] started — ${describeEmailDelivery().summary} Tick every ${INTERVAL_MS / 1000}s.`);
   while (!stopping) {
     try {

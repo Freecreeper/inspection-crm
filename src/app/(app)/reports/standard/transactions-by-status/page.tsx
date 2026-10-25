@@ -1,8 +1,10 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import { runReport } from "@/lib/reporting";
 import { ReportTable } from "../../ReportTable";
 
 export default async function TransactionsByStatusPage() {
+  await requireReportAccess();
   const result = await runReport({
     entity: "Transaction",
     columns: [],

@@ -128,6 +128,13 @@ describe("runReport — grouped mode", () => {
 });
 
 describe("runReport — row mode", () => {
+  it("refuses a row report with no columns instead of returning every column (catalog bypass)", async () => {
+    const config: ReportConfig = { entity: "Transaction", columns: [], filters: [], groupBy: [], aggregations: [] };
+    await expect(runReport(config)).rejects.toThrow("Pick at least one column.");
+    expect(mockPrisma.transaction.findMany).not.toHaveBeenCalled();
+  });
+
+
   it("flattens a joined column into a dotted key instead of leaving it nested", async () => {
     mockPrisma.transaction.findMany.mockResolvedValue([{ status: "LEAD_IN_PROGRESS", property: { city: "Springfield" } }]);
     mockPrisma.transaction.count.mockResolvedValue(1);

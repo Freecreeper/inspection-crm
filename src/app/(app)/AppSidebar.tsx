@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { trapTabKey } from "@/components/focusTrap";
+import type { Permission } from "@/lib/rbac";
 import {
   type LucideIcon,
   LayoutDashboard,
@@ -23,11 +24,15 @@ import {
   BookOpen,
   BarChart3,
   Receipt,
+  KeyRound,
+  UserCog,
   Menu,
   X,
 } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
+// `requires` hides a link from roles that can't use the page (the page
+// itself still enforces the permission).
+type NavItem = { href: string; label: string; icon: LucideIcon; requires?: Permission };
 
 const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
@@ -64,7 +69,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Work",
     items: [
       { href: "/tasks", label: "Tasks", icon: CheckSquare },
-      { href: "/invoices", label: "Invoices", icon: Receipt },
+      { href: "/invoices", label: "Invoices", icon: Receipt, requires: "financial:read" },
       { href: "/email", label: "Email", icon: Send },
       { href: "/communications", label: "Communications", icon: Mail },
       { href: "/documents", label: "Documents", icon: FileText },
@@ -74,7 +79,8 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Tools",
     items: [
       { href: "/narratives", label: "Narratives", icon: BookOpen },
-      { href: "/reports", label: "Reports", icon: BarChart3 },
+      { href: "/reports", label: "Reports", icon: BarChart3, requires: "report-builder:use" },
+      { href: "/settings/users", label: "Users", icon: UserCog, requires: "user:manage" },
     ],
   },
 ];
@@ -88,11 +94,14 @@ const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 export function AppSidebar({
   displayName,
   roleLabel,
+  granted = [],
   signOutAction,
   children,
 }: {
   displayName: string;
   roleLabel: string;
+  // The permissions the signed-in role has (decided on the server).
+  granted?: Permission[];
   signOutAction: () => Promise<void>;
   children: React.ReactNode;
 }) {
@@ -134,7 +143,7 @@ export function AppSidebar({
   const mobileButtonRef = useRef<HTMLButtonElement>(null);
 
   const content = (onNavigate: () => void) => (
-    <SidebarContent pathname={pathname} displayName={displayName} roleLabel={roleLabel} signOutAction={signOutAction} onNavigate={onNavigate} />
+    <SidebarContent pathname={pathname} displayName={displayName} roleLabel={roleLabel} granted={granted} signOutAction={signOutAction} onNavigate={onNavigate} />
   );
 
   return (
@@ -253,15 +262,18 @@ function SidebarContent({
   pathname,
   displayName,
   roleLabel,
+  granted,
   signOutAction,
   onNavigate,
 }: {
   pathname: string;
   displayName: string;
   roleLabel: string;
+  granted: Permission[];
   signOutAction: () => Promise<void>;
   onNavigate: () => void;
 }) {
+  const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
   return (
     <>
       <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-5">
@@ -277,7 +289,7 @@ function SidebarContent({
       </div>
 
       <nav aria-label="Main" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.label}>
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{group.label}</p>
             <div className="mt-1.5 space-y-0.5">
@@ -314,11 +326,16 @@ function SidebarContent({
             <p className="truncate text-xs text-slate-500">{roleLabel}</p>
           </div>
         </div>
-        <form action={signOutAction}>
-          <button type="submit" className="mt-2.5 text-xs text-slate-500 hover:text-slate-800 hover:underline">
-            Sign out
-          </button>
-        </form>
+        <div className="mt-2.5 flex items-center gap-4">
+          <Link href="/account/password" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 hover:underline">
+            <KeyRound className="h-3 w-3" aria-hidden="true" /> Change password
+          </Link>
+          <form action={signOutAction}>
+            <button type="submit" className="text-xs text-slate-500 hover:text-slate-800 hover:underline">
+              Sign out
+            </button>
+          </form>
+        </div>
       </div>
     </>
   );

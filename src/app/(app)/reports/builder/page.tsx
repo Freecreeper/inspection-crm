@@ -1,3 +1,4 @@
+import { requireReportAccess } from "@/lib/reports/access";
 import Link from "next/link";
 import {
   REPORTABLE_ENTITIES,
@@ -13,6 +14,7 @@ import { ReportTable } from "../ReportTable";
 type SP = Record<string, string | string[] | undefined>;
 
 export default async function ReportBuilderPage({ searchParams }: { searchParams: Promise<SP> }) {
+  await requireReportAccess();
   const sp = await searchParams;
   const entity = typeof sp.entity === "string" ? (sp.entity as ReportableEntity) : undefined;
   const config = searchParamsToConfig(sp);

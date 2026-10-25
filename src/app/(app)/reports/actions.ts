@@ -30,9 +30,13 @@ export async function saveReport(formData: FormData) {
   redirect(`/reports/saved/${saved.id}`);
 }
 
+// Only the report's owner can delete it (shared reports are read-only to
+// everyone else).
 export async function deleteSavedReport(id: string) {
   const session = await auth();
   assertCan(session?.user?.role as Role | undefined, "report-builder:use");
-  await prisma.reportDefinition.delete({ where: { id } });
+  if (!session?.user?.id) throw new Error("Not signed in.");
+  const { count } = await prisma.reportDefinition.deleteMany({ where: { id, ownerId: session.user.id } });
+  if (count === 0) throw new Error("Report not found.");
   revalidatePath("/reports/saved");
 }

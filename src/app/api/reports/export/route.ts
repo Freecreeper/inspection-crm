@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { assertCan, ForbiddenError } from "@/lib/rbac";
-import { searchParamsToConfig, runReport } from "@/lib/reporting";
+import { searchParamsToConfig, runReport, ReportValidationError } from "@/lib/reporting";
+import { toCsv } from "@/lib/reports/csv";
 import type { Role } from "@prisma/client";
-
-function toCsvValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  const str = value instanceof Date ? value.toISOString() : typeof value === "object" ? JSON.stringify(value) : String(value);
-  return `"${str.replace(/"/g, '""')}"`;
-}
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -31,14 +26,19 @@ export async function GET(req: Request) {
   const config = searchParamsToConfig(sp);
   if (!config) return NextResponse.json({ error: "Invalid report configuration" }, { status: 400 });
 
-  const result = await runReport(config);
-  const headers = result.rows[0] ? Object.keys(result.rows[0]) : [];
-  const lines = [headers.join(","), ...result.rows.map((row) => headers.map((h) => toCsvValue(row[h])).join(","))];
+  let result;
+  try {
+    result = await runReport(config);
+  } catch (err) {
+    if (err instanceof ReportValidationError) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
+  }
 
-  return new NextResponse(lines.join("\n"), {
+  return new NextResponse(toCsv(result.rows), {
     headers: {
-      "Content-Type": "text/csv",
+      "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": 'attachment; filename="report.csv"',
+      "Cache-Control": "private, no-store",
     },
   });
 }

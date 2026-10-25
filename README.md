@@ -123,7 +123,7 @@ Tailwind CSS. See the architecture proposal §1 for the full stack and rationale
 
 ```bash
 docker compose up -d        # Postgres + Redis
-cp .env.example .env        # then fill in AUTH_SECRET (npx auth secret) if not already set
+cp .env.example .env        # then set AUTH_SECRET: npx auth secret (required; the app won't start without it)
 npm install
 npx prisma migrate dev      # apply the schema
 npx prisma db seed          # admin@example.com / inspector@example.com, password "changeme123"
