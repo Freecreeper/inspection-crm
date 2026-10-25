@@ -205,25 +205,44 @@ export async function uploadMedia(inspectionId: string, findingId: string, formD
   const validation = validateMediaUpload(file);
   if (!validation.ok) throw new Error(validation.error);
 
+  // The ids arrive from the browser, so the inspection is taken from the
+  // finding's own record (never from the request) and must match, and the
+  // report must still be open for editing — all before touching the disk.
+  const finding = await prisma.finding.findUnique({
+    where: { id: findingId },
+    select: { component: { select: { section: { select: { report: { select: { inspectionId: true, status: true } } } } } } },
+  });
+  const report = finding?.component.section.report;
+  if (!report || report.inspectionId !== inspectionId) throw new Error("That finding isn't part of this inspection.");
+  if (!isReportEditable(report.status)) throw new Error("This report is not open for editing.");
+
   const caption = String(formData.get("caption") ?? "").trim() || null;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const storageKey = `${inspectionId}/${randomUUID()}-${safeFileName(file.name)}`;
-  const destination = path.join(MEDIA_ROOT, storageKey);
+  const storageKey = `${report.inspectionId}/${randomUUID()}-${safeFileName(file.name)}`;
+  const destination = path.resolve(MEDIA_ROOT, storageKey);
+  // Same containment check the read routes use.
+  if (!destination.startsWith(MEDIA_ROOT + path.sep)) throw new Error("Invalid upload location.");
 
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, buffer);
 
-  await prisma.media.create({
-    data: {
-      inspectionId,
-      findingId,
-      storageKey,
-      fileType: file.type,
-      originalFileName: file.name,
-      caption,
-      uploadedById: session?.user?.id ?? null,
-    },
-  });
+  try {
+    await prisma.media.create({
+      data: {
+        inspectionId: report.inspectionId,
+        findingId,
+        storageKey,
+        fileType: file.type,
+        originalFileName: file.name,
+        caption,
+        uploadedById: session?.user?.id ?? null,
+      },
+    });
+  } catch (err) {
+    // No untracked files left behind.
+    await unlink(destination).catch(() => undefined);
+    throw err;
+  }
 }
 
 export async function deleteMedia(mediaId: string) {
