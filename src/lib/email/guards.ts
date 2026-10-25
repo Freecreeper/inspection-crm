@@ -62,8 +62,15 @@ export async function evaluateGuardCheck(check: GuardCheck, db: Db = prisma): Pr
       return { ok: true };
     }
     case "reportDeliveryValid": {
-      const delivery = await db.reportDelivery.findUnique({ where: { id: check.reportDeliveryId }, select: { id: true } });
+      const delivery = await db.reportDelivery.findUnique({
+        where: { id: check.reportDeliveryId },
+        select: { versionId: true, revokedAt: true, report: { select: { versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { id: true } } } } },
+      });
       if (!delivery) return { ok: false, reason: "Report delivery no longer exists" };
+      if (delivery.revokedAt) return { ok: false, reason: "The report link was revoked" };
+      // A queued email for an older version must not go out once a revised
+      // version has been finalized.
+      if (delivery.report.versions[0] && delivery.report.versions[0].id !== delivery.versionId) return { ok: false, reason: "A newer version of this report was finalized" };
       return { ok: true };
     }
   }

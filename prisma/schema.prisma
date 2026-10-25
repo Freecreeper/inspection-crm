@@ -293,6 +293,7 @@ model Lead {
 
   @@index([status])
   @@index([createdAt])
+  @@index([referralSourceId])
   @@map("leads")
 }
 
@@ -359,6 +360,8 @@ model Appointment {
 
   @@index([startAt])
   @@index([userId, startAt])
+  @@index([inspectionId])
+  @@index([transactionId])
   @@map("appointments")
 }
 
@@ -384,6 +387,7 @@ model Task {
   @@index([assigneeId])
   @@index([dueAt])
   @@index([realtorId, completedAt])
+  @@index([transactionId])
   @@map("tasks")
 }
 
@@ -487,6 +491,7 @@ model RealtorBrokerageHistory {
   createdAt   DateTime  @default(now())
 
   @@index([realtorId])
+  @@index([brokerageId])
   @@map("realtor_brokerage_history")
 }
 
@@ -568,6 +573,8 @@ model Transaction {
   @@index([createdAt])
   @@index([closingDate])
   @@index([inspectionDeadline])
+  @@index([referralSourceId])
+  @@index([propertyId])
   @@map("transactions")
 }
 
@@ -642,6 +649,7 @@ model TransactionRealtor {
 
   @@index([transactionId])
   @@index([realtorId])
+  @@index([brokerageId])
   @@map("transaction_realtors")
 }
 
@@ -708,6 +716,8 @@ model Inspection {
   @@index([status])
   @@index([scheduledAt])
   @@index([inspectorId, scheduledAt])
+  @@index([transactionId])
+  @@index([propertyId])
   @@map("inspections")
 }
 
@@ -721,6 +731,7 @@ model InspectionService {
   createdAt    DateTime   @default(now())
 
   @@index([inspectionId])
+  @@index([serviceId])
   @@map("inspection_services")
 }
 
@@ -978,6 +989,7 @@ model Media {
 
   @@index([inspectionId])
   @@index([findingId])
+  @@index([reportId])
   @@map("media")
 }
 
@@ -1030,11 +1042,15 @@ model ReportDelivery {
   deliveredById   String?
   accessTokenHash String                @unique
   accessExpiresAt DateTime
+  // Set when staff revoke the link (sent to the wrong person, superseded).
+  // A revoked link stops working immediately.
+  revokedAt       DateTime?
 
   emailMessages EmailMessage[]
 
   @@index([reportId])
   @@index([status])
+  @@index([versionId])
   @@map("report_deliveries")
 }
 
@@ -1284,6 +1300,8 @@ model EmailMessage {
   @@index([campaignId])
   @@index([automationId])
   @@index([createdAt])
+  @@index([reportDeliveryId])
+  @@index([templateId])
   @@map("email_messages")
 }
 

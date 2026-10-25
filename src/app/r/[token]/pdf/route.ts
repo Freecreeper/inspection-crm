@@ -30,7 +30,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": contentDispositionHeader(`${snapshot.reportNumber}.pdf`),
+      "Content-Disposition": contentDispositionHeader(`${snapshot.reportNumber}-v${snapshot.versionNumber}.pdf`),
       "X-Content-Type-Options": "nosniff",
     },
   });
