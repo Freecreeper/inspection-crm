@@ -77,8 +77,8 @@ export async function loadKpis(ctx: DashboardContext, keys: KpiKey[]): Promise<K
     },
     referralsMonth: () => prisma.transaction.count({ where: { referralSourceId: { not: null }, createdAt: range(month) } }),
     realtorReferralsMonth: () => prisma.transaction.count({ where: { referralSource: { realtorId: { not: null } }, createdAt: range(month) } }),
-    outstandingBalance: async () => money((await ctx.collectibleInvoices()).reduce((sum, inv) => sum.plus(inv.balance), new Prisma.Decimal(0))),
-    unpaidInvoices: async () => (await ctx.collectibleInvoices()).length,
+    outstandingBalance: async () => money((await ctx.collectibleTotals()).balance),
+    unpaidInvoices: async () => (await ctx.collectibleTotals()).count,
     reportsAwaiting: () => ctx.unfinishedReportCount(),
     unsignedAgreements: () =>
       prisma.inspection.count({

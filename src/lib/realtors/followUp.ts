@@ -31,6 +31,25 @@ export function followUpBucket(dueAt: Date | null, now: Date): FollowUpBucket {
   return "upcoming";
 }
 
+// The same buckets as a database condition, so each bucket is queried on
+// its own (with its own limit and true count) instead of being picked out of
+// one capped list — where 200 overdue tasks would hide today's.
+export function bucketDueWhere(bucket: FollowUpBucket, now: Date): { dueAt: null | { gte?: Date; lt?: Date } } {
+  const today = startOfDay(now);
+  switch (bucket) {
+    case "unscheduled":
+      return { dueAt: null };
+    case "overdue":
+      return { dueAt: { lt: today } };
+    case "today":
+      return { dueAt: { gte: today, lt: addDays(today, 1) } };
+    case "thisWeek":
+      return { dueAt: { gte: addDays(today, 1), lt: addDays(today, 8) } };
+    case "upcoming":
+      return { dueAt: { gte: addDays(today, 8) } };
+  }
+}
+
 export function groupFollowUps<T extends { dueAt: Date | null }>(tasks: T[], now: Date): Record<FollowUpBucket, T[]> {
   const groups: Record<FollowUpBucket, T[]> = { overdue: [], today: [], thisWeek: [], upcoming: [], unscheduled: [] };
   for (const task of tasks) groups[followUpBucket(task.dueAt, now)].push(task);

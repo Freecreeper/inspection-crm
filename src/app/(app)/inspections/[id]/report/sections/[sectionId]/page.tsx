@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { isReportEditable } from "@/lib/reportEngine";
+import { narrativeFits } from "@/lib/narratives";
 import {
   setSectionNotApplicable,
   setComponentStatus,
@@ -37,7 +38,9 @@ export default async function SectionEditorPage({
       },
     }),
     prisma.findingCategory.findMany({ where: { active: true }, orderBy: { displayOrder: "asc" } }),
-    prisma.narrative.findMany({ where: { active: true }, orderBy: { title: "asc" }, take: 100 }),
+    // The whole active library, lightly (no narrative text): capping it
+    // before matching hid most component-specific narratives.
+    prisma.narrative.findMany({ where: { active: true }, orderBy: { title: "asc" }, select: { id: true, title: true, componentHint: true, sectionHint: true } }),
   ]);
   if (!section || section.report.inspectionId !== id) notFound();
 
@@ -212,30 +215,27 @@ export default async function SectionEditorPage({
                     </SubmitButton>
                   </form>
 
-                  {narratives.length > 0 && (
-                    <details className="text-xs">
-                      <summary className="cursor-pointer text-slate-600">Or insert from the narrative library</summary>
-                      <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                        {narratives
-                          .filter(
-                            (n) =>
-                              !n.componentHint ||
-                              n.componentHint.toLowerCase().includes(component.name.toLowerCase()) ||
-                              component.name.toLowerCase().includes(n.componentHint.toLowerCase())
-                          )
-                          .map((n) => (
+                  {(() => {
+                    const fitting = narratives.filter((n) => narrativeFits(n, component.name, section.name));
+                    if (fitting.length === 0) return null;
+                    return (
+                      <details className="text-xs">
+                        <summary className="cursor-pointer text-slate-600">
+                          Or insert from the narrative library ({fitting.length} for {component.name})
+                        </summary>
+                        <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                          {fitting.map((n) => (
                             <li key={n.id} className="flex items-center justify-between rounded bg-slate-50 px-2 py-1">
                               <span>{n.title}</span>
                               <form action={createFindingFromNarrative.bind(null, component.id, n.id)}>
-                                <SubmitButton className="text-blue-700 hover:underline">
-                                  Insert
-                                </SubmitButton>
+                                <SubmitButton className="text-blue-700 hover:underline">Insert</SubmitButton>
                               </form>
                             </li>
                           ))}
-                      </ul>
-                    </details>
-                  )}
+                        </ul>
+                      </details>
+                    );
+                  })()}
                 </div>
               )}
             </section>

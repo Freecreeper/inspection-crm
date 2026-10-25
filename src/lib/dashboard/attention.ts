@@ -325,11 +325,18 @@ export async function loadAttention(ctx: DashboardContext, opts: AttentionOption
 
   const [events, reports, deliveries, emails, invoices, tasks, reviewCount] = await Promise.all([
     want("conflict", "noInspector", "agreementUnsigned") ? ctx.inspectionEvents() : [],
-    want("reportUnfinished") ? ctx.unfinishedReports() : [],
+    // "My items" is filtered in each query, before its limit.
+    want("reportUnfinished") ? ctx.unfinishedReports(mine ? me : null) : [],
     want("deliveryFailed")
       ? prisma.reportDelivery.findMany({
-          where: { status: "FAILED", report: { deliveredAt: null, deliveries: { none: { status: { in: ["SENT", "VIEWED"] } } } } },
+          where: {
+            status: "FAILED",
+            report: { deliveredAt: null, deliveries: { none: { status: { in: ["SENT", "VIEWED"] } } }, ...(mine ? { inspection: { inspectorId: me } } : {}) },
+          },
           orderBy: { accessExpiresAt: "desc" },
+          // One row per report, so a report with many failed attempts can't
+          // crowd out every other report's failure.
+          distinct: ["reportId"],
           take: 20,
           select: failedDeliverySelect,
         })
@@ -342,6 +349,7 @@ export async function loadAttention(ctx: DashboardContext, opts: AttentionOption
             updatedAt: { gte: new Date(ctx.now.getTime() - EMAIL_FAILURE_LOOKBACK_DAYS * 86_400_000) },
             // A failed report email already shows as a failed delivery.
             NOT: { status: "FAILED", reportDeliveryId: { not: null } },
+            ...(mine ? { inspection: { inspectorId: me } } : {}),
           },
           orderBy: { updatedAt: "desc" },
           take: 20,
@@ -349,17 +357,17 @@ export async function loadAttention(ctx: DashboardContext, opts: AttentionOption
         })
       : [],
     want("invoiceOverdue") ? ctx.collectibleInvoices() : [],
-    want("taskOverdue", "realtorFollowUp") ? ctx.openTasks() : [],
+    want("taskOverdue", "realtorFollowUp") ? ctx.openTasks({ assigneeId: mine ? me : null }) : [],
     want("emailReview") ? prisma.emailMessage.count({ where: { status: "DRAFT", mode: "REVIEW", campaignId: null } }) : 0,
   ]);
 
   const items = [
     ...inspectionAttention(mine ? events.filter((e) => e.inspectorId === me) : events, ctx.today, timeZone),
-    ...reportAttention(mine ? reports.filter((r) => r.inspectorId === me) : reports, ctx.today, reportDueDays, timeZone),
-    ...deliveryAttention(mine ? deliveries.filter((d) => d.report.inspection.inspectorId === me) : deliveries),
-    ...emailAttention(mine ? emails.filter((m) => m.inspection?.inspectorId === me) : emails),
+    ...reportAttention(reports, ctx.today, reportDueDays, timeZone),
+    ...deliveryAttention(deliveries),
+    ...emailAttention(emails),
     ...invoiceAttention(invoices, ctx.startOfToday, timeZone),
-    ...taskAttention(mine ? tasks.filter((t) => t.assigneeId === me) : tasks, ctx.today, timeZone),
+    ...taskAttention(tasks, ctx.today, timeZone),
     ...emailReviewAttention(reviewCount),
   ].filter((i) => cats.has(i.category));
 
