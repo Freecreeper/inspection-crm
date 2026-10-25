@@ -1,25 +1,37 @@
 import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
+import { safeRedirectPath } from "@/lib/security/redirects";
+
+const MESSAGES: Record<string, { tone: "error" | "info"; text: string }> = {
+  "1": { tone: "error", text: "Incorrect email or password." },
+  locked: { tone: "error", text: "Too many sign-in attempts. Wait 15 minutes and try again." },
+  changed: { tone: "info", text: "Password changed. Sign in with your new password." },
+};
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; error?: string }>;
+  searchParams: Promise<{ from?: string; error?: string; notice?: string }>;
 }) {
-  const { from, error } = await searchParams;
+  const params = await searchParams;
+  // Only a same-site path ever reaches the form (no //evil.example).
+  const from = params.from ? safeRedirectPath(params.from) : "";
+  const message = MESSAGES[params.error ?? ""] ?? MESSAGES[params.notice ?? ""] ?? null;
 
   async function login(formData: FormData) {
     "use server";
+    const target = safeRedirectPath(formData.get("from"));
     try {
       await signIn("credentials", {
         email: formData.get("email"),
         password: formData.get("password"),
-        redirectTo: (formData.get("from") as string) || "/dashboard",
+        redirectTo: target,
       });
     } catch (err) {
       if (err instanceof AuthError) {
-        redirect(`/login?error=1${from ? `&from=${encodeURIComponent(from)}` : ""}`);
+        const code = err instanceof CredentialsSignin && err.code === "locked" ? "locked" : "1";
+        redirect(`/login?error=${code}${target !== "/dashboard" ? `&from=${encodeURIComponent(target)}` : ""}`);
       }
       throw err;
     }
@@ -31,14 +43,14 @@ export default async function LoginPage({
         <p className="font-mono text-xs uppercase tracking-wide text-slate-500">Inspection CRM</p>
         <h1 className="mt-1 text-xl font-semibold text-slate-900">Staff sign in</h1>
 
-        {error && (
-          <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            Incorrect email or password.
+        {message && (
+          <p role={message.tone === "error" ? "alert" : "status"} className={`mt-4 rounded-md px-3 py-2 text-sm ${message.tone === "error" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>
+            {message.text}
           </p>
         )}
 
         <form action={login} className="mt-6 space-y-4">
-          <input type="hidden" name="from" value={from ?? ""} />
+          <input type="hidden" name="from" value={from} />
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700">
               Email
@@ -47,6 +59,7 @@ export default async function LoginPage({
               id="email"
               name="email"
               type="email"
+              autoComplete="username"
               required
               className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
@@ -59,6 +72,7 @@ export default async function LoginPage({
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               required
               className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
