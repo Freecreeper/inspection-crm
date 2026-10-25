@@ -18,7 +18,7 @@ import { createLead, convertLead } from "./actions";
 
 const mockAuth = vi.mocked(auth);
 const mockPrisma = prisma as unknown as {
-  lead: { create: ReturnType<typeof vi.fn>; findUniqueOrThrow: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  lead: { create: ReturnType<typeof vi.fn>; findUniqueOrThrow: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; updateMany: ReturnType<typeof vi.fn> };
   customer: { create: ReturnType<typeof vi.fn> };
   transaction: { create: ReturnType<typeof vi.fn> };
   transactionCustomer: { create: ReturnType<typeof vi.fn> };
@@ -56,6 +56,7 @@ describe("convertLead", () => {
       phone: null,
       referralSourceId: "ref-1",
     });
+    mockPrisma.lead.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.customer.create.mockResolvedValue({ id: "cust-1" });
     mockPrisma.transaction.create.mockResolvedValue({ id: "txn-1" });
 
@@ -67,9 +68,11 @@ describe("convertLead", () => {
     expect(mockPrisma.transactionCustomer.create).toHaveBeenCalledWith({
       data: { transactionId: "txn-1", customerId: "cust-1", role: "PRIMARY_BUYER", primaryContact: true },
     });
-    expect(mockPrisma.lead.update).toHaveBeenCalledWith({
-      where: { id: "lead-1" },
-      data: expect.objectContaining({ status: "CONVERTED", convertedCustomerId: "cust-1" }),
+    // Marked CONVERTED by the atomic claim, then linked to the new customer.
+    expect(mockPrisma.lead.updateMany).toHaveBeenCalledWith({
+      where: { id: "lead-1", status: { not: "CONVERTED" } },
+      data: expect.objectContaining({ status: "CONVERTED" }),
     });
+    expect(mockPrisma.lead.update).toHaveBeenCalledWith({ where: { id: "lead-1" }, data: { convertedCustomerId: "cust-1" } });
   });
 });

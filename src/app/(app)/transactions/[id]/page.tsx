@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -98,9 +99,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   options={properties.map((p) => ({ id: p.id, label: `${p.addressLine1}, ${p.city}` }))}
                 />
               </div>
-              <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+              <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
                 Set
-              </button>
+              </SubmitButton>
             </form>
           </>
         )}
@@ -118,9 +119,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             Closing date
             <input type="date" name="closingDate" defaultValue={dateOnlyKey(transaction.closingDate) ?? ""} className="mt-1 block rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
           </label>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Save dates
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -156,9 +157,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
               ) : (
                 <form action={setPrimaryCustomerAction}>
                   <input type="hidden" name="transactionCustomerId" value={tc.id} />
-                  <button type="submit" className="text-xs text-blue-700 hover:underline">
+                  <SubmitButton className="text-xs text-blue-700 hover:underline">
                     Make primary
-                  </button>
+                  </SubmitButton>
                 </form>
               )}
             </li>
@@ -186,9 +187,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             <input type="checkbox" name="primaryContact" value="true" />
             Primary contact
           </label>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Add
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -216,9 +217,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             <option value="TRANSACTION_COORDINATOR">Transaction coordinator</option>
             <option value="OTHER">Other</option>
           </select>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Add
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -251,9 +252,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
               <Combobox name="inspectorId" placeholder="Unassigned" options={inspectors.map((u) => ({ id: u.id, label: u.name }))} />
             </div>
             <input name="scheduledAt" type="datetime-local" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Schedule inspection
-            </button>
+            </SubmitButton>
           </form>
         ) : (
           <p className="mt-3 text-xs text-slate-400">Set a property above to schedule an inspection.</p>
@@ -279,9 +280,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 </span>
                 {!task.completedAt && (
                   <form action={completeAction}>
-                    <button type="submit" className="text-xs text-blue-700 hover:underline">
+                    <SubmitButton className="text-xs text-blue-700 hover:underline">
                       Complete
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
               </li>
@@ -296,9 +297,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             <Combobox name="assigneeId" placeholder="Unassigned" options={users.map((u) => ({ id: u.id, label: u.name }))} />
           </div>
           <input name="dueAt" type="date" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Add
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -313,9 +314,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   {a.title} — {a.startAt.toLocaleString()}
                 </span>
                 <form action={cancelAction}>
-                  <button type="submit" className="text-xs text-red-600 hover:underline">
+                  <SubmitButton className="text-xs text-red-600 hover:underline">
                     Cancel
-                  </button>
+                  </SubmitButton>
                 </form>
               </li>
             );
@@ -327,9 +328,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           <input name="title" placeholder="Title" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
           <input name="startAt" type="datetime-local" required className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
           <input name="endAt" type="datetime-local" required className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Schedule
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -413,9 +414,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             <option value="INBOUND">Inbound</option>
           </select>
           <input name="summary" placeholder="Summary" required className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Log
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -432,12 +433,12 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           ))}
           {transaction.documents.length === 0 && <p className="text-sm text-slate-400">No documents uploaded.</p>}
         </ul>
-        <form action={uploadDocumentAction} encType="multipart/form-data" className="mt-3 flex gap-2">
+        <form action={uploadDocumentAction} className="mt-3 flex gap-2">
           <input name="title" placeholder="Title (optional)" className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
           <input name="file" type="file" required className="text-sm" />
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Upload
-          </button>
+          </SubmitButton>
         </form>
       </section>
 

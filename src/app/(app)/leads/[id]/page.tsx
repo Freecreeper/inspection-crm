@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/SubmitButton";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { convertLead } from "../actions";
@@ -31,9 +32,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
       {lead.status !== "CONVERTED" ? (
         <form action={convertAction} className="mt-6">
-          <button type="submit" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
             Convert to customer + transaction
-          </button>
+          </SubmitButton>
           <p className="mt-2 text-xs text-slate-500">
             Creates a Customer and an open Transaction. Property, realtor, and referral source can all be
             added later — nothing here blocks conversion (§7).
