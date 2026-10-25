@@ -1,3 +1,4 @@
+import { formatBusinessDateTime } from "@/lib/businessTime";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getPrimaryCustomer } from "@/lib/transactions";
@@ -33,7 +34,7 @@ export default async function CommunicationsPage() {
               const primaryCustomer = c.transaction ? getPrimaryCustomer(c.transaction.customers) : null;
               return (
                 <tr key={c.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 tabular-nums text-slate-600">{c.occurredAt.toLocaleString()}</td>
+                  <td className="px-4 py-2 tabular-nums text-slate-600">{formatBusinessDateTime(c.occurredAt)}</td>
                   <td className="px-4 py-2">
                     {c.transaction ? (
                       <Link href={`/transactions/${c.transaction.id}`} className="font-medium text-slate-900 hover:underline">

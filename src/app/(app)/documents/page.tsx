@@ -1,3 +1,4 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getPrimaryCustomer } from "@/lib/transactions";
@@ -44,7 +45,7 @@ export default async function DocumentsPage() {
                   )}
                 </td>
                 <td className="px-4 py-2 text-slate-600">{d.fileType}</td>
-                <td className="px-4 py-2 tabular-nums text-slate-600">{d.createdAt.toLocaleDateString()}</td>
+                <td className="px-4 py-2 tabular-nums text-slate-600">{formatBusinessDate(d.createdAt)}</td>
                 <td className="px-4 py-2 text-right">
                   <a href={`/api/documents/${d.id}`} className="text-xs text-blue-700 hover:underline">
                     Download

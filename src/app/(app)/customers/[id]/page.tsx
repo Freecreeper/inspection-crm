@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -98,7 +99,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </span>
             <span className="text-right text-xs tabular-nums text-slate-500">
               <EmailStatusBadge status={m.status} simulated={m.simulated} />
-              <span className="block">{(m.sentAt ?? m.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+              <span className="block">{(m.sentAt ?? m.createdAt).toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}</span>
             </span>
           </li>
         ))}

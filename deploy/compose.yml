@@ -19,6 +19,9 @@ x-app: &app
     AUTH_URL: https://crm.n3rdlabs.dev
     AUTH_TRUST_HOST: "true"
     APP_BASE_URL: https://crm.n3rdlabs.dev
+    # The process clock runs in the business zone too, as a backstop for any
+    # date formatted without an explicit zone (the app always passes one).
+    TZ: ${APP_TIMEZONE:-America/New_York}
   volumes:
     - storage:/app/storage
   logging:

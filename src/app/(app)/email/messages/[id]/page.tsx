@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -11,7 +12,7 @@ import { EmailStatusBadge, CATEGORY_LABELS, MODE_LABELS } from "@/components/ema
 import { EmailButton } from "@/components/email/EmailComposer";
 import { MessageActions } from "../../_components/MessageActions";
 
-const fmt = (d: Date | null) => (d ? d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : null);
+const fmt = (d: Date | null) => (d ? d.toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
 export default async function EmailMessagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

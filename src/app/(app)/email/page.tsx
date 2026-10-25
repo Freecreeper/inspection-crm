@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import type { EmailStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -80,7 +81,7 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
             {messages.map((m) => (
               <tr key={m.id} className="border-t border-slate-100 align-top first:border-t-0">
                 <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-slate-600">
-                  {(m.sentAt ?? m.scheduledFor ?? m.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  {(m.sentAt ?? m.scheduledFor ?? m.createdAt).toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   {m.status === "SCHEDULED" && <span className="block text-xs text-slate-400">scheduled</span>}
                 </td>
                 <td className="px-3 py-2.5">

@@ -1,4 +1,5 @@
 "use client";
+import { businessTimeZone } from "@/lib/businessTime";
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,7 @@ export interface RelationshipEmailData {
   lastMarketingEmailAt: string | null;
 }
 
-const short = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null);
+const short = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", year: "numeric" }) : null);
 
 // Optional relationship dates and category-specific email preferences. None
 // of this is required; nothing is ever assumed when it's missing.

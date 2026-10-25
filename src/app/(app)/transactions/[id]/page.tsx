@@ -1,3 +1,4 @@
+import { businessTimeZone, formatBusinessDate, formatBusinessDateTime } from "@/lib/businessTime";
 import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -40,7 +41,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         realtors: { include: { realtor: true, brokerage: true }, orderBy: { createdAt: "asc" } },
         inspections: {
           orderBy: { createdAt: "desc" },
-          include: { inspector: true, reports: { select: { id: true, status: true }, take: 1 } },
+          include: { inspector: true, reports: { select: { id: true, status: true }, orderBy: { createdAt: "desc" }, take: 1 } },
         },
         tasks: { orderBy: [{ completedAt: "asc" }, { dueAt: "asc" }], include: { assignee: true } },
         appointments: { where: { cancelledAt: null }, orderBy: { startAt: "asc" } },
@@ -231,7 +232,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             return (
               <li key={i.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
                 <Link href={`/inspections/${i.id}`} className="text-slate-800 hover:underline">
-                  {i.scheduledAt ? i.scheduledAt.toLocaleString() : "Not scheduled"}
+                  {i.scheduledAt ? formatBusinessDateTime(i.scheduledAt) : "Not scheduled"}
                   {i.inspector ? ` — ${i.inspector.name}` : ""}
                 </Link>
                 <span className="flex items-center gap-2">
@@ -276,7 +277,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 <span>
                   {task.title}
                   {task.assignee ? ` — ${task.assignee.name}` : ""}
-                  {task.dueAt ? ` (due ${task.dueAt.toLocaleDateString()})` : ""}
+                  {task.dueAt ? ` (due ${formatBusinessDate(task.dueAt)})` : ""}
                 </span>
                 {!task.completedAt && (
                   <form action={completeAction}>
@@ -311,7 +312,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             return (
               <li key={a.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
                 <span className="text-slate-800">
-                  {a.title} — {a.startAt.toLocaleString()}
+                  {a.title} — {formatBusinessDateTime(a.startAt)}
                 </span>
                 <form action={cancelAction}>
                   <SubmitButton className="text-xs text-red-600 hover:underline">
@@ -349,7 +350,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   </div>
                   <p className="mt-0.5 text-xs tabular-nums text-slate-600">
                     Total {formatMoney(totals.total)} · Paid {formatMoney(totals.paid)} · Balance {formatMoney(totals.balance)}
-                    {inv.dueAt && ` · Due ${inv.dueAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                    {inv.dueAt && ` · Due ${inv.dueAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", year: "numeric" })}`}
                   </p>
                   {collectible && (
                     <div className="mt-2 flex flex-wrap items-start gap-2">
@@ -395,7 +396,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 )}
               </p>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
-                {c.channel} · {c.direction} · {c.occurredAt.toLocaleString()}
+                {c.channel} · {c.direction} · {formatBusinessDateTime(c.occurredAt)}
                 {c.email && <EmailStatusBadge status={c.email.status} simulated={c.email.simulated} />}
               </p>
             </li>

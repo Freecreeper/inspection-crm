@@ -1,3 +1,5 @@
+import { businessTimeZone } from "@/lib/businessTime";
+import { addMonths, startOfDayUtc, startOfMonth, toDayKey } from "@/lib/calendar/time";
 import { Prisma, type RealtorParticipantRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPrimaryCustomer } from "@/lib/transactions";
@@ -113,20 +115,22 @@ export interface MonthCount {
   count: number;
 }
 
-export function monthlyCounts(dates: Date[], now: Date, months: number): MonthCount[] {
+// Calendar months in the business time zone (not the server's), so a
+// referral at 9 PM on Sep 30 in New York counts in September.
+export function monthlyCounts(dates: Date[], now: Date, months: number, timeZone = businessTimeZone()): MonthCount[] {
+  const first = startOfMonth(toDayKey(now, timeZone));
   const buckets: MonthCount[] = [];
   for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthStart = addMonths(first, -i);
     buckets.push({
-      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      month: monthStart.slice(0, 7),
+      label: new Date(`${monthStart}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: "UTC" }),
       count: 0,
     });
   }
   const index = new Map(buckets.map((b, i) => [b.month, i]));
   for (const date of dates) {
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const i = index.get(key);
+    const i = index.get(toDayKey(date, timeZone).slice(0, 7));
     if (i !== undefined) buckets[i].count++;
   }
   return buckets;
@@ -134,7 +138,8 @@ export function monthlyCounts(dates: Date[], now: Date, months: number): MonthCo
 
 export async function loadRealtorAnalytics(realtorId: string, opts: { includeFinancials: boolean; now?: Date }) {
   const now = opts.now ?? new Date();
-  const since = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const timeZone = businessTimeZone();
+  const since = startOfDayUtc(addMonths(startOfMonth(toDayKey(now, timeZone)), -11), timeZone);
   const referred = referredTransactionWhere(realtorId);
   const associated = associatedTransactionWhere(realtorId);
   const completedAssociated: Prisma.InspectionWhereInput = { status: "COMPLETED", transaction: associated };

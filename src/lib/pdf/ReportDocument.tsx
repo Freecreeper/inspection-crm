@@ -1,3 +1,4 @@
+import { formatBusinessDate, formatBusinessDateTimeWithZone } from "@/lib/businessTime";
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import type { ReportSnapshot } from "@/lib/reportEngine";
 
@@ -29,7 +30,7 @@ export interface FindingPhoto {
 }
 
 export function ReportDocument({ snapshot, photosByFinding }: { snapshot: ReportSnapshot; photosByFinding: Map<string, FindingPhoto[]> }) {
-  const inspectionDate = snapshot.inspectionDate ? new Date(snapshot.inspectionDate).toLocaleDateString() : "Not recorded";
+  const inspectionDate = snapshot.inspectionDate ? formatBusinessDate(snapshot.inspectionDate) : "Not recorded";
 
   return (
     <Document title={`${snapshot.reportNumber} — Inspection Report`}>
@@ -45,7 +46,7 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
         <Text style={styles.coverMeta}>Prepared For: {snapshot.customerName || "Not recorded"}</Text>
         <Text style={styles.coverMeta}>Inspector: {snapshot.inspectorName || "Not recorded"}</Text>
         <Text style={styles.coverMeta}>
-          Version {snapshot.versionNumber} — Finalized {new Date(snapshot.finalizedAt).toLocaleString()}
+          Version {snapshot.versionNumber} — Finalized {formatBusinessDateTimeWithZone(snapshot.finalizedAt)}
         </Text>
         {snapshot.reasonForRevision && (
           <Text style={styles.coverMeta}>Reason for revision: {snapshot.reasonForRevision}</Text>

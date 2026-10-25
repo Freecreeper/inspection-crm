@@ -1,3 +1,4 @@
+import { businessTimeZone } from "@/lib/businessTime";
 import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -100,7 +101,7 @@ export default async function AutomationsPage() {
                   </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-slate-500">
-                  {e.firedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  {e.firedAt.toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   {detail.emailMessageId && (
                     <Link href={`/email/messages/${detail.emailMessageId}`} className="text-emerald-700 hover:underline">
                       View

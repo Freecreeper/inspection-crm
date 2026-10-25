@@ -1,6 +1,7 @@
+import { formatBusinessDate } from "@/lib/businessTime";
 function formatCell(value: unknown): string {
   if (value === null || value === undefined) return "Unknown";
-  if (value instanceof Date) return value.toLocaleDateString();
+  if (value instanceof Date) return formatBusinessDate(value);
   if (typeof value === "object") {
     // Prisma's groupBy aggregation buckets (_count/_sum/_avg) come back as
     // single-key objects like { _all: 5 } or { squareFootage: 1800 } — show

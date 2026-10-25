@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { businessTimeZone } from "@/lib/businessTime";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,10 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Inspection CRM",
-  description: "Home inspection CRM — Version 1 foundation.",
-};
+// The business time zone is published to the browser as a meta tag, so
+// client components format dates in the same zone as the server
+// (src/lib/businessTime.ts) instead of whatever zone the browser is in.
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Inspection CRM",
+    description: "Home inspection CRM — Version 1 foundation.",
+    other: { "app-timezone": businessTimeZone() },
+  };
+}
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Every page renders per request so each one gets its own CSP nonce
