@@ -1,8 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { bucketsForFilter, followUpBucket, groupFollowUps, parseFollowUpFilter } from "./followUp";
+import { zonedDateTimeToUtc } from "@/lib/calendar/time";
 
-const NOW = new Date("2026-09-26T15:00:00");
-const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h);
+// Days are business days (APP_TIMEZONE), whatever zone the test machine
+// or server runs in.
+beforeAll(() => vi.stubEnv("APP_TIMEZONE", "America/New_York"));
+afterAll(() => vi.unstubAllEnvs());
+const pad = (n: number) => String(n).padStart(2, "0");
+const at = (y: number, m: number, d: number, h = 12) => zonedDateTimeToUtc(`${y}-${pad(m)}-${pad(d)}`, `${pad(h)}:00`, "America/New_York");
+const NOW = at(2026, 9, 26, 15);
 
 describe("followUpBucket", () => {
   it("buckets by calendar day relative to today", () => {
