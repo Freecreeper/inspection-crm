@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -81,9 +82,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
             <option value="COMPLETED">Completed</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Update
-          </button>
+          </SubmitButton>
         </form>
 
         <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Scheduled for</h3>
@@ -118,9 +119,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
                 </option>
               ))}
             </select>
-            <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <SubmitButton className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
               {inspection.scheduledAt ? "Reschedule" : "Schedule"}
-            </button>
+            </SubmitButton>
           </form>
         )}
         <p className="mt-1 text-xs text-slate-500">Changing the date or time updates reminders and notifies customers per the email automations. Overlapping bookings for the inspector are refused.</p>
@@ -136,9 +137,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
               options={inspectors.map((u) => ({ id: u.id, label: u.name }))}
             />
           </div>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Assign
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -186,9 +187,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
             <option value="true">Utilities on</option>
             <option value="false">Utilities off</option>
           </select>
-          <button type="submit" className="col-span-2 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <SubmitButton className="col-span-2 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
             Save conditions
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -216,9 +217,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
                 </option>
               ))}
             </select>
-            <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Start report
-            </button>
+            </SubmitButton>
           </form>
         )}
       </section>

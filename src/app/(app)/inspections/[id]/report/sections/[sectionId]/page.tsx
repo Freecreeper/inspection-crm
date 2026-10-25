@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/SubmitButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -66,9 +67,9 @@ export default async function SectionEditorPage({
             className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50"
           />
           {editable && (
-            <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
               Save
-            </button>
+            </SubmitButton>
           )}
         </form>
       </section>
@@ -102,9 +103,9 @@ export default async function SectionEditorPage({
                 />
                 <textarea name="notes" defaultValue={component.notes ?? ""} placeholder="Notes" rows={2} disabled={!editable} className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50" />
                 {editable && (
-                  <button type="submit" className="col-span-2 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+                  <SubmitButton className="col-span-2 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
                     Save component
-                  </button>
+                  </SubmitButton>
                 )}
               </form>
 
@@ -114,7 +115,7 @@ export default async function SectionEditorPage({
                   const deleteAction = deleteFinding.bind(null, finding.id);
                   const mediaAction = uploadMedia.bind(null, section.report.inspectionId, finding.id);
                   return (
-                    <div key={finding.id} className="rounded-md border border-slate-200 p-3">
+                    <div key={`${finding.id}:${finding.updatedAt.getTime()}`} className="rounded-md border border-slate-200 p-3">
                       <form action={updateAction} className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <input name="title" defaultValue={finding.title} required disabled={!editable} placeholder="Title" className="rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50" />
@@ -148,9 +149,9 @@ export default async function SectionEditorPage({
                           ))}
                         </div>
                         {editable && (
-                          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800">
+                          <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800">
                             Save finding
-                          </button>
+                          </SubmitButton>
                         )}
                       </form>
 
@@ -160,29 +161,29 @@ export default async function SectionEditorPage({
                             <img src={`/api/media/${m.id}`} alt={m.caption ?? ""} className="h-20 w-28 rounded object-cover" />
                             {editable && (
                               <form action={deleteMedia.bind(null, m.id)} className="absolute right-0 top-0">
-                                <button type="submit" className="rounded bg-black/60 px-1 text-[10px] text-white">
+                                <SubmitButton className="rounded bg-black/60 px-1 text-[10px] text-white" confirm="Remove this photo?">
                                   ×
-                                </button>
+                                </SubmitButton>
                               </form>
                             )}
                           </div>
                         ))}
                       </div>
                       {editable && (
-                        <form action={mediaAction} encType="multipart/form-data" className="mt-2 flex gap-2">
+                        <form action={mediaAction} className="mt-2 flex gap-2">
                           <input name="file" type="file" accept="image/*" required className="text-xs" />
                           <input name="caption" placeholder="Caption (optional)" className="flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs" />
-                          <button type="submit" className="rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">
+                          <SubmitButton className="rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">
                             Add photo
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
 
                       {editable && (
                         <form action={deleteAction} className="mt-2">
-                          <button type="submit" className="text-xs text-red-600 hover:underline">
+                          <SubmitButton className="text-xs text-red-600 hover:underline" confirm="Remove this finding and its photos?">
                             Remove finding
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
                     </div>
@@ -206,9 +207,9 @@ export default async function SectionEditorPage({
                       </select>
                     </div>
                     <textarea name="description" placeholder="Description" required rows={2} className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-                    <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800">
+                    <SubmitButton className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800">
                       Add custom finding
-                    </button>
+                    </SubmitButton>
                   </form>
 
                   {narratives.length > 0 && (
@@ -226,9 +227,9 @@ export default async function SectionEditorPage({
                             <li key={n.id} className="flex items-center justify-between rounded bg-slate-50 px-2 py-1">
                               <span>{n.title}</span>
                               <form action={createFindingFromNarrative.bind(null, component.id, n.id)}>
-                                <button type="submit" className="text-blue-700 hover:underline">
+                                <SubmitButton className="text-blue-700 hover:underline">
                                   Insert
-                                </button>
+                                </SubmitButton>
                               </form>
                             </li>
                           ))}

@@ -195,6 +195,7 @@ describe("report-ready email", () => {
     expect(message.bodyText).toContain("[secure link — created when sent]");
     // Delivery becomes SENT and the report DELIVERED only now.
     expect(db.reportDelivery.update).toHaveBeenCalledWith({ where: { id: "del-1" }, data: { status: "SENT", deliveredAt: NOW } });
-    expect(db.inspectionReport.update).toHaveBeenCalledWith({ where: { id: "rep-1" }, data: { status: "DELIVERED", deliveredAt: NOW } });
+    // ...but only a finalized report: an amendment opened meanwhile stays open.
+    expect(db.inspectionReport.updateMany).toHaveBeenCalledWith({ where: { id: "rep-1", status: { in: ["FINALIZED", "DELIVERED"] } }, data: { status: "DELIVERED", deliveredAt: NOW } });
   });
 });
