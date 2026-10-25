@@ -46,6 +46,8 @@ export const PERMISSIONS = {
   "dashboard:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
   // The cross-system Recent Activity feed (audit log, deliveries, sent mail).
   "activity:view": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
+  // Staff accounts: add people, change roles, deactivate, reset passwords.
+  "user:manage": ["OWNER_ADMIN"],
   // Global record search in the Dashboard header.
   "search:global": ["OWNER_ADMIN", "OFFICE_STAFF", "INSPECTOR", "REPORTING_ANALYST"],
   // Broad staff access for V1 (PR #1 review item 7) — deliberately centralized
