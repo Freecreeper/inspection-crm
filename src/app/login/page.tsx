@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { AuthError, CredentialsSignin } from "next-auth";
@@ -7,6 +8,7 @@ const MESSAGES: Record<string, { tone: "error" | "info"; text: string }> = {
   "1": { tone: "error", text: "Incorrect email or password." },
   locked: { tone: "error", text: "Too many sign-in attempts. Wait 15 minutes and try again." },
   changed: { tone: "info", text: "Password changed. Sign in with your new password." },
+  reset: { tone: "info", text: "Your password was reset. Sign in with your new password." },
 };
 
 export default async function LoginPage({
@@ -84,6 +86,11 @@ export default async function LoginPage({
             Sign in
           </button>
         </form>
+        <p className="mt-4 text-center text-sm">
+          <Link href="/forgot-password" className="text-emerald-700 hover:underline">
+            Forgot your password?
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isPublic =
     pathname.startsWith("/login") ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/reset-password/") || // emailed reset link (its own token)
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/r/") || // signed report-delivery links
     pathname.startsWith("/u/") || // signed email-preference links
