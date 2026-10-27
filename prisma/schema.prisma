@@ -264,6 +264,7 @@ model User {
   reportDefinitions       ReportDefinition[]
   narrativesCreated       Narrative[]
   reportVersionsFinalized ReportVersion[]    @relation("FinalizedByUser")
+  passwordResetTokens     PasswordResetToken[]
   emailMessagesCreated    EmailMessage[]
   campaignsCreated        EmailCampaign[]    @relation("CampaignCreatedBy")
   campaignsApproved       EmailCampaign[]    @relation("CampaignApprovedBy")
@@ -1404,4 +1405,21 @@ model LoginAttempt {
   updatedAt   DateTime  @updatedAt
 
   @@map("login_attempts")
+}
+
+// "Forgot password" links. Only the SHA-256 of the token is stored (the raw
+// token exists only in the email/link), each expires after an hour, works
+// once, and requesting a new one invalidates the previous ones.
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  requestedIp String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }

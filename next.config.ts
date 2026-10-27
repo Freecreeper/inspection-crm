@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: [...SECURITY_HEADERS, ...(production ? [HSTS_HEADER] : [])] },
       { source: "/r/:path*", headers: TOKEN_PAGE_HEADERS },
       { source: "/u/:path*", headers: TOKEN_PAGE_HEADERS },
+      { source: "/reset-password/:path*", headers: TOKEN_PAGE_HEADERS },
     ];
   },
 };

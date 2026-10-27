@@ -10,7 +10,9 @@ import { prisma } from "@/lib/prisma";
 
 export const WINDOW_MS = 15 * 60_000;
 export const LOCK_MS = 15 * 60_000;
-export const LIMITS = { email: 8, ip: 40 } as const;
+// email/ip: failed sign-ins. resetEmail/resetIp: password-reset requests
+// (every request counts), so the reset form can't be used to flood an inbox.
+export const LIMITS = { email: 8, ip: 40, resetEmail: 3, resetIp: 10 } as const;
 
 export type ThrottleKey = { kind: keyof typeof LIMITS; value: string };
 
