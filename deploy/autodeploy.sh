@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Continuous deployment for crm.n3rdlabs.dev. genesisadmin's crontab runs this every minute as
-# ~/inspection-crm/bin/autodeploy (a copy of this file; see README, "Production"). When master has
-# a commit that is not live yet and that commit's CI run passed, it exports the commit to a fresh
-# release directory and runs that release's deploy/deploy.sh. The repo is public, so nothing here
-# needs a credential on either side.
+# Deployment for crm.n3rdlabs.dev, installed on the box as ~/inspection-crm/bin/autodeploy (a copy
+# of this file; see README, "Production"). When master has a commit that is not live yet, it exports
+# the commit to a fresh release directory and runs that release's deploy/deploy.sh. The repo is
+# public, so nothing here needs a credential on either side.
 #
-#   autodeploy          what cron runs
-#   autodeploy --force  ship master's tip now: skips the CI check and retries a held commit
+#   autodeploy --force  ship master's tip now: skips the CI check and retries a held commit. This is
+#                       how deploys run today, from a laptop via deploy/ship.sh (`npm run ship`).
+#   autodeploy          ship only once the commit's CI run passed (for a crontab entry, which is
+#                       currently disabled)
 set -euo pipefail
 
 base="$HOME/inspection-crm"

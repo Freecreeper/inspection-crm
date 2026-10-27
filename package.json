@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "ship": "bash deploy/ship.sh",
     "worker": "tsx --tsconfig tsconfig.json scripts/email-worker.ts"
   },
   "dependencies": {
