@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 let pathname = "/realtors";
@@ -76,5 +76,24 @@ describe("mobile sidebar", () => {
       );
     });
     expect(screen.queryByRole("dialog", { name: "Main menu" })).toBeNull();
+  });
+});
+
+describe("navigation groups", () => {
+  const groupLinks = (label: string) => {
+    const nav = screen.getAllByRole("navigation", { name: "Main" })[0];
+    const heading = within(nav).getByText(label, { selector: "p" });
+    return [...heading.parentElement!.querySelectorAll("a")].map((a) => a.textContent?.trim());
+  };
+
+  it("keeps the inspection side apart from the realtor/brokerage side", () => {
+    render(
+      <AppSidebar displayName="Admin Owner" roleLabel="Owner Admin" granted={["financial:read", "report-builder:use", "user:manage"]} signOutAction={async () => {}}>
+        <p>Page content</p>
+      </AppSidebar>
+    );
+    expect(groupLinks("Inspections")).toEqual(["Inspections", "Services & Packages", "Report Templates", "Narratives", "Invoices"]);
+    expect(groupLinks("Relationships")).toEqual(["Realtors", "Brokerages", "Referral sources", "Tasks"]);
+    expect(groupLinks("Clients & deals")).toEqual(["Leads", "Customers", "Transactions", "Properties"]);
   });
 });

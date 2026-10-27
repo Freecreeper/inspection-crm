@@ -26,6 +26,8 @@ import {
   Receipt,
   KeyRound,
   UserCog,
+  Package,
+  LayoutTemplate,
   Menu,
   X,
 } from "lucide-react";
@@ -34,6 +36,9 @@ import {
 // itself still enforces the permission).
 type NavItem = { href: string; label: string; icon: LucideIcon; requires?: Permission };
 
+// Grouped by kind of work: the inspection side (jobs, what's offered, what
+// goes into reports) is kept apart from the relationship side (Realtors,
+// brokerages, referrals, follow-up tasks).
 const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Overview",
@@ -43,33 +48,36 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: "Business",
+    label: "Inspections",
     items: [
-      { href: "/leads", label: "Leads", icon: UserPlus },
-      { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
       { href: "/inspections", label: "Inspections", icon: MapPin },
+      { href: "/services", label: "Services & Packages", icon: Package },
+      { href: "/report-templates", label: "Report Templates", icon: LayoutTemplate },
+      { href: "/narratives", label: "Narratives", icon: BookOpen },
+      { href: "/invoices", label: "Invoices", icon: Receipt, requires: "financial:read" },
     ],
   },
   {
-    label: "Contacts",
+    label: "Relationships",
     items: [
-      { href: "/customers", label: "Customers", icon: Users },
       { href: "/realtors", label: "Realtors", icon: Contact },
       { href: "/brokerages", label: "Brokerages", icon: Building2 },
-    ],
-  },
-  {
-    label: "Data",
-    items: [
-      { href: "/properties", label: "Properties", icon: Home },
       { href: "/referral-sources", label: "Referral sources", icon: Star },
+      { href: "/tasks", label: "Tasks", icon: CheckSquare },
     ],
   },
   {
-    label: "Work",
+    label: "Clients & deals",
     items: [
-      { href: "/tasks", label: "Tasks", icon: CheckSquare },
-      { href: "/invoices", label: "Invoices", icon: Receipt, requires: "financial:read" },
+      { href: "/leads", label: "Leads", icon: UserPlus },
+      { href: "/customers", label: "Customers", icon: Users },
+      { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
+      { href: "/properties", label: "Properties", icon: Home },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
       { href: "/email", label: "Email", icon: Send },
       { href: "/communications", label: "Communications", icon: Mail },
       { href: "/documents", label: "Documents", icon: FileText },
@@ -78,7 +86,6 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Tools",
     items: [
-      { href: "/narratives", label: "Narratives", icon: BookOpen },
       { href: "/reports", label: "Reports", icon: BarChart3, requires: "report-builder:use" },
       { href: "/settings/users", label: "Users", icon: UserCog, requires: "user:manage" },
     ],
