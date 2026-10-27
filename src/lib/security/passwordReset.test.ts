@@ -5,7 +5,7 @@ vi.mock("@/lib/prisma", async () => {
   const { createMockPrisma } = await import("@/test-utils/mockPrisma");
   return { prisma: createMockPrisma() };
 });
-const send = vi.fn(async () => ({ ok: true as const, providerMessageId: "pm-1" }));
+const send = vi.fn(async (_email: { to: string; text: string; subject: string }) => ({ ok: true as const, providerMessageId: "pm-1" }));
 let simulated = false;
 vi.mock("@/lib/email/providers", () => ({ getEmailProvider: () => ({ name: "fake", simulated, send }) }));
 
@@ -37,7 +37,7 @@ describe("requesting a reset", () => {
     const stored = db.passwordResetToken.create.mock.calls[0][0].data;
     expect(stored).toMatchObject({ userId: "u1", expiresAt: new Date("2026-10-27T16:00:00Z"), requestedIp: "203.0.113.9" });
 
-    const email = send.mock.calls[0][0] as { to: string; text: string; subject: string };
+    const email = send.mock.calls[0][0];
     expect(email.to).toBe("zack@example.com");
     const raw = email.text.match(/https:\/\/crm\.example\.com\/reset-password\/(\S+)/)![1];
     expect(raw.length).toBeGreaterThanOrEqual(43); // 256 bits
