@@ -148,17 +148,19 @@ container on every push/PR, using `npm ci` against the committed `package-lock.j
 
 ## Production (crm.n3rdlabs.dev)
 
-Every push to `master` that passes CI deploys, within about a minute of CI finishing. The netcup
-box pulls rather than GitHub pushing: a crontab entry runs `~/inspection-crm/bin/autodeploy` (a
-copy of `deploy/autodeploy.sh`) every minute. When `master` has moved and the CI run for the new
-commit succeeded (read from the public Actions API, so no keys or secrets exist anywhere), it exports
-the commit to `~/inspection-crm/releases/<time>-<sha>` and runs `deploy/deploy.sh`: build the image,
+Deploys are run by hand from a laptop: `npm run ship` (`deploy/ship.sh`) on a clean `master` that
+matches `origin/master`. It runs lint, typecheck and the tests, then SSHes to the netcup box
+(`crm-server` alias for `genesisadmin@152.53.89.254`, override with `CRM_SSH_HOST`) and runs
+`~/inspection-crm/bin/autodeploy --force` (a copy of `deploy/autodeploy.sh`). That fetches `master`,
+exports it to `~/inspection-crm/releases/<time>-<sha>` and runs `deploy/deploy.sh`: build the image,
 apply migrations, re-run the (create-only) seed, then swap the app and email-worker containers.
+`ship` then confirms the box's live revision and the login page.
 
-A failed build or migration leaves the running version up. A commit whose CI or deploy failed is
-held (`~/inspection-crm/held`) so it is not rebuilt every minute; the next push moves on, and
-`~/inspection-crm/bin/autodeploy --force` ships the tip right away without waiting for CI. Every
-deploy is logged in `~/inspection-crm/deploy.log`.
+A failed build or migration leaves the running version up. Every deploy is logged in
+`~/inspection-crm/deploy.log`. Without `--force`, `autodeploy` ships only a commit whose CI passed;
+its every-minute crontab entry is commented out (not deleted) in genesisadmin's crontab, and
+uncommenting it turns push-to-deploy back on. The box hosts other live projects, so the deploy
+touches only the `inspection-crm` Compose project and prunes only that project's images.
 
 On the box (`~/inspection-crm`):
 
@@ -182,8 +184,8 @@ cd ~/inspection-crm && CRM_ENV_FILE=$PWD/shared/.env docker compose --project-na
   npx tsx scripts/create-admin.ts you@example.com "Your Name"
 ```
 
-If `deploy/autodeploy.sh` changes, copy it to `~/inspection-crm/bin/autodeploy` by hand. Cron runs
-that fixed copy, so a bad edit to the poller cannot stop the deploy that would fix it.
+If `deploy/autodeploy.sh` changes, copy it to `~/inspection-crm/bin/autodeploy` by hand. Deploys run
+that fixed copy, so a bad edit to it cannot stop the deploy that would fix it.
 
 ## Project layout
 

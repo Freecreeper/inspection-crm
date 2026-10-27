@@ -25,5 +25,6 @@ echo "==> Seeding reference data"
 echo "==> Starting the app and email worker"
 "${compose[@]}" up -d --wait app worker
 
-docker image prune -f >/dev/null
+# Only this project's superseded images: other projects share this Docker host.
+docker image prune -f --filter label=com.docker.compose.project=inspection-crm >/dev/null
 echo "==> Live at https://crm.n3rdlabs.dev"
