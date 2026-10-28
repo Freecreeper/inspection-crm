@@ -170,11 +170,21 @@ function useClosedGroups(pathname: string) {
     }
   }, [closed, loaded]);
 
+  // Folding animates only once the saved state has been applied, so groups
+  // folded in an earlier visit don't visibly fold shut on every page load
+  // (or every time the mobile menu opens).
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {
+    if (!loaded) return;
+    const frame = requestAnimationFrame(() => setAnimate(true));
+    return () => cancelAnimationFrame(frame);
+  }, [loaded]);
+
   function toggle(label: string) {
     setClosed((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]));
   }
 
-  return { isOpen: (label: string) => !closed.includes(label), toggle };
+  return { isOpen: (label: string) => !closed.includes(label), toggle, animate };
 }
 
 // `dragged` taken out and put in `target`'s place: coming from above, it
@@ -464,7 +474,7 @@ function SidebarContent({
   signOutAction: () => Promise<void>;
   onNavigate: () => void;
 }) {
-  const { isOpen, toggle } = useClosedGroups(pathname);
+  const { isOpen, toggle, animate: animateFolding } = useClosedGroups(pathname);
   const { order, save: saveOrder } = useGroupOrder();
   // Arrange mode: headings become drag handles with move buttons, and the
   // links are tucked away so the whole list fits.
@@ -610,28 +620,42 @@ function SidebarContent({
                 className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600"
               >
                 {group.label}
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
               </button>
             )}
-            <div id={groupListId(group.label)} hidden={arranging || !isOpen(group.label)} className="mt-1 space-y-0.5">
-              {group.items.map((item) => {
-                const active = isActivePath(pathname, item.href);
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium ${
-                      active ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 shrink-0 ${active ? "text-emerald-600" : "text-slate-400"}`} />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            {/* Folds by animating the row height between 0 and the content's own
+                height; closed content is inert, so it can't be tabbed to or read. */}
+            <div
+              id={groupListId(group.label)}
+              inert={arranging || !isOpen(group.label)}
+              aria-hidden={arranging || !isOpen(group.label)}
+              className={`grid ${animateFolding ? "transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none" : ""} ${
+                arranging || !isOpen(group.label) ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+              }`}
+            >
+              {/* Side padding keeps the links' focus outlines clear of the clip. */}
+              <div className="-mx-1 min-h-0 overflow-hidden px-1">
+                <div className="space-y-0.5 pb-0.5 pt-1">
+                  {group.items.map((item) => {
+                    const active = isActivePath(pathname, item.href);
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onNavigate}
+                        aria-current={active ? "page" : undefined}
+                        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium ${
+                          active ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        }`}
+                      >
+                        <Icon className={`h-4 w-4 shrink-0 ${active ? "text-emerald-600" : "text-slate-400"}`} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         ))}

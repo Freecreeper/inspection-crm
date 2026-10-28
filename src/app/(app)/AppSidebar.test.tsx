@@ -121,6 +121,21 @@ describe("navigation groups", () => {
     expect(JSON.parse(localStorage.getItem("sidebar-closed-groups")!)).toEqual([]);
   });
 
+  it("animates folding, but not the folds restored on load", async () => {
+    localStorage.setItem("sidebar-closed-groups", JSON.stringify(["Communication"]));
+    const user = userEvent.setup();
+    renderSidebar();
+    const list = (label: string) => desktopNav().querySelector<HTMLElement>(`#${groupToggle(label).getAttribute("aria-controls")}`)!;
+    expect(list("Communication").hasAttribute("inert")).toBe(true);
+    expect(list("Communication").className).not.toContain("transition-");
+
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    await user.click(groupToggle("Clients & deals"));
+    expect(list("Clients & deals").className).toContain("transition-");
+    expect(list("Clients & deals").className).toContain("grid-rows-[0fr]");
+    expect(list("Clients & deals").hasAttribute("inert")).toBe(true);
+  });
+
   it("opens the group holding the current page, on load and on navigation", () => {
     localStorage.setItem("sidebar-closed-groups", JSON.stringify(["Relationships", "Clients & deals"]));
     const { rerender } = renderSidebar();
