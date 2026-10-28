@@ -29,6 +29,9 @@ import {
   Package,
   LayoutTemplate,
   ChevronDown,
+  ChevronUp,
+  GripVertical,
+  ArrowUpDown,
   Menu,
   X,
 } from "lucide-react";
@@ -100,6 +103,19 @@ function isActivePath(pathname: string, href: string): boolean {
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 // Labels of the nav groups folded shut, as a JSON array (per browser).
 const CLOSED_GROUPS_STORAGE_KEY = "sidebar-closed-groups";
+// The nav groups' labels in the order this browser arranged them.
+const GROUP_ORDER_STORAGE_KEY = "sidebar-group-order";
+
+// Saved labels come first, in their saved order; any group the saved order
+// doesn't name (added since, or hidden from the role that saved it) keeps
+// its default position relative to the others, after them.
+export function orderGroups<T extends { label: string }>(groups: T[], order: string[]): T[] {
+  const rank = (g: T, i: number) => {
+    const saved = order.indexOf(g.label);
+    return saved === -1 ? order.length + i : saved;
+  };
+  return groups.map((g, i) => ({ g, r: rank(g, i) })).sort((a, b) => a.r - b.r).map(({ g }) => g);
+}
 
 function activeGroupLabel(pathname: string): string | undefined {
   return NAV_GROUPS.find((g) => g.items.some((i) => isActivePath(pathname, i.href)))?.label;
@@ -111,6 +127,17 @@ function groupListId(label: string): string {
 
 // Which groups are folded shut. The group holding the current page is
 // opened on load and on every navigation, so the active link never hides.
+// A JSON array of group labels saved under `key`, or [] when it's missing,
+// malformed, or storage is blocked.
+function readStoredLabels(key: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function useClosedGroups(pathname: string) {
   const [closed, setClosed] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -119,13 +146,7 @@ function useClosedGroups(pathname: string) {
   useEffect(() => {
     // Same reason as the sidebar collapse below: localStorage only exists
     // after mount.
-    let stored: string[] = [];
-    try {
-      const parsed: unknown = JSON.parse(localStorage.getItem(CLOSED_GROUPS_STORAGE_KEY) ?? "[]");
-      if (Array.isArray(parsed)) stored = parsed.filter((v): v is string => typeof v === "string");
-    } catch {
-      // Missing, malformed, or blocked storage — every group starts open.
-    }
+    const stored = readStoredLabels(CLOSED_GROUPS_STORAGE_KEY);
     const active = activeGroupLabel(pathname);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setClosed(stored.filter((label) => label !== active));
@@ -154,6 +175,28 @@ function useClosedGroups(pathname: string) {
   }
 
   return { isOpen: (label: string) => !closed.includes(label), toggle };
+}
+
+function useGroupOrder() {
+  const [order, setOrder] = useState<string[]>([]);
+
+  useEffect(() => {
+    // localStorage only exists after mount (see the sidebar collapse below).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrder(readStoredLabels(GROUP_ORDER_STORAGE_KEY));
+  }, []);
+
+  function save(next: string[]) {
+    setOrder(next);
+    try {
+      if (next.length) localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(next));
+      else localStorage.removeItem(GROUP_ORDER_STORAGE_KEY);
+    } catch {
+      // Ignore — the new order holds for this page view, just won't persist.
+    }
+  }
+
+  return { order, save };
 }
 
 export function AppSidebar({
@@ -339,7 +382,42 @@ function SidebarContent({
   onNavigate: () => void;
 }) {
   const { isOpen, toggle } = useClosedGroups(pathname);
-  const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
+  const { order, save: saveOrder } = useGroupOrder();
+  // Arrange mode: headings become drag handles with move buttons, and the
+  // links are tucked away so the whole list fits.
+  const [arranging, setArranging] = useState(false);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const groups = orderGroups(NAV_GROUPS, order).map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
+  // Moves happen within the groups this role sees; the rest keep their
+  // default places after them (orderGroups).
+  function moveGroup(label: string, delta: -1 | 1) {
+    const labels = groups.map((g) => g.label);
+    const from = labels.indexOf(label);
+    const to = from + delta;
+    if (from === -1 || to < 0 || to >= labels.length) return;
+    [labels[from], labels[to]] = [labels[to], labels[from]];
+    saveOrder(labels);
+    // The group's DOM node moves, which can drop focus; put it back on the
+    // same button, or the other one once it reaches the end of the list.
+    requestAnimationFrame(() => {
+      const button = (dir: string) => navRef.current?.querySelector<HTMLButtonElement>(`[data-move="${label}:${dir}"]`);
+      const same = button(delta < 0 ? "up" : "down");
+      (same && !same.disabled ? same : button(delta < 0 ? "down" : "up"))?.focus();
+    });
+  }
+
+  function dropGroup(dragged: string, target: string) {
+    if (dragged === target) return;
+    const labels = groups.map((g) => g.label).filter((l) => l !== dragged);
+    const at = labels.indexOf(target);
+    if (at === -1) return;
+    // Dropping onto a group below the dragged one lands after it, above lands before.
+    const draggedWasAbove = groups.findIndex((g) => g.label === dragged) < groups.findIndex((g) => g.label === target);
+    labels.splice(draggedWasAbove ? at + 1 : at, 0, dragged);
+    saveOrder(labels);
+  }
+
   return (
     <>
       <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-5">
@@ -354,20 +432,65 @@ function SidebarContent({
         </div>
       </div>
 
-      <nav aria-label="Main" className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
-        {groups.map((group) => (
-          <div key={group.label}>
-            <button
-              type="button"
-              onClick={() => toggle(group.label)}
-              aria-expanded={isOpen(group.label)}
-              aria-controls={groupListId(group.label)}
-              className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600"
-            >
-              {group.label}
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
-            </button>
-            <div id={groupListId(group.label)} hidden={!isOpen(group.label)} className="mt-1 space-y-0.5">
+      <nav ref={navRef} aria-label="Main" className={`flex-1 overflow-y-auto px-3 py-4 ${arranging ? "space-y-1.5" : "space-y-3"}`}>
+        {groups.map((group, index) => (
+          <div
+            key={group.label}
+            draggable={arranging}
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", group.label);
+              setDragging(group.label);
+            }}
+            onDragOver={(e) => {
+              if (dragging) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragging) dropGroup(dragging, group.label);
+              setDragging(null);
+            }}
+            onDragEnd={() => setDragging(null)}
+            className={dragging === group.label ? "opacity-40" : undefined}
+          >
+            {arranging ? (
+              <div className="flex cursor-grab items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 py-1 pl-2 pr-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate">{group.label}</span>
+                <button
+                  type="button"
+                  data-move={`${group.label}:up`}
+                  onClick={() => moveGroup(group.label, -1)}
+                  disabled={index === 0}
+                  aria-label={`Move ${group.label} up`}
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-500 hover:bg-white hover:text-slate-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  data-move={`${group.label}:down`}
+                  onClick={() => moveGroup(group.label, 1)}
+                  disabled={index === groups.length - 1}
+                  aria-label={`Move ${group.label} down`}
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-500 hover:bg-white hover:text-slate-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => toggle(group.label)}
+                aria-expanded={isOpen(group.label)}
+                aria-controls={groupListId(group.label)}
+                className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+              >
+                {group.label}
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
+              </button>
+            )}
+            <div id={groupListId(group.label)} hidden={arranging || !isOpen(group.label)} className="mt-1 space-y-0.5">
               {group.items.map((item) => {
                 const active = isActivePath(pathname, item.href);
                 const Icon = item.icon;
@@ -389,6 +512,27 @@ function SidebarContent({
             </div>
           </div>
         ))}
+
+        <div className="flex items-center gap-3 px-3 pt-2">
+          {arranging ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setArranging(false)}
+                className="cursor-pointer rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+              >
+                Done
+              </button>
+              <button type="button" onClick={() => saveOrder([])} disabled={order.length === 0} className="cursor-pointer text-xs text-slate-500 hover:text-slate-800 hover:underline disabled:cursor-default disabled:opacity-40 disabled:hover:no-underline">
+                Reset order
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setArranging(true)} className="inline-flex cursor-pointer items-center gap-1 text-xs text-slate-400 hover:text-slate-700 hover:underline">
+              <ArrowUpDown className="h-3 w-3" aria-hidden="true" /> Reorder sections
+            </button>
+          )}
+        </div>
       </nav>
 
       <div className="border-t border-slate-200 px-4 py-3">
