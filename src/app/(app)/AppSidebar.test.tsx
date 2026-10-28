@@ -80,6 +80,29 @@ describe("mobile sidebar", () => {
   });
 });
 
+describe("desktop sidebar collapse", () => {
+  it("animates collapsing, keeps collapsed links out of reach, and restores a saved collapse without animating", async () => {
+    localStorage.setItem("sidebar-collapsed", "true");
+    const user = userEvent.setup();
+    const { container } = renderSidebar();
+    const aside = container.querySelector("aside")!;
+    expect(aside.className).toContain("w-0");
+    expect(aside.className).not.toContain("transition-");
+    expect(aside.firstElementChild!.hasAttribute("inert")).toBe(true);
+
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(aside.className).toContain("w-64");
+    expect(aside.className).toContain("transition-[width,border-color]");
+    expect(aside.firstElementChild!.hasAttribute("inert")).toBe(false);
+    expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
+
+    await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    expect(aside.className).toContain("w-0");
+    expect(aside.firstElementChild!.className).toContain("opacity-0");
+  });
+});
+
 describe("navigation groups", () => {
   const groupLinks = (label: string) => {
     const nav = screen.getAllByRole("navigation", { name: "Main" })[0];

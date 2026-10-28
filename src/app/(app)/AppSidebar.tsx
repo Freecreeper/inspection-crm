@@ -311,6 +311,7 @@ export function AppSidebar({
   // localStorage right after mount — avoids a server/client markup mismatch
   // since localStorage isn't available during server rendering.
   const [collapsed, setCollapsed] = useState(false);
+  const [animateCollapse, setAnimateCollapse] = useState(false);
 
   useEffect(() => {
     // localStorage is a browser-only API — there's no way to read it before
@@ -323,6 +324,10 @@ export function AppSidebar({
     } catch {
       // Private browsing / blocked storage — fall back to the expanded default.
     }
+    // Animate only from the next frame on, so a sidebar collapsed on an
+    // earlier visit starts collapsed instead of visibly sliding shut.
+    const frame = requestAnimationFrame(() => setAnimateCollapse(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   function setCollapsedPersisted(next: boolean) {
@@ -333,6 +338,8 @@ export function AppSidebar({
       // Ignore — collapse still works for this session, just won't persist.
     }
   }
+
+  const iconMotion = animateCollapse ? "transition-[rotate,opacity,scale] duration-300 motion-reduce:transition-none" : "";
 
   function toggleCollapsed() {
     setCollapsedPersisted(!collapsed);
@@ -349,13 +356,22 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Desktop: in the layout, collapsible, remembered per browser. */}
+      {/* Desktop: in the layout, collapsible, remembered per browser. The
+          width eases shut while the contents slide out and fade; collapsed,
+          they're inert so Tab can't reach links that aren't on screen. */}
       <aside
-        className={`hidden shrink-0 overflow-hidden border-slate-200 bg-white transition-[width] duration-200 lg:block ${
-          collapsed ? "w-0" : "w-64 border-r"
-        }`}
+        className={`hidden shrink-0 overflow-hidden border-r bg-white bg-clip-padding lg:block ${
+          animateCollapse ? "transition-[width,border-color] duration-300 ease-in-out motion-reduce:transition-none" : ""
+        } ${collapsed ? "w-0 border-transparent" : "w-64 border-slate-200"}`}
       >
-        <div className="flex h-full w-64 flex-col">{content(() => setCollapsedPersisted(true))}</div>
+        <div
+          inert={collapsed}
+          className={`flex h-full w-64 flex-col ${animateCollapse ? "transition-[opacity,translate] duration-300 ease-in-out motion-reduce:transition-none" : ""} ${
+            collapsed ? "-translate-x-6 opacity-0" : "translate-x-0 opacity-100"
+          }`}
+        >
+          {content(() => setCollapsedPersisted(true))}
+        </div>
       </aside>
 
       {mobileOpen && (
@@ -388,9 +404,17 @@ export function AppSidebar({
             onClick={toggleCollapsed}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden h-9 w-9 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:flex"
+            className="relative hidden h-9 w-9 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:flex"
           >
-            {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+            {/* Both icons stay mounted and swap with a turn and a fade. */}
+            <Menu
+              className={`absolute h-5 w-5 ${iconMotion} ${collapsed ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-75 opacity-0"}`}
+              aria-hidden="true"
+            />
+            <X
+              className={`absolute h-5 w-5 ${iconMotion} ${collapsed ? "rotate-90 scale-75 opacity-0" : "rotate-0 scale-100 opacity-100"}`}
+              aria-hidden="true"
+            />
           </button>
           <p className="text-sm font-bold uppercase tracking-wide text-slate-900 lg:hidden">Inspection CRM</p>
         </div>
