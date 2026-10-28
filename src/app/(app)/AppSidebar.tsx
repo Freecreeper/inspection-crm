@@ -28,6 +28,7 @@ import {
   UserCog,
   Package,
   LayoutTemplate,
+  ChevronDown,
   Menu,
   X,
 } from "lucide-react";
@@ -97,6 +98,63 @@ function isActivePath(pathname: string, href: string): boolean {
 }
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
+// Labels of the nav groups folded shut, as a JSON array (per browser).
+const CLOSED_GROUPS_STORAGE_KEY = "sidebar-closed-groups";
+
+function activeGroupLabel(pathname: string): string | undefined {
+  return NAV_GROUPS.find((g) => g.items.some((i) => isActivePath(pathname, i.href)))?.label;
+}
+
+function groupListId(label: string): string {
+  return `nav-group-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+// Which groups are folded shut. The group holding the current page is
+// opened on load and on every navigation, so the active link never hides.
+function useClosedGroups(pathname: string) {
+  const [closed, setClosed] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [seenPath, setSeenPath] = useState(pathname);
+
+  useEffect(() => {
+    // Same reason as the sidebar collapse below: localStorage only exists
+    // after mount.
+    let stored: string[] = [];
+    try {
+      const parsed: unknown = JSON.parse(localStorage.getItem(CLOSED_GROUPS_STORAGE_KEY) ?? "[]");
+      if (Array.isArray(parsed)) stored = parsed.filter((v): v is string => typeof v === "string");
+    } catch {
+      // Missing, malformed, or blocked storage — every group starts open.
+    }
+    const active = activeGroupLabel(pathname);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setClosed(stored.filter((label) => label !== active));
+    setLoaded(true);
+    // Mount only; navigation is handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (pathname !== seenPath) {
+    setSeenPath(pathname);
+    const active = activeGroupLabel(pathname);
+    if (active && closed.includes(active)) setClosed(closed.filter((label) => label !== active));
+  }
+
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem(CLOSED_GROUPS_STORAGE_KEY, JSON.stringify(closed));
+    } catch {
+      // Ignore — folding still works for this page view, just won't persist.
+    }
+  }, [closed, loaded]);
+
+  function toggle(label: string) {
+    setClosed((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]));
+  }
+
+  return { isOpen: (label: string) => !closed.includes(label), toggle };
+}
 
 export function AppSidebar({
   displayName,
@@ -280,6 +338,7 @@ function SidebarContent({
   signOutAction: () => Promise<void>;
   onNavigate: () => void;
 }) {
+  const { isOpen, toggle } = useClosedGroups(pathname);
   const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
   return (
     <>
@@ -295,11 +354,20 @@ function SidebarContent({
         </div>
       </div>
 
-      <nav aria-label="Main" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <nav aria-label="Main" className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{group.label}</p>
-            <div className="mt-1.5 space-y-0.5">
+            <button
+              type="button"
+              onClick={() => toggle(group.label)}
+              aria-expanded={isOpen(group.label)}
+              aria-controls={groupListId(group.label)}
+              className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+            >
+              {group.label}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
+            </button>
+            <div id={groupListId(group.label)} hidden={!isOpen(group.label)} className="mt-1 space-y-0.5">
               {group.items.map((item) => {
                 const active = isActivePath(pathname, item.href);
                 const Icon = item.icon;
