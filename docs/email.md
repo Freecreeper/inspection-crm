@@ -18,7 +18,7 @@ Code lives in `src/lib/email/`:
 | File | Responsibility |
 | --- | --- |
 | `config.ts` | Environment config and the secret-free `describeEmailDelivery()` shown in the UI |
-| `providers/` | `EmailProvider` interface, Postmark adapter (REST, no SDK), log (simulated) provider |
+| `providers/` | `EmailProvider` interface, Postmark adapter (REST, no SDK), Resend adapter (account email), log (simulated) provider |
 | `variables.ts`, `render.ts` | Allow-listed template fields; renderer; text→safe HTML |
 | `context.ts` | Builds field values from real CRM records only |
 | `eligibility.ts` | Who may receive which category (suppression + realtor preferences) |
@@ -55,6 +55,20 @@ Implement `EmailProvider` (`providers/types.ts`): `send(OutboundEmail) → SendR
 `suppressed` (recipient refused). Return it from `getEmailProvider()`, and add a webhook route that normalizes its events
 into `parsePostmarkEvent`'s `ParsedEvent` shape. No business module changes.
 
+## Account email (password resets)
+
+Mail about a staff member's own account (today, the "Forgot password?" reset link) is not CRM communication, so it
+has its own switch: with `ACCOUNT_EMAIL_FROM` and `RESEND_API_KEY` both set, `getAccountMailer()` sends it through the
+Resend adapter from that address, **whatever `EMAIL_DELIVERY_MODE` says**. That lets staff reset their passwords while
+mail to customers and realtors is still simulated. Without both variables it follows the business provider and the
+Email → Settings From address, like everything else (and with delivery simulated, the reset link goes to the server
+log). Like before, it is handed straight to the provider and never enters the email log or the worker queue, so there
+are no retries or webhooks for it.
+
+Setup: in Resend, verify the sending domain (DKIM; the domain's DMARC policy must pass), create an API key with
+**Sending access** limited to that domain, and set `RESEND_API_KEY` plus `ACCOUNT_EMAIL_FROM`
+(e.g. `Inspection CRM <no-reply@yourdomain>`). `ACCOUNT_EMAIL_REPLY_TO` is optional.
+
 ## Environment variables
 
 | Variable | Purpose |
@@ -65,6 +79,8 @@ into `parsePostmarkEvent`'s `ParsedEvent` shape. No business module changes.
 | `POSTMARK_API_TOKEN` | Server API token (server-only, never shown in UI or logs) |
 | `POSTMARK_TRANSACTIONAL_STREAM` / `POSTMARK_BROADCAST_STREAM` | Stream IDs (default `outbound` / `broadcast`) |
 | `POSTMARK_WEBHOOK_USERNAME` / `POSTMARK_WEBHOOK_PASSWORD` | Webhook Basic-auth credentials; webhook is rejected if unset |
+| `ACCOUNT_EMAIL_FROM`, `RESEND_API_KEY` | Together, deliver account email (password resets) through Resend from that address, independent of `EMAIL_DELIVERY_MODE` |
+| `ACCOUNT_EMAIL_REPLY_TO` | Optional Reply-To for account email |
 | `APP_BASE_URL` | Public base URL for links (falls back to `NEXTAUTH_URL`) |
 | `APP_TIMEZONE` | Time zone for dates/times in email and for birthday/anniversary days |
 | `EMAIL_WORKER_SECRET` | Bearer secret enabling `POST /api/cron/email`; endpoint disabled when empty |

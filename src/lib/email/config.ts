@@ -17,6 +17,10 @@ export interface EmailConfig {
   webhookPassword: string | null;
   workerSecret: string | null;
   batchSize: number;
+  // Account email (password resets) to the CRM's own staff; see getAccountMailer().
+  accountFrom: string | null;
+  accountReplyTo: string | null;
+  resendApiKey: string | null;
 }
 
 function env(name: string): string | null {
@@ -45,6 +49,9 @@ export function getEmailConfig(): EmailConfig {
     webhookPassword: env("POSTMARK_WEBHOOK_PASSWORD"),
     workerSecret: env("EMAIL_WORKER_SECRET"),
     batchSize: Math.min(100, Math.max(1, Number(env("EMAIL_WORKER_BATCH") ?? 25) || 25)),
+    accountFrom: env("ACCOUNT_EMAIL_FROM"),
+    accountReplyTo: env("ACCOUNT_EMAIL_REPLY_TO"),
+    resendApiKey: env("RESEND_API_KEY"),
   };
 }
 

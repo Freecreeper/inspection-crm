@@ -5,9 +5,14 @@ vi.mock("@/lib/prisma", async () => {
   const { createMockPrisma } = await import("@/test-utils/mockPrisma");
   return { prisma: createMockPrisma() };
 });
-const send = vi.fn(async (_email: { to: string; text: string; subject: string }) => ({ ok: true as const, providerMessageId: "pm-1" }));
+const send = vi.fn(async (_email: { from: string; replyTo?: string | null; to: string; text: string; subject: string }) => ({ ok: true as const, providerMessageId: "pm-1" }));
 let simulated = false;
-vi.mock("@/lib/email/providers", () => ({ getEmailProvider: () => ({ name: "fake", simulated, send }) }));
+// What getAccountMailer() returns: null unless a test configures a separate account sender.
+let accountMailer: { provider: { name: string; simulated: boolean; send: typeof send }; from: string; replyTo: string | null } | null = null;
+vi.mock("@/lib/email/providers", () => ({
+  getEmailProvider: () => ({ name: "fake", simulated, send }),
+  getAccountMailer: () => accountMailer,
+}));
 
 import { prisma } from "@/lib/prisma";
 import { findResetToken, requestPasswordReset, resetPasswordWithToken } from "./passwordReset";
@@ -20,6 +25,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 beforeEach(() => {
   vi.clearAllMocks();
   simulated = false;
+  accountMailer = null;
   vi.stubEnv("APP_BASE_URL", "https://crm.example.com");
   vi.stubEnv("EMAIL_FROM", "noreply@crm.example.com");
   db.loginAttempt.findMany.mockResolvedValue([]);
@@ -72,6 +78,25 @@ describe("requesting a reset", () => {
     expect(send).not.toHaveBeenCalled();
     expect(warn.mock.calls[0][0]).toMatch(/reset link for zack@example\.com .*https:\/\/crm\.example\.com\/reset-password\//);
     warn.mockRestore();
+  });
+
+  it("a configured account sender delivers even while business email is simulated", async () => {
+    simulated = true;
+    accountMailer = { provider: { name: "resend", simulated: false, send }, from: "Inspection CRM <no-reply@n3rdlabs.example>", replyTo: "help@n3rdlabs.example" };
+    db.user.findUnique.mockResolvedValue({ id: "u1", name: "Zack", email: "zack@example.com", active: true });
+    await requestPasswordReset("zack@example.com", null, NOW);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0]).toMatchObject({
+      from: "Inspection CRM <no-reply@n3rdlabs.example>",
+      replyTo: "help@n3rdlabs.example",
+      to: "zack@example.com",
+    });
+  });
+
+  it("without an account sender, it uses the business From name and address", async () => {
+    db.user.findUnique.mockResolvedValue({ id: "u1", name: "Zack", email: "zack@example.com", active: true });
+    await requestPasswordReset("zack@example.com", null, NOW);
+    expect(send.mock.calls[0][0].from).toBe("Acme Inspections <noreply@crm.example.com>");
   });
 });
 

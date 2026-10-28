@@ -168,7 +168,10 @@ On the box (`~/inspection-crm`):
 - `shared/.env` — `POSTGRES_PASSWORD` and `AUTH_SECRET` (mode 600, not in git). It is also passed
   to the app and worker whole, so `APP_TIMEZONE`, `EMAIL_DELIVERY_MODE`, `POSTMARK_*` and the
   `CALENDAR_*` settings from `.env.example` go here (then redeploy). Email is simulated until
-  `EMAIL_DELIVERY_MODE=live`.
+  `EMAIL_DELIVERY_MODE=live`. Password-reset email is the exception (docs/email.md, "Account email"):
+  `ACCOUNT_EMAIL_FROM` is `Inspection CRM <no-reply@n3rdlabs.dev>`, and `RESEND_API_KEY` (a
+  sending-only key for n3rdlabs.dev in the n3rdlabs Resend team) is set with
+  `~/inspection-crm/bin/set-resend-key`, which reads it at a hidden prompt and restarts the app.
 - `current` — symlink to the live release.
 - Docker Compose project `inspection-crm` (`deploy/compose.yml`): Postgres in the
   `inspection-crm_db-data` volume, `storage/` (uploads, photos, PDFs) in `inspection-crm_storage`,
