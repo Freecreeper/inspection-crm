@@ -17,6 +17,9 @@ fi
 
 echo "==> Checking ${sha:0:7}"
 npm run --silent lint
+# The typecheck needs Next's generated route types (LayoutProps etc.), which
+# normally come from a build; generate just those.
+npx next typegen >/dev/null
 npm run --silent typecheck
 npm run --silent test
 
