@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { trapTabKey } from "@/components/focusTrap";
@@ -175,6 +175,89 @@ function useClosedGroups(pathname: string) {
   }
 
   return { isOpen: (label: string) => !closed.includes(label), toggle };
+}
+
+// `dragged` taken out and put in `target`'s place: coming from above, it
+// lands just after the target; from below, just before.
+export function moveLabel(labels: string[], dragged: string, target: string): string[] {
+  const from = labels.indexOf(dragged);
+  const to = labels.indexOf(target);
+  if (from === -1 || to === -1 || from === to) return labels;
+  const next = labels.filter((l) => l !== dragged);
+  next.splice(to, 0, dragged);
+  return next;
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function groupElements(nav: HTMLElement): HTMLElement[] {
+  return [...nav.querySelectorAll<HTMLElement>(":scope > [data-group]")];
+}
+
+// The translateY a running animation currently applies to `el`.
+function currentTranslateY(el: HTMLElement): number {
+  const transform = getComputedStyle(el).transform;
+  return transform && transform !== "none" ? new DOMMatrixReadOnly(transform).m42 : 0;
+}
+
+// A short highlight on a group that just moved, so the eye can find it.
+function flashGroup(nav: HTMLElement | null, label: string) {
+  const bar = nav?.querySelector(`:scope > [data-group="${label}"]`)?.firstElementChild;
+  if (!(bar instanceof HTMLElement) || typeof bar.animate !== "function" || prefersReducedMotion()) return;
+  bar.animate(
+    [
+      { boxShadow: "0 0 0 3px rgb(16 185 129 / 0.45)", backgroundColor: "rgb(236 253 245)" },
+      { boxShadow: "0 0 0 3px rgb(16 185 129 / 0)" },
+    ],
+    { duration: 700, easing: "ease-out" }
+  );
+}
+
+// Reordering motion (FLIP): call the returned `snapshot` just before changing
+// the order; once it changes, each group starts where it was and glides to
+// its new place. Positions come from offsetTop, which ignores transforms,
+// plus whatever offset a running glide has reached, so a glide cut short by
+// the next move carries on from where it visibly is. Entering arrange mode
+// fades the bars in one after another.
+function useReorderMotion(navRef: React.RefObject<HTMLElement | null>, orderKey: string, arranging: boolean) {
+  const before = useRef<Map<string, number> | null>(null);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const tops = before.current;
+    before.current = null;
+    if (!nav || !tops || prefersReducedMotion()) return;
+    for (const el of groupElements(nav)) {
+      const prev = tops.get(el.dataset.group!);
+      if (prev === undefined || prev === el.offsetTop || typeof el.animate !== "function") continue;
+      const from = prev - el.offsetTop + currentTranslateY(el);
+      el.getAnimations().forEach((a) => a.cancel());
+      el.animate([{ transform: `translateY(${from}px)` }, { transform: "translateY(0)" }], { duration: 260, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+    }
+  }, [navRef, orderKey]);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav || !arranging || prefersReducedMotion()) return;
+    groupElements(nav).forEach((el, i) => {
+      const bar = el.firstElementChild;
+      if (bar instanceof HTMLElement && typeof bar.animate === "function") {
+        bar.animate([{ opacity: 0, transform: "translateY(-6px) scale(0.98)" }, { opacity: 1, transform: "none" }], {
+          duration: 200,
+          delay: i * 35,
+          easing: "ease-out",
+          fill: "backwards",
+        });
+      }
+    });
+  }, [navRef, arranging]);
+
+  return function snapshot() {
+    const nav = navRef.current;
+    if (nav) before.current = new Map(groupElements(nav).map((el) => [el.dataset.group!, el.offsetTop]));
+  };
 }
 
 function useGroupOrder() {
@@ -387,8 +470,16 @@ function SidebarContent({
   // links are tucked away so the whole list fits.
   const [arranging, setArranging] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
+  // While dragging, the order the list shows (live, unsaved); saved on drop,
+  // dropped on cancel.
+  const [preview, setPreview] = useState<string[] | null>(null);
+  // Brief pause after each live move so a neighbour gliding past the
+  // pointer doesn't immediately swap back.
+  const settleUntil = useRef(0);
   const navRef = useRef<HTMLElement>(null);
-  const groups = orderGroups(NAV_GROUPS, order).map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
+  const allowed = orderGroups(NAV_GROUPS, order).map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
+  const groups = preview ? orderGroups(allowed, preview) : allowed;
+  const snapshot = useReorderMotion(navRef, groups.map((g) => g.label).join("|"), arranging);
   // Moves happen within the groups this role sees; the rest keep their
   // default places after them (orderGroups).
   function moveGroup(label: string, delta: -1 | 1) {
@@ -397,6 +488,7 @@ function SidebarContent({
     const to = from + delta;
     if (from === -1 || to < 0 || to >= labels.length) return;
     [labels[from], labels[to]] = [labels[to], labels[from]];
+    snapshot();
     saveOrder(labels);
     // The group's DOM node moves, which can drop focus; put it back on the
     // same button, or the other one once it reaches the end of the list.
@@ -404,18 +496,25 @@ function SidebarContent({
       const button = (dir: string) => navRef.current?.querySelector<HTMLButtonElement>(`[data-move="${label}:${dir}"]`);
       const same = button(delta < 0 ? "up" : "down");
       (same && !same.disabled ? same : button(delta < 0 ? "down" : "up"))?.focus();
+      flashGroup(navRef.current, label);
     });
   }
 
-  function dropGroup(dragged: string, target: string) {
-    if (dragged === target) return;
-    const labels = groups.map((g) => g.label).filter((l) => l !== dragged);
-    const at = labels.indexOf(target);
-    if (at === -1) return;
-    // Dropping onto a group below the dragged one lands after it, above lands before.
-    const draggedWasAbove = groups.findIndex((g) => g.label === dragged) < groups.findIndex((g) => g.label === target);
-    labels.splice(draggedWasAbove ? at + 1 : at, 0, dragged);
-    saveOrder(labels);
+  // `at` is the dragover event's timestamp.
+  function dragOverGroup(target: string, at: number) {
+    if (!dragging || target === dragging || at < settleUntil.current) return;
+    const current = groups.map((g) => g.label);
+    const next = moveLabel(current, dragging, target);
+    if (next === current) return;
+    settleUntil.current = at + 250;
+    snapshot();
+    setPreview(next);
+  }
+
+  function endDrag() {
+    snapshot();
+    setDragging(null);
+    setPreview(null);
   }
 
   return (
@@ -432,29 +531,53 @@ function SidebarContent({
         </div>
       </div>
 
-      <nav ref={navRef} aria-label="Main" className={`flex-1 overflow-y-auto px-3 py-4 ${arranging ? "space-y-1.5" : "space-y-3"}`}>
+      <nav
+        ref={navRef}
+        aria-label="Main"
+        // Drops land anywhere in the list, gaps included; the live preview
+        // already shows where.
+        onDragOver={(e) => {
+          if (dragging) e.preventDefault();
+        }}
+        onDrop={(e) => {
+          if (!dragging) return;
+          e.preventDefault();
+          const label = dragging;
+          if (preview) saveOrder(preview);
+          endDrag();
+          requestAnimationFrame(() => flashGroup(navRef.current, label));
+        }}
+        className={`relative flex-1 overflow-y-auto px-3 py-4 ${arranging ? "space-y-1.5" : "space-y-3"}`}
+      >
         {groups.map((group, index) => (
           <div
             key={group.label}
+            data-group={group.label}
             draggable={arranging}
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
               e.dataTransfer.setData("text/plain", group.label);
+              settleUntil.current = 0;
               setDragging(group.label);
+              setPreview(groups.map((g) => g.label));
             }}
             onDragOver={(e) => {
-              if (dragging) e.preventDefault();
-            }}
-            onDrop={(e) => {
+              if (!dragging) return;
               e.preventDefault();
-              if (dragging) dropGroup(dragging, group.label);
-              setDragging(null);
+              dragOverGroup(group.label, e.timeStamp);
             }}
-            onDragEnd={() => setDragging(null)}
-            className={dragging === group.label ? "opacity-40" : undefined}
+            onDragEnd={endDrag}
           >
             {arranging ? (
-              <div className="flex cursor-grab items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 py-1 pl-2 pr-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+              // The dragged group stays in the list as a dashed placeholder
+              // marking where it will land.
+              <div
+                className={`flex cursor-grab items-center gap-1.5 rounded-md border py-1 pl-2 pr-1 text-[11px] font-semibold uppercase tracking-wider transition-[color,background-color,border-color,box-shadow] duration-150 ${
+                  dragging === group.label
+                    ? "border-dashed border-emerald-400 bg-emerald-50 text-emerald-700 opacity-70"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:shadow-sm"
+                }`}
+              >
                 <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate">{group.label}</span>
                 <button
@@ -523,7 +646,15 @@ function SidebarContent({
               >
                 Done
               </button>
-              <button type="button" onClick={() => saveOrder([])} disabled={order.length === 0} className="cursor-pointer text-xs text-slate-500 hover:text-slate-800 hover:underline disabled:cursor-default disabled:opacity-40 disabled:hover:no-underline">
+              <button
+                type="button"
+                onClick={() => {
+                  snapshot();
+                  saveOrder([]);
+                }}
+                disabled={order.length === 0}
+                className="cursor-pointer text-xs text-slate-500 hover:text-slate-800 hover:underline disabled:cursor-default disabled:opacity-40 disabled:hover:no-underline"
+              >
                 Reset order
               </button>
             </>

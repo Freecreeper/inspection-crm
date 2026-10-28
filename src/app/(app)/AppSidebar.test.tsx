@@ -18,7 +18,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-import { AppSidebar, orderGroups } from "./AppSidebar";
+import { AppSidebar, moveLabel, orderGroups } from "./AppSidebar";
 
 afterEach(() => {
   cleanup();
@@ -175,7 +175,7 @@ describe("reordering groups", () => {
     expect(localStorage.getItem("sidebar-group-order")).toBeNull();
   });
 
-  it("drops a dragged group where it lands", async () => {
+  it("rearranges live while dragging, saves on drop, and puts things back on a cancelled drag", async () => {
     const user = userEvent.setup();
     renderSidebar();
     await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
@@ -183,13 +183,30 @@ describe("reordering groups", () => {
     const dataTransfer = { effectAllowed: "", setData: () => {}, getData: () => "" };
 
     fireEvent.dragStart(groupEl("Overview"), { dataTransfer });
+    // The dragged group stays in the list as a dashed placeholder.
+    expect(groupEl("Overview").firstElementChild!.className).toContain("border-dashed");
     fireEvent.dragOver(groupEl("Relationships"), { dataTransfer });
-    fireEvent.drop(groupEl("Relationships"), { dataTransfer });
+    // Shown right away, not saved until the drop.
     expect(headingOrder()).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
+    expect(localStorage.getItem("sidebar-group-order")).toBeNull();
+    fireEvent.drop(groupEl("Relationships"), { dataTransfer });
+    fireEvent.dragEnd(groupEl("Overview"), { dataTransfer });
+    expect(headingOrder()).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
+    expect(JSON.parse(localStorage.getItem("sidebar-group-order")!)).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
+    expect(groupEl("Overview").firstElementChild!.className).not.toContain("border-dashed");
 
     fireEvent.dragStart(groupEl("Communication"), { dataTransfer });
-    fireEvent.drop(groupEl("Inspections"), { dataTransfer });
+    fireEvent.dragOver(groupEl("Inspections"), { dataTransfer });
     expect(headingOrder()).toEqual(["Communication", "Inspections", "Relationships", "Overview", "Clients & deals"]);
+    // Let go outside the list: back to the saved order.
+    fireEvent.dragEnd(groupEl("Communication"), { dataTransfer });
+    expect(headingOrder()).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
+  });
+
+  it("moves a dragged label into the target's place", () => {
+    expect(moveLabel(["A", "B", "C"], "A", "C")).toEqual(["B", "C", "A"]);
+    expect(moveLabel(["A", "B", "C"], "C", "A")).toEqual(["C", "A", "B"]);
+    expect(moveLabel(["A", "B", "C"], "B", "B")).toEqual(["A", "B", "C"]);
   });
 
   it("keeps groups a saved order doesn't name in their default places after it", () => {
