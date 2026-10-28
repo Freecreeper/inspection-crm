@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 let pathname = "/realtors";
@@ -18,7 +18,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-import { AppSidebar } from "./AppSidebar";
+import { AppSidebar, orderGroups } from "./AppSidebar";
 
 afterEach(() => {
   cleanup();
@@ -137,5 +137,65 @@ describe("navigation groups", () => {
     });
     expect(linkVisible("Customers")).toBe(true);
     expect(JSON.parse(localStorage.getItem("sidebar-closed-groups")!)).toEqual([]);
+  });
+});
+
+describe("reordering groups", () => {
+  const desktopNav = () => screen.getAllByRole("navigation", { name: "Main" })[0];
+  const headingOrder = () =>
+    [...desktopNav().querySelectorAll(":scope > div[draggable]")].map((el) => el.querySelector("button[aria-expanded], span")?.textContent?.trim());
+  const DEFAULT = ["Overview", "Inspections", "Relationships", "Clients & deals", "Communication"];
+
+  it("moves groups with the arrange-mode buttons, keeps focus on the moved group, and remembers the order", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    expect(headingOrder()).toEqual(DEFAULT);
+
+    await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
+    // Links are tucked away while arranging.
+    expect(within(desktopNav()).queryByRole("link", { name: "Realtors" })).toBeNull();
+    expect(within(desktopNav()).getByRole("button", { name: "Move Overview up" })).toHaveProperty("disabled", true);
+
+    await user.click(within(desktopNav()).getByRole("button", { name: "Move Communication up" }));
+    await user.click(within(desktopNav()).getByRole("button", { name: "Move Communication up" }));
+    expect(headingOrder()).toEqual(["Overview", "Inspections", "Communication", "Relationships", "Clients & deals"]);
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Move Communication up");
+
+    await user.click(within(desktopNav()).getByRole("button", { name: "Done" }));
+    expect(within(desktopNav()).getByRole("link", { name: "Realtors" })).toBeTruthy();
+
+    cleanup();
+    renderSidebar();
+    expect(headingOrder()).toEqual(["Overview", "Inspections", "Communication", "Relationships", "Clients & deals"]);
+
+    await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
+    await user.click(within(desktopNav()).getByRole("button", { name: "Reset order" }));
+    expect(headingOrder()).toEqual(DEFAULT);
+    expect(localStorage.getItem("sidebar-group-order")).toBeNull();
+  });
+
+  it("drops a dragged group where it lands", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
+    const groupEl = (label: string) => [...desktopNav().querySelectorAll(":scope > div[draggable]")].find((el) => el.querySelector("span")?.textContent === label)!;
+    const dataTransfer = { effectAllowed: "", setData: () => {}, getData: () => "" };
+
+    fireEvent.dragStart(groupEl("Overview"), { dataTransfer });
+    fireEvent.dragOver(groupEl("Relationships"), { dataTransfer });
+    fireEvent.drop(groupEl("Relationships"), { dataTransfer });
+    expect(headingOrder()).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
+
+    fireEvent.dragStart(groupEl("Communication"), { dataTransfer });
+    fireEvent.drop(groupEl("Inspections"), { dataTransfer });
+    expect(headingOrder()).toEqual(["Communication", "Inspections", "Relationships", "Overview", "Clients & deals"]);
+  });
+
+  it("keeps groups a saved order doesn't name in their default places after it", () => {
+    const groups = ["A", "B", "C", "D"].map((label) => ({ label }));
+    expect(orderGroups(groups, ["C", "A"]).map((g) => g.label)).toEqual(["C", "A", "B", "D"]);
+    expect(orderGroups(groups, []).map((g) => g.label)).toEqual(["A", "B", "C", "D"]);
+    expect(orderGroups(groups, ["Gone", "D"]).map((g) => g.label)).toEqual(["D", "A", "B", "C"]);
   });
 });
