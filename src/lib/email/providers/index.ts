@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getEmailConfig } from "../config";
 import { createPostmarkProvider } from "./postmark";
+import { createResendProvider } from "./resend";
 import type { EmailProvider } from "./types";
 
 export type { EmailProvider, OutboundEmail, SendResult } from "./types";
@@ -41,4 +42,26 @@ export function getEmailProvider(): EmailProvider {
     transactionalStream: config.transactionalStream,
     broadcastStream: config.broadcastStream,
   });
+}
+
+export interface AccountMailer {
+  provider: EmailProvider;
+  from: string;
+  replyTo: string | null;
+}
+
+// Mail about a staff member's own account (password resets) has its own switch, so it can be
+// delivered while mail to customers and realtors is still simulated: with ACCOUNT_EMAIL_FROM and
+// RESEND_API_KEY both set, it goes out through Resend whatever EMAIL_DELIVERY_MODE says. Null when
+// that isn't configured (and under test unless a provider was injected); callers then fall back
+// to getEmailProvider() and the business From address.
+export function getAccountMailer(): AccountMailer | null {
+  const config = getEmailConfig();
+  if (!config.accountFrom || !config.resendApiKey) return null;
+  if (process.env.VITEST && !override) return null;
+  return {
+    provider: override ?? createResendProvider({ apiKey: config.resendApiKey }),
+    from: config.accountFrom,
+    replyTo: config.accountReplyTo,
+  };
 }

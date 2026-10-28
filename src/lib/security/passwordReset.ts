@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { getEmailConfig } from "@/lib/email/config";
 import { getEmailSettings } from "@/lib/email/settings";
-import { getEmailProvider } from "@/lib/email/providers";
+import { getAccountMailer, getEmailProvider } from "@/lib/email/providers";
 import { textToHtml } from "@/lib/email/render";
 import { hashPassword, passwordProblem } from "./password";
 import { clearFailures, lockedUntil, recordFailure } from "./loginThrottle";
@@ -51,8 +51,12 @@ export async function requestPasswordReset(rawEmail: string, ip: string | null, 
     "",
     "If you didn't ask for this, you can ignore this email; your password stays the same.",
   ].join("\n");
-  const provider = getEmailProvider();
-  const from = settings.fromEmail ?? config.defaultFromEmail;
+  // A configured account sender (ACCOUNT_EMAIL_FROM + RESEND_API_KEY) delivers even while business
+  // email is simulated; otherwise this follows the business provider and From address.
+  const account = getAccountMailer();
+  const provider = account?.provider ?? getEmailProvider();
+  const businessFrom = settings.fromEmail ?? config.defaultFromEmail;
+  const from = account?.from ?? (businessFrom ? `${settings.fromName} <${businessFrom}>` : null);
   if (provider.simulated || !from) {
     // No real delivery configured: the server log is the only place the
     // link can go, so whoever runs the server can pass it on.
@@ -60,9 +64,9 @@ export async function requestPasswordReset(rawEmail: string, ip: string | null, 
     return;
   }
   const result = await provider.send({
-    from: `${settings.fromName} <${from}>`,
+    from,
     to: user.email,
-    replyTo: settings.replyTo,
+    replyTo: account ? account.replyTo : settings.replyTo,
     subject: "Reset your Inspection CRM password",
     text,
     html: textToHtml(text),
