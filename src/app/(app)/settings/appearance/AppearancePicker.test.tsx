@@ -24,9 +24,9 @@ describe("Appearance picker", () => {
     await user.click(screen.getByLabelText("Coastal"));
     expect(document.documentElement.dataset.appearance).toBe("dark");
     expect(document.documentElement.dataset.palette).toBe("coastal");
-    expect(document.cookie).toContain("crm-theme=dark:coastal");
+    expect(document.cookie).toMatch(/crm-theme=dark:coastal@\d+/);
     await waitFor(() => expect(saveThemePreference).toHaveBeenCalledTimes(1));
-    expect(saveThemePreference).toHaveBeenCalledWith({ appearance: "dark", palette: "coastal" });
+    expect(saveThemePreference).toHaveBeenCalledWith({ appearance: "dark", palette: "coastal", savedAt: expect.any(Number) });
     expect(await screen.findByText("Saved to your account.")).toBeTruthy();
   });
 

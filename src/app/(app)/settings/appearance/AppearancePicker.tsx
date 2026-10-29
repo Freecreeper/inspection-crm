@@ -46,7 +46,8 @@ export function AppearancePicker({ initial }: { initial: ThemePreference }) {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
-  function choose(next: ThemePreference) {
+  function choose(choice: ThemePreference) {
+    const next = { ...choice, savedAt: Date.now() };
     setPref(next);
     applyTheme(next);
     setStatus("saving");

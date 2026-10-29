@@ -31,13 +31,17 @@ describe("saveThemePreference", () => {
     await saveThemePreference({ appearance: "dark", palette: "slate", userId: "someone-else" });
     expect(db.user.update).toHaveBeenCalledWith({
       where: { id: "u1" },
-      data: { uiPreferences: { version: 1, navigation: { collapsed: true }, theme: { appearance: "dark", palette: "slate" } } },
+      data: { uiPreferences: { version: 1, navigation: { collapsed: true }, theme: { appearance: "dark", palette: "slate", savedAt: expect.any(Number) } } },
     });
-    expect(cookieSet).toHaveBeenCalledWith("crm-theme", "dark:slate", expect.objectContaining({ path: "/" }));
+    expect(cookieSet).toHaveBeenCalledWith("crm-theme", expect.stringMatching(/^dark:slate@\d+$/), expect.objectContaining({ path: "/" }));
     expect(updateSession).toHaveBeenCalled();
   });
 
   it("stores a safe fallback for anything invalid", async () => {
-    expect(await saveThemePreference({ appearance: "neon", palette: "custom", custom: { brand: "javascript:", neutral: "cool", sidebar: "light" } })).toEqual({ appearance: "system", palette: "forest" });
+    expect(await saveThemePreference({ appearance: "neon", palette: "custom", custom: { brand: "javascript:", neutral: "cool", sidebar: "light" } })).toEqual({
+      appearance: "system",
+      palette: "forest",
+      savedAt: expect.any(Number),
+    });
   });
 });

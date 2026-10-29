@@ -16,7 +16,7 @@ export async function saveThemePreference(input: unknown): Promise<ThemePreferen
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Not signed in.");
-  const theme = validTheme(input);
+  const theme = { ...validTheme(input), savedAt: Date.now() };
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { uiPreferences: true } });
   await prisma.user.update({ where: { id: userId }, data: { uiPreferences: uiPreferencesWithTheme(user?.uiPreferences, theme) as Prisma.InputJsonValue } });

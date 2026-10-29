@@ -37,6 +37,10 @@ export interface ThemePreference {
   appearance: Appearance;
   palette: PaletteId;
   custom?: CustomTheme;
+  // When it was chosen (ms since epoch). The cookie and the saved account
+  // theme can disagree — just after a save, or after a change on another
+  // device — and the newer one wins (pickTheme).
+  savedAt?: number;
 }
 
 export const THEME_COOKIE = "crm-theme";
@@ -64,19 +68,32 @@ export function validTheme(v: unknown): ThemePreference {
   const appearance = isAppearance(o.appearance) ? o.appearance : DEFAULT_THEME.appearance;
   const custom = validCustom(o.custom);
   const palette: PaletteId = o.palette === "custom" && custom ? "custom" : isPreset(o.palette) ? o.palette : DEFAULT_THEME.palette;
-  return { appearance, palette, ...(custom ? { custom } : {}) };
+  const savedAt = typeof o.savedAt === "number" && Number.isFinite(o.savedAt) && o.savedAt > 0 ? Math.floor(o.savedAt) : undefined;
+  return { appearance, palette, ...(custom ? { custom } : {}), ...(savedAt ? { savedAt } : {}) };
 }
 
 // Compact form for the cookie and session token:
-//   "dark:coastal"  or  "light:custom:1f7a5a:warm:dark"
+//   "dark:coastal"  or  "light:custom:1f7a5a:warm:dark", plus "@<savedAt>"
 export function encodeTheme(pref: ThemePreference): string {
   const base = `${pref.appearance}:${pref.palette}`;
-  return pref.palette === "custom" && pref.custom ? `${base}:${pref.custom.brand.slice(1)}:${pref.custom.neutral}:${pref.custom.sidebar}` : base;
+  const body = pref.palette === "custom" && pref.custom ? `${base}:${pref.custom.brand.slice(1)}:${pref.custom.neutral}:${pref.custom.sidebar}` : base;
+  return pref.savedAt ? `${body}@${pref.savedAt}` : body;
 }
 
 export function parseThemeCookie(value: string | undefined | null): ThemePreference {
-  const [appearance, palette, brand, neutral, sidebar] = (value ?? "").split(":");
-  return validTheme({ appearance, palette, custom: brand ? { brand: `#${brand}`, neutral, sidebar } : undefined });
+  const [body = "", stamp] = decodeURIComponent(value ?? "").split("@");
+  const [appearance, palette, brand, neutral, sidebar] = body.split(":");
+  return validTheme({ appearance, palette, custom: brand ? { brand: `#${brand}`, neutral, sidebar } : undefined, savedAt: Number(stamp) });
+}
+
+// The account's saved theme (from the session) or this browser's cookie,
+// whichever was chosen more recently; the account's on a tie.
+export function pickTheme(sessionValue: string | undefined, cookieValue: string | undefined): ThemePreference {
+  if (!sessionValue) return parseThemeCookie(cookieValue);
+  if (!cookieValue) return parseThemeCookie(sessionValue);
+  const fromSession = parseThemeCookie(sessionValue);
+  const fromCookie = parseThemeCookie(cookieValue);
+  return (fromCookie.savedAt ?? 0) > (fromSession.savedAt ?? 0) ? fromCookie : fromSession;
 }
 
 export function themeCookie(pref: ThemePreference): string {
@@ -96,19 +113,24 @@ export function themeFromUiPreferences(doc: unknown): ThemePreference | null {
 
 export function uiPreferencesWithTheme(doc: unknown, theme: ThemePreference): Record<string, unknown> {
   const current = doc && typeof doc === "object" && (doc as Record<string, unknown>).version === UI_PREFERENCES_VERSION ? (doc as Record<string, unknown>) : {};
-  return { ...current, version: UI_PREFERENCES_VERSION, theme: { appearance: theme.appearance, palette: theme.palette, ...(theme.custom ? { custom: theme.custom } : {}) } };
+  return {
+    ...current,
+    version: UI_PREFERENCES_VERSION,
+    theme: { appearance: theme.appearance, palette: theme.palette, ...(theme.custom ? { custom: theme.custom } : {}), ...(theme.savedAt ? { savedAt: theme.savedAt } : {}) },
+  };
 }
 
 export const CUSTOM_THEME_STYLE_ID = "custom-theme";
 
 // Browser only: apply a preference to the open page at once (including a
-// custom theme's colors) and remember it in this browser.
+// custom theme's colors, written into the one style element the root
+// layout always renders) and remember it in this browser.
 export function applyTheme(pref: ThemePreference) {
   const root = document.documentElement;
   root.dataset.appearance = pref.appearance;
   root.dataset.palette = pref.palette;
-  let style = document.getElementById(CUSTOM_THEME_STYLE_ID);
   if (pref.palette === "custom" && pref.custom) {
+    let style = document.getElementById(CUSTOM_THEME_STYLE_ID);
     if (!style) {
       style = document.createElement("style");
       style.id = CUSTOM_THEME_STYLE_ID;
