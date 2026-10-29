@@ -1,6 +1,11 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { QueueRow, QueueSection, WorkspaceHeader, rowAction } from "@/components/workspace/WorkspaceHeader";
+import { DELIVERED_WINDOW_DAYS, INSPECTION_QUEUES, QUEUE_INFO, UPCOMING_WINDOW_DAYS, groupInspectionQueues, type InspectionQueue } from "@/lib/inspections/workflow";
+import { updateInspectionStatus } from "./actions";
 import { getPrimaryCustomer } from "@/lib/transactions";
 import { getCalendarConfig } from "@/lib/calendar/config";
 import { addDays, formatDay, formatTime, startOfDayUtc, toDayKey } from "@/lib/calendar/time";
@@ -14,11 +19,34 @@ const FILTERS = {
 type Filter = keyof typeof FILTERS;
 const PAGE_SIZE = 50;
 
-// Default view is what's coming up (today onward, plus unscheduled), soonest
+// List, Schedule (the Calendar) and Workflow over the same inspections:
+// List to find and review them, Workflow to work the operational queues.
+export default async function InspectionsPage({ searchParams }: { searchParams: Promise<{ filter?: string; view?: string; page?: string }> }) {
+  const params = await searchParams;
+  const workflow = params.view === "workflow";
+  const session = await auth();
+  const canConduct = can(session?.user?.role as Role | undefined, "inspection:conduct");
+  return (
+    <div className="space-y-5">
+      <WorkspaceHeader
+        title="Inspections"
+        modes={[
+          { key: "list", label: "List", href: "/inspections" },
+          { key: "schedule", label: "Schedule", href: "/calendar" },
+          { key: "workflow", label: "Workflow", href: "/inspections?view=workflow" },
+        ]}
+        current={workflow ? "workflow" : "list"}
+      />
+      {workflow ? <Workflow canConduct={canConduct} /> : <List params={params} />}
+    </div>
+  );
+}
+
+// Default list is what's coming up (today onward, plus unscheduled), soonest
 // first; Past is newest first. Both page through everything with a count,
 // so nothing silently drops off after the first N rows.
-export default async function InspectionsPage({ searchParams }: { searchParams: Promise<{ filter?: string; view?: string; page?: string }> }) {
-  const { filter: rawFilter, view: rawView, page: rawPage } = await searchParams;
+async function List({ params }: { params: { filter?: string; view?: string; page?: string } }) {
+  const { filter: rawFilter, view: rawView, page: rawPage } = params;
   const filter = rawFilter && rawFilter in FILTERS ? (rawFilter as Filter) : null;
   const view = rawView === "past" ? "past" : "upcoming";
   const page = Math.max(1, Math.floor(Number(rawPage) || 1));
@@ -56,9 +84,8 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-neutral-900">Inspections</h1>
       {!filter && (
-        <nav aria-label="Inspection views" className="mt-3 flex gap-1">
+        <nav aria-label="Upcoming or past" className="flex gap-1">
           {(["upcoming", "past"] as const).map((v) => (
             <Link
               key={v}
@@ -161,6 +188,118 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const reportHref = (id: string) => `/inspections/${id}/report`;
+
+async function Workflow({ canConduct }: { canConduct: boolean }) {
+  const now = new Date();
+  const { timeZone } = getCalendarConfig();
+  const today = toDayKey(now, timeZone);
+  const bounds = { now, dayStart: startOfDayUtc(today, timeZone), dayEnd: startOfDayUtc(addDays(today, 1), timeZone) };
+  const deliveredSince = new Date(now.getTime() - DELIVERED_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
+  const inspections = await prisma.inspection.findMany({
+    where: {
+      OR: [
+        { status: { in: ["SCHEDULED", "IN_PROGRESS"] }, OR: [{ scheduledAt: null }, { scheduledAt: { lt: startOfDayUtc(addDays(today, UPCOMING_WINDOW_DAYS + 1), timeZone) } }] },
+        { status: "COMPLETED", reports: { none: { status: { in: ["DELIVERED", "ARCHIVED"] } } } },
+        { status: "COMPLETED", reports: { some: { status: "DELIVERED", deliveredAt: { gte: deliveredSince } } } },
+      ],
+    },
+    orderBy: [{ scheduledAt: { sort: "asc", nulls: "first" } }, { id: "asc" }],
+    include: {
+      property: true,
+      inspector: { select: { name: true } },
+      transaction: { include: { customers: { include: { customer: true } } } },
+      reports: { select: { id: true, status: true, deliveredAt: true }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
+    take: 500,
+  });
+  const rows = inspections.map((i) => ({ ...i, report: i.reports[0] ?? null }));
+  const groups = groupInspectionQueues(rows, bounds);
+  const thisYear = today.slice(0, 4);
+  const when = (d: Date | null) => {
+    if (!d) return "No date set";
+    const day = toDayKey(d, timeZone);
+    return `${formatDay(day, "short")}${day.slice(0, 4) !== thisYear ? `, ${day.slice(0, 4)}` : ""}, ${formatTime(d, timeZone)}`;
+  };
+
+  // Only the actions that fit each queue.
+  const actionsFor = (queue: InspectionQueue, i: (typeof rows)[number]) => {
+    const statusButton = (status: "IN_PROGRESS" | "COMPLETED", label: string) =>
+      canConduct && (
+        <form action={updateInspectionStatus.bind(null, i.id)}>
+          <input type="hidden" name="status" value={status} />
+          <button type="submit" className={rowAction}>
+            {label}
+          </button>
+        </form>
+      );
+    return (
+      <>
+        {(queue === "today" || queue === "awaiting") && statusButton("IN_PROGRESS", "Start")}
+        {queue === "inProgress" && statusButton("COMPLETED", "Mark complete")}
+        {queue === "complete" && (
+          <Link href={reportHref(i.id)} className={rowAction}>
+            Start report
+          </Link>
+        )}
+        {(queue === "reportInProgress" || queue === "delivered") && (
+          <Link href={reportHref(i.id)} className={rowAction}>
+            Open report
+          </Link>
+        )}
+        {queue === "readyForReview" && (
+          <Link href={`${reportHref(i.id)}/finalize`} className={rowAction}>
+            Review &amp; finalize
+          </Link>
+        )}
+        {queue === "readyToDeliver" && (
+          <Link href={reportHref(i.id)} className={rowAction}>
+            Deliver
+          </Link>
+        )}
+        <Link href={`/inspections/${i.id}`} className={rowAction}>
+          Open
+        </Link>
+      </>
+    );
+  };
+
+  const section = (queue: InspectionQueue) => {
+    const info = QUEUE_INFO[queue];
+    return (
+      <QueueSection key={queue} id={`queue-${queue}`} title={info.title} hint={info.hint} count={groups[queue].length} tone={groups[queue].length ? info.tone : undefined} empty="Nothing here.">
+        {groups[queue].map((i) => {
+          const customer = getPrimaryCustomer(i.transaction.customers);
+          return (
+            <QueueRow key={i.id} actions={actionsFor(queue, i)}>
+              <Link href={`/inspections/${i.id}`} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
+                {i.property.addressLine1}, {i.property.city}
+              </Link>
+              <p className="truncate text-xs text-neutral-500">
+                {[when(i.scheduledAt), customer && `${customer.firstName} ${customer.lastName}`, i.inspector?.name ?? "Unassigned"].filter(Boolean).join(" · ")}
+              </p>
+            </QueueRow>
+          );
+        })}
+      </QueueSection>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">Inspection</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{INSPECTION_QUEUES.slice(0, 4).map(section)}</div>
+      </div>
+      <div>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">Report</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{INSPECTION_QUEUES.slice(4).map(section)}</div>
+      </div>
     </div>
   );
 }
