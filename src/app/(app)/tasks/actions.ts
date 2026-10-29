@@ -11,7 +11,11 @@ import type { Role } from "@prisma/client";
 function revalidateTaskPaths(task: { transactionId: string | null; realtorId: string | null }) {
   revalidatePath("/tasks");
   revalidatePath("/calendar");
-  if (task.transactionId) revalidatePath(`/transactions/${task.transactionId}`);
+  if (task.transactionId) {
+    revalidatePath(`/transactions/${task.transactionId}`);
+    // Customers' Follow-up lists their transactions' tasks.
+    revalidatePath("/customers");
+  }
   if (task.realtorId) {
     revalidatePath("/realtors");
     revalidatePath(`/realtors/${task.realtorId}`);
