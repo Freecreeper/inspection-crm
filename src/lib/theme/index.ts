@@ -122,10 +122,11 @@ export function uiPreferencesWithTheme(doc: unknown, theme: ThemePreference): Re
 
 export const CUSTOM_THEME_STYLE_ID = "custom-theme";
 
-// Browser only: apply a preference to the open page at once (including a
-// custom theme's colors, written into the one style element the root
-// layout always renders) and remember it in this browser.
-export function applyTheme(pref: ThemePreference) {
+// Browser only: apply a choice to the open page at once (including a custom
+// theme's colors, written into the one style element the root layout always
+// renders) and remember it in this browser. Returns it stamped with now.
+export function applyTheme(choice: ThemePreference): ThemePreference {
+  const pref = { ...choice, savedAt: Date.now() };
   const root = document.documentElement;
   root.dataset.appearance = pref.appearance;
   root.dataset.palette = pref.palette;
@@ -139,4 +140,5 @@ export function applyTheme(pref: ThemePreference) {
     style.textContent = customThemeCss(pref.custom);
   }
   document.cookie = themeCookie(pref);
+  return pref;
 }
