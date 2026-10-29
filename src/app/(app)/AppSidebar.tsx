@@ -341,6 +341,10 @@ export function AppSidebar({
   // since localStorage isn't available during server rendering.
   const [collapsed, setCollapsed] = useState(false);
   const [animateCollapse, setAnimateCollapse] = useState(false);
+  // The rail/full contents fade in only after the viewer toggles: adding
+  // the animation class after load would otherwise replay it on every
+  // page load.
+  const [fadeContents, setFadeContents] = useState(false);
 
   useEffect(() => {
     // localStorage is a browser-only API — there's no way to read it before
@@ -361,6 +365,7 @@ export function AppSidebar({
 
   function setCollapsedPersisted(next: boolean) {
     setCollapsed(next);
+    setFadeContents(true);
     try {
       localStorage.setItem(COLLAPSE_STORAGE_KEY, String(next));
     } catch {
@@ -394,11 +399,11 @@ export function AppSidebar({
         } ${collapsed ? "w-16" : "w-64"}`}
       >
         {collapsed ? (
-          <div key="rail" className={`flex h-full w-16 flex-col ${animateCollapse ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
+          <div key="rail" className={`flex h-full w-16 flex-col ${fadeContents ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
             <SidebarRail pathname={pathname} displayName={displayName} roleLabel={roleLabel} granted={granted} signOutAction={signOutAction} />
           </div>
         ) : (
-          <div key="full" className={`flex h-full w-64 flex-col ${animateCollapse ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
+          <div key="full" className={`flex h-full w-64 flex-col ${fadeContents ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
             {content(() => setCollapsedPersisted(true))}
           </div>
         )}
