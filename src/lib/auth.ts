@@ -6,6 +6,7 @@ import { clearFailures, clientIp, lockedUntil, pruneAttempts, recordFailure, thr
 import { verifyPassword } from "./security/password";
 import { sameOriginRedirect } from "./security/redirects";
 import { refreshSessionToken, SESSION_MAX_AGE_SECONDS, type SessionToken } from "./security/session";
+import { encodeTheme, themeFromUiPreferences } from "./theme";
 
 // Too many recent failures for this email or address. The login page shows
 // a "try again later" message; it is the same for real and unknown emails.
@@ -16,13 +17,13 @@ class LockedOut extends CredentialsSignin {
 const loadCurrentUser = (id: string) =>
   prisma.user.findUnique({
     where: { id },
-    select: { id: true, active: true, role: true, name: true, email: true, sessionVersion: true, mustChangePassword: true },
+    select: { id: true, active: true, role: true, name: true, email: true, sessionVersion: true, mustChangePassword: true, uiPreferences: true },
   });
 
 // Staff auth path (§13): credential sessions, JWT strategy. Customer/realtor
 // report access is a separate signed-token path (see report delivery routes),
 // deliberately not wired through this provider.
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update: updateSession } = NextAuth({
   session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: { signIn: "/login" },
   providers: [
@@ -55,16 +56,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await clearFailures(email);
         // Housekeeping: expired counters from anyone (cheap, indexed by key).
         void pruneAttempts().catch(() => undefined);
-        return { id: user.id, email: user.email, name: user.name, role: user.role, sessionVersion: user.sessionVersion, mustChangePassword: user.mustChangePassword };
+        const theme = themeFromUiPreferences(user.uiPreferences);
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          sessionVersion: user.sessionVersion,
+          mustChangePassword: user.mustChangePassword,
+          theme: theme ? encodeTheme(theme) : undefined,
+        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
-        const u = user as { id: string; role: string; sessionVersion?: number; mustChangePassword?: boolean };
-        return { ...token, id: u.id, role: u.role, sv: u.sessionVersion ?? 0, mcp: u.mustChangePassword ?? false, checkedAt: Date.now() };
+        const u = user as { id: string; role: string; sessionVersion?: number; mustChangePassword?: boolean; theme?: string };
+        return { ...token, id: u.id, role: u.role, sv: u.sessionVersion ?? 0, mcp: u.mustChangePassword ?? false, theme: u.theme, checkedAt: Date.now() };
       }
+      // A settings save asks for a fresh token (updateSession): re-read the
+      // user now instead of at the next periodic check. The client can't
+      // supply any values here — they always come from the database.
+      if (trigger === "update") token.checkedAt = 0;
       // Re-checked against the user row every few minutes; null signs out.
       const refreshed = await refreshSessionToken(token as SessionToken, Date.now(), loadCurrentUser);
       return refreshed as typeof token | null;
@@ -74,6 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.mustChangePassword = Boolean(token.mcp);
+        session.user.theme = typeof token.theme === "string" ? token.theme : undefined;
       }
       return session;
     },

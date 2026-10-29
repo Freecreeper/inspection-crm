@@ -6,6 +6,8 @@ declare module "next-auth" {
       id: string;
       role: string;
       mustChangePassword: boolean;
+      // Saved theme, encoded (src/lib/theme).
+      theme?: string;
     } & DefaultSession["user"];
   }
 
@@ -13,6 +15,7 @@ declare module "next-auth" {
     role: string;
     sessionVersion?: number;
     mustChangePassword?: boolean;
+    theme?: string;
   }
 }
 
@@ -24,6 +27,7 @@ declare module "next-auth/jwt" {
     sv?: number;
     // mustChangePassword, refreshed with the periodic re-check.
     mcp?: boolean;
+    theme?: string;
     checkedAt?: number;
   }
 }

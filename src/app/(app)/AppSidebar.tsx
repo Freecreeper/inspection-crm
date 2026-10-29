@@ -602,7 +602,7 @@ function SidebarRail({
         >
           {initialsOf(displayName)}
         </span>
-        <Link href="/account/appearance" aria-label="Appearance" {...tipProps("Appearance")} className={`${iconButton} text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-strong`}>
+        <Link href="/settings/appearance" aria-label="Appearance" {...tipProps("Appearance")} className={`${iconButton} text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-strong`}>
           <Palette className="h-4 w-4" aria-hidden="true" />
         </Link>
         <form action={signOutAction}>
@@ -871,7 +871,7 @@ function SidebarContent({
           <Link href="/account/password" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-sidebar-muted hover:text-sidebar-strong hover:underline">
             <KeyRound className="h-3 w-3" aria-hidden="true" /> Change password
           </Link>
-          <Link href="/account/appearance" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-sidebar-muted hover:text-sidebar-strong hover:underline">
+          <Link href="/settings/appearance" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-sidebar-muted hover:text-sidebar-strong hover:underline">
             <Palette className="h-3 w-3" aria-hidden="true" /> Appearance
           </Link>
           <form action={signOutAction}>

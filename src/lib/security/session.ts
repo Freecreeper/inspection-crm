@@ -3,7 +3,9 @@
 // they kept using the app (Auth.js slides the expiry forward on every
 // request). Every few minutes it is checked against the user row: a
 // missing, deactivated, or revoked (sessionVersion changed) user is signed
-// out, and the role and must-change-password flag are refreshed.
+// out, and the role, must-change-password flag and theme are refreshed.
+
+import { encodeTheme, themeFromUiPreferences } from "@/lib/theme";
 
 export const RECHECK_MS = 2 * 60_000;
 // Idle sessions end after this long (sliding: each request extends it).
@@ -17,6 +19,8 @@ export interface SessionToken {
   email?: string | null;
   sv?: number;
   mcp?: boolean;
+  // The user's saved theme, encoded (src/lib/theme); absent = none saved.
+  theme?: string;
   checkedAt?: number;
   [key: string]: unknown;
 }
@@ -29,6 +33,7 @@ export interface CurrentUser {
   email: string;
   sessionVersion: number;
   mustChangePassword: boolean;
+  uiPreferences?: unknown;
 }
 
 export async function refreshSessionToken(
@@ -45,5 +50,6 @@ export async function refreshSessionToken(
   // Tokens from before sessionVersion existed carry none; treat as version 0.
   if ((token.sv ?? 0) !== user.sessionVersion) return null;
 
-  return { ...token, id: user.id, role: user.role, name: user.name, email: user.email, sv: user.sessionVersion, mcp: user.mustChangePassword, checkedAt: now };
+  const theme = themeFromUiPreferences(user.uiPreferences);
+  return { ...token, id: user.id, role: user.role, name: user.name, email: user.email, sv: user.sessionVersion, mcp: user.mustChangePassword, theme: theme ? encodeTheme(theme) : undefined, checkedAt: now };
 }
