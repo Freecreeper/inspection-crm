@@ -25,11 +25,11 @@ export default async function LeadsByReferralSourcePage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <Link href="/reports" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/reports" className="text-xs text-muted-foreground hover:underline">
         ← Reports
       </Link>
-      <h1 className="text-xl font-semibold text-neutral-900">Leads by Referral Source</h1>
-      <p className="text-sm text-neutral-500">
+      <h1 className="text-xl font-semibold text-foreground">Leads by Referral Source</h1>
+      <p className="text-sm text-muted-foreground">
         Grouped by referral source — a null group is a real &quot;Unknown&quot; bucket, not a dropped record.
       </p>
       <ReportTable rows={rows} reconciledTotal={result.reconciledTotal} />

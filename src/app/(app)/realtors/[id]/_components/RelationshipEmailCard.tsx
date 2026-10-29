@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { updateRealtorEmailPreferences, updateRealtorRelationshipDates } from "../../actions";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
 
 export interface RelationshipEmailData {
   realtorId: string;
@@ -70,7 +70,7 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
         }}
       >
         <fieldset disabled={!canEditDates || pending} className="space-y-3">
-          <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Relationship dates (optional)</legend>
+          <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Relationship dates (optional)</legend>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor={`${id}-bm`} className="text-xs text-neutral-600">
@@ -104,7 +104,7 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
               </select>
             </div>
           </div>
-          <p className="text-xs text-neutral-500">No birth year is ever stored.</p>
+          <p className="text-xs text-muted-foreground">No birth year is ever stored.</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <label htmlFor={`${id}-career`} className="text-xs text-neutral-600">
@@ -120,7 +120,7 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
             </div>
           </div>
           {canEditDates && (
-            <button type="submit" className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+            <button type="submit" className="rounded-md border border-input bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-hover">
               Save dates
             </button>
           )}
@@ -134,10 +134,10 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
         }}
       >
         <fieldset disabled={!canEditPreferences || pending} className="space-y-2">
-          <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Email preferences</legend>
-          <p className="text-xs text-neutral-500">Operational email about their transactions is never affected by these.</p>
-          {!data.hasEmail && <p className="text-sm text-amber-700">No email on file — no email can be sent until one is added.</p>}
-          {data.suppression && <p className="text-sm text-amber-700">Address suppressed: {data.suppression}</p>}
+          <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email preferences</legend>
+          <p className="text-xs text-muted-foreground">Operational email about their transactions is never affected by these.</p>
+          {!data.hasEmail && <p className="text-sm text-warning-strong">No email on file — no email can be sent until one is added.</p>}
+          {data.suppression && <p className="text-sm text-warning-strong">Address suppressed: {data.suppression}</p>}
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={prefs.relationshipEmailsEnabled} onChange={(e) => setPrefs({ ...prefs, relationshipEmailsEnabled: e.target.checked })} />
             Relationship emails (thank-yous, birthdays, check-ins)
@@ -154,7 +154,7 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
               <input id={`${id}-src`} value={prefs.marketingOptInSource} onChange={(e) => setPrefs({ ...prefs, marketingOptInSource: e.target.value })} placeholder="e.g. Signed up at open house" className={input} />
             </div>
           )}
-          <dl className="space-y-0.5 text-xs text-neutral-500">
+          <dl className="space-y-0.5 text-xs text-muted-foreground">
             {data.marketingOptIn && data.marketingOptInAt && (
               <div>
                 Opted in {short(data.marketingOptInAt)}
@@ -166,14 +166,14 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
             <div>Last marketing email: {short(data.lastMarketingEmailAt) ?? "never"}</div>
           </dl>
           {canEditPreferences && (
-            <button type="submit" className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+            <button type="submit" className="rounded-md border border-input bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-hover">
               Save preferences
             </button>
           )}
         </fieldset>
       </form>
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`text-xs ${message.ok ? "text-accent-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`text-xs ${message.ok ? "text-success-strong" : "text-danger-strong"}`}>
           {message.text}
         </p>
       )}

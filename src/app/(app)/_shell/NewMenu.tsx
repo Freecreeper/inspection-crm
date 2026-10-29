@@ -52,7 +52,7 @@ export function NewMenu({
           <span className="sr-only sm:not-sr-only">New</span>
         </>
       }
-      buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-solid-600 px-3.5 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
+      buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       {(close) => (
         <div
@@ -93,7 +93,7 @@ export function NewMenu({
   );
 }
 
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm";
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm";
 
 // A customer needs only a name. Likely duplicates are shown first — the
 // same check scheduling uses — and nothing is merged automatically.
@@ -127,17 +127,17 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
       {duplicates ? (
         <div className="space-y-3">
           <p className="text-sm text-neutral-700">These customers look similar. Open one, or create a new customer anyway.</p>
-          <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+          <ul className="divide-y divide-neutral-100 rounded-md border border-border">
             {duplicates.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2">
                 <span className="min-w-0 text-sm">
-                  <span className="block font-medium text-neutral-900">{d.name}</span>
-                  <span className="block text-xs text-neutral-500">
+                  <span className="block font-medium text-foreground">{d.name}</span>
+                  <span className="block text-xs text-muted-foreground">
                     Same {d.reasons.join(", ")}
                     {d.email ? ` · ${d.email}` : ""}
                   </span>
                 </span>
-                <Link href={`/customers/${d.id}`} onClick={onClose} className="rounded-md border border-neutral-300 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                <Link href={`/customers/${d.id}`} onClick={onClose} className="rounded-md border border-input px-2.5 py-1 text-sm font-medium text-neutral-700 hover:bg-hover">
                   Open
                 </Link>
               </li>
@@ -147,7 +147,7 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
             <button type="button" onClick={() => setDuplicates(null)} className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">
               Back
             </button>
-            <button type="button" disabled={pending} onClick={() => submit(true)} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+            <button type="button" disabled={pending} onClick={() => submit(true)} className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
               Create anyway
             </button>
           </div>
@@ -176,7 +176,7 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
           </label>
           <PhoneField value={form.phone} onChange={(phone) => setForm({ ...form, phone })} />
           {error && (
-            <p role="alert" className="text-sm text-rose-700">
+            <p role="alert" className="text-sm text-danger-strong">
               {error}
             </p>
           )}
@@ -184,7 +184,7 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
             <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">
               Cancel
             </button>
-            <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
               {pending ? "Saving…" : "Create customer"}
             </button>
           </div>

@@ -34,8 +34,8 @@ import { Popover } from "@/components/Popover";
 import { MiniMonths } from "./MiniMonths";
 import { WeekAgenda } from "./WeekAgenda";
 
-const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
-const iconBtn = "inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-300 bg-surface text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
+const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border border-input bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring";
+const iconBtn = "inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-surface text-neutral-700 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring";
 
 function useIsPhone() {
   const [phone, setPhone] = useState(false);
@@ -225,10 +225,10 @@ export function CalendarApp({
     <div>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-baseline gap-3">
-          <h1 className="text-2xl font-semibold text-neutral-900">Calendar</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Calendar</h1>
           <p className="truncate text-sm font-medium text-neutral-600" aria-live="polite">
             {title}
-            {loading && <span className="ml-2 text-xs font-normal text-neutral-400">Loading…</span>}
+            {loading && <span className="ml-2 text-xs font-normal text-subtle">Loading…</span>}
           </p>
         </div>
         {(canSchedule || viewer.canUpdateTasks || viewer.canBlockTime) && (
@@ -239,7 +239,7 @@ export function CalendarApp({
                 Schedule
               </>
             }
-            buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-solid-600 px-3.5 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
+            buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {(close) => (
               <div role="menu" aria-label="Schedule" className="flex flex-col">
@@ -290,7 +290,7 @@ export function CalendarApp({
             aria-label="Go to date"
             value={anchor}
             onChange={(e) => e.target.value && setAnchor(e.target.value)}
-            className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
           />
         )}
         <nav aria-label="Calendar view" className="flex w-full rounded-lg bg-neutral-100 p-0.5 sm:w-auto">
@@ -300,7 +300,7 @@ export function CalendarApp({
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium sm:flex-none ${view === v ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900"}`}
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium sm:flex-none ${view === v ? "bg-surface text-foreground shadow-sm" : "text-neutral-600 hover:text-foreground"}`}
             >
               {VIEW_LABELS[v]}
             </button>
@@ -312,17 +312,17 @@ export function CalendarApp({
             <label htmlFor="calendar-search" className="sr-only">
               Search the calendar
             </label>
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden="true" />
             <input
               id="calendar-search"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search this view"
-              className="h-9 w-44 rounded-md border border-neutral-300 bg-surface pl-8 pr-7 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 w-44 rounded-md border border-input bg-surface pl-8 pr-7 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring [&::-webkit-search-cancel-button]:hidden"
             />
             {query && (
-              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700">
+              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-subtle hover:text-neutral-700">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -330,7 +330,7 @@ export function CalendarApp({
           {people.length > 0 && (
             <label className="flex items-center">
               <span className="sr-only">Inspector</span>
-              <select value={inspectorId ?? ""} onChange={(e) => setInspectorId(e.target.value || null)} className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm text-neutral-700">
+              <select value={inspectorId ?? ""} onChange={(e) => setInspectorId(e.target.value || null)} className="h-9 rounded-md border border-input bg-surface px-2 text-sm text-neutral-700">
                 <option value="">All inspectors</option>
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -352,7 +352,7 @@ export function CalendarApp({
           >
             {() => (
               <fieldset className="px-2 py-1.5">
-                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-500">Show</legend>
+                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Show</legend>
                 <div className="mt-1.5 space-y-1.5">
                   {CALENDAR_LAYERS.filter((l) => l.key !== "billing" || viewer.role !== "REPORTING_ANALYST" || true).map((l) => (
                     <label key={l.key} className="flex items-center gap-2 px-1 text-sm text-neutral-700">
@@ -372,7 +372,7 @@ export function CalendarApp({
       </div>
 
       {q && (
-        <p className="mt-2 text-xs text-neutral-500" aria-live="polite">
+        <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
           {visible.length} match{visible.length === 1 ? "" : "es"} in this view.{" "}
           <button type="button" onClick={() => setQuery("")} className="underline">
             Clear
@@ -380,7 +380,7 @@ export function CalendarApp({
         </p>
       )}
       {notice && (
-        <p role="status" className="mt-2 flex items-center justify-between rounded-md bg-accent-50 px-3 py-2 text-sm text-accent-800">
+        <p role="status" className="mt-2 flex items-center justify-between rounded-md border border-success-border bg-success-soft px-3 py-2 text-sm text-success-strong">
           {notice}
           <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded p-0.5 hover:bg-accent-100">
             <X className="h-4 w-4" />
@@ -388,7 +388,7 @@ export function CalendarApp({
         </p>
       )}
       {loadError && (
-        <p role="alert" className="mt-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {loadError}{" "}
           <button type="button" onClick={() => refresh()} className="font-medium underline">
             Retry
@@ -417,7 +417,7 @@ export function CalendarApp({
                 onEventClick={setSelected}
                 emptyAction={
                   canSchedule ? (
-                    <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white">
+                    <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
                       Schedule inspection
                     </button>
                   ) : undefined
@@ -463,7 +463,7 @@ export function CalendarApp({
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
             <TimeGrid days={[anchor]} events={visible} config={config} variant="day" today={today} now={now} onEventClick={setSelected} onSlotClick={onSlotClick} onDrop={onDrop} />
             <section aria-label="Day agenda">
-              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">Agenda</h2>
+              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Agenda</h2>
               <AgendaList day={anchor} events={visible} timeZone={tz} onEventClick={setSelected} />
             </section>
           </div>
@@ -472,7 +472,7 @@ export function CalendarApp({
         )}
       </div>
       {!isPhone && (effectiveView === "day" || effectiveView === "week") && (canSchedule || onDrop) && (
-        <p className="mt-2 text-xs text-neutral-500">
+        <p className="mt-2 text-xs text-muted-foreground">
           {canSchedule && "Click an empty time to schedule an inspection. "}
           {onDrop && "Drag an inspection to reschedule it — you'll confirm before anything changes. "}
           {onDrop && "Or open it and choose Reschedule."}

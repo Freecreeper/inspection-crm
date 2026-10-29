@@ -8,8 +8,8 @@ import { MoreMenu } from "./MoreMenu";
 import { EmailComposer } from "@/components/email/EmailComposer";
 
 const actionClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
-const unavailableClass = "inline-flex items-center gap-1.5 rounded-md border border-dashed border-neutral-200 px-3 py-1.5 text-sm text-neutral-400";
+  "inline-flex items-center gap-1.5 rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring";
+const unavailableClass = "inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm text-subtle";
 
 // Missing contact info removes only the action that needs it — the rest of
 // the record stays fully usable (§7 non-blocking data).

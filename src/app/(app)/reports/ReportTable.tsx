@@ -19,13 +19,13 @@ function formatCell(value: unknown): string {
 export function ReportTable({ rows, reconciledTotal }: { rows: Record<string, unknown>[]; reconciledTotal: number }) {
   return (
     <>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted-foreground">
         {reconciledTotal} total record{reconciledTotal === 1 ? "" : "s"} — every matching row is counted, including
         ones with an unknown value for the fields shown.
       </p>
-      <div className="mt-2 overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-2 overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>{rows[0] && Object.keys(rows[0]).map((key) => <th key={key} className="px-3 py-2 font-medium">{key}</th>)}</tr>
           </thead>
           <tbody>
@@ -40,7 +40,7 @@ export function ReportTable({ rows, reconciledTotal }: { rows: Record<string, un
             ))}
             {rows.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-neutral-400">No matching records.</td>
+                <td className="px-3 py-6 text-center text-subtle">No matching records.</td>
               </tr>
             )}
           </tbody>

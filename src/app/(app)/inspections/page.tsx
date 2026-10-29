@@ -91,7 +91,7 @@ async function List({ params }: { params: { filter?: string; view?: string; page
               key={v}
               href={v === "upcoming" ? "/inspections" : "/inspections?view=past"}
               aria-current={view === v ? "page" : undefined}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === v ? "bg-neutral-solid-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === v ? "bg-primary text-primary-foreground" : "text-neutral-600 hover:bg-neutral-100"}`}
             >
               {v === "upcoming" ? "Upcoming" : "Past"}
             </Link>
@@ -101,14 +101,14 @@ async function List({ params }: { params: { filter?: string; view?: string; page
       {filter && (
         <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-600">
           <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-neutral-700">Showing: {FILTERS[filter]}</span>
-          <Link href="/inspections" className="text-accent-700 hover:underline">
+          <Link href="/inspections" className="text-link hover:underline">
             Clear filter
           </Link>
         </p>
       )}
-      <div className="mt-6 overflow-hidden rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Property</th>
               <th className="px-4 py-2 font-medium">Customer</th>
@@ -123,9 +123,9 @@ async function List({ params }: { params: { filter?: string; view?: string; page
               const primaryCustomer = getPrimaryCustomer(i.transaction.customers);
               const report = i.reports[0];
               return (
-                <tr key={i.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+                <tr key={i.id} className="border-t border-neutral-100 hover:bg-hover">
                   <td className="px-4 py-2">
-                    <Link href={`/inspections/${i.id}`} className="font-medium text-neutral-900 hover:underline">
+                    <Link href={`/inspections/${i.id}`} className="font-medium text-foreground hover:underline">
                       {i.property.addressLine1}, {i.property.city}
                     </Link>
                   </td>
@@ -136,11 +136,11 @@ async function List({ params }: { params: { filter?: string; view?: string; page
                     {i.scheduledAt ? (
                       `${formatDay(toDayKey(i.scheduledAt, timeZone), "short")}${toDayKey(i.scheduledAt, timeZone).slice(0, 4) !== thisYear ? `, ${toDayKey(i.scheduledAt, timeZone).slice(0, 4)}` : ""}, ${formatTime(i.scheduledAt, timeZone)}`
                     ) : (
-                      <span className="text-neutral-400">Not set</span>
+                      <span className="text-subtle">Not set</span>
                     )}
                   </td>
                   <td className="px-4 py-2 text-neutral-600">
-                    {i.inspector?.name || <span className="text-neutral-400">Unassigned</span>}
+                    {i.inspector?.name || <span className="text-subtle">Unassigned</span>}
                   </td>
                   <td className="px-4 py-2">
                     <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
@@ -149,11 +149,11 @@ async function List({ params }: { params: { filter?: string; view?: string; page
                   </td>
                   <td className="px-4 py-2">
                     {report ? (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[11px] text-blue-700">
+                      <span className="rounded-full bg-info-soft px-2 py-0.5 font-mono text-[11px] text-info-strong">
                         {report.status}
                       </span>
                     ) : (
-                      <span className="text-neutral-400">Not started</span>
+                      <span className="text-subtle">Not started</span>
                     )}
                   </td>
                 </tr>
@@ -161,7 +161,7 @@ async function List({ params }: { params: { filter?: string; view?: string; page
             })}
             {inspections.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-subtle">
                   {filter ? "No inspections match this filter." : view === "past" ? "No past inspections." : "Nothing coming up — schedule one from the Calendar or a transaction."}
                 </td>
               </tr>
@@ -176,12 +176,12 @@ async function List({ params }: { params: { filter?: string; view?: string; page
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={href(page - 1)} className="rounded-md border border-neutral-300 bg-surface px-3 py-1 hover:bg-neutral-50">
+              <Link href={href(page - 1)} className="rounded-md border border-input bg-surface px-3 py-1 hover:bg-hover">
                 Previous
               </Link>
             )}
             {page * PAGE_SIZE < total && (
-              <Link href={href(page + 1)} className="rounded-md border border-neutral-300 bg-surface px-3 py-1 hover:bg-neutral-50">
+              <Link href={href(page + 1)} className="rounded-md border border-input bg-surface px-3 py-1 hover:bg-hover">
                 Next
               </Link>
             )}
@@ -277,10 +277,10 @@ async function Workflow({ canConduct }: { canConduct: boolean }) {
           const customer = getPrimaryCustomer(i.transaction.customers);
           return (
             <QueueRow key={i.id} actions={actionsFor(queue, i)}>
-              <Link href={`/inspections/${i.id}`} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
+              <Link href={`/inspections/${i.id}`} className="block truncate text-sm font-medium text-foreground hover:underline">
                 {i.property.addressLine1}, {i.property.city}
               </Link>
-              <p className="truncate text-xs text-neutral-500">
+              <p className="truncate text-xs text-muted-foreground">
                 {[when(i.scheduledAt), customer && `${customer.firstName} ${customer.lastName}`, i.inspector?.name ?? "Unassigned"].filter(Boolean).join(" · ")}
               </p>
             </QueueRow>
@@ -293,11 +293,11 @@ async function Workflow({ canConduct }: { canConduct: boolean }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">Inspection</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-subtle">Inspection</h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{INSPECTION_QUEUES.slice(0, 4).map(section)}</div>
       </div>
       <div>
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">Report</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-subtle">Report</h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{INSPECTION_QUEUES.slice(4).map(section)}</div>
       </div>
     </div>

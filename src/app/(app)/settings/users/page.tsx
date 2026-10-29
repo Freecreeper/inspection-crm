@@ -15,8 +15,8 @@ export default async function UsersPage() {
   });
   return (
     <div className="max-w-4xl">
-      <h1 className="text-xl font-semibold text-neutral-900">Users</h1>
-      <p className="mt-1 text-sm text-neutral-500">Add staff, set their role, and deactivate people who leave. Deactivating signs them out everywhere immediately.</p>
+      <h1 className="text-xl font-semibold text-foreground">Users</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Add staff, set their role, and deactivate people who leave. Deactivating signs them out everywhere immediately.</p>
       <UsersManager currentUserId={session!.user.id} users={rows.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))} />
     </div>
   );

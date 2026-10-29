@@ -39,11 +39,11 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-5xl space-y-6">
-      <Link href="/email/campaigns" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/email/campaigns" className="text-xs text-muted-foreground hover:underline">
         ← All campaigns
       </Link>
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900">{campaign?.name ?? "New campaign"}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{campaign?.name ?? "New campaign"}</h2>
         {campaign && (
           <p className="text-sm text-neutral-600">
             {CAMPAIGN_STATUS_LABELS[campaign.status]} · {describeAudience(audience, brokerageNames)}
@@ -72,22 +72,22 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
       {campaign && campaign.messages.length > 0 && (
         <section aria-labelledby="recipients">
-          <h3 id="recipients" className="text-sm font-semibold text-neutral-900">
+          <h3 id="recipients" className="text-sm font-semibold text-foreground">
             Recipients
           </h3>
-          <p className="mt-1 text-xs text-neutral-500">{[...counts].map(([s, n]) => `${n} ${s.toLowerCase()}`).join(" · ")}</p>
-          <ul className="mt-2 max-h-[28rem] divide-y divide-neutral-100 overflow-y-auto rounded-lg border border-neutral-200 bg-surface text-sm">
+          <p className="mt-1 text-xs text-muted-foreground">{[...counts].map(([s, n]) => `${n} ${s.toLowerCase()}`).join(" · ")}</p>
+          <ul className="mt-2 max-h-[28rem] divide-y divide-neutral-100 overflow-y-auto rounded-lg border border-border bg-surface text-sm">
             {campaign.messages.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2">
                 <span>
-                  <Link href={`/email/messages/${m.id}`} className="text-neutral-900 hover:underline">
+                  <Link href={`/email/messages/${m.id}`} className="text-foreground hover:underline">
                     {m.recipientName}
                   </Link>
-                  <span className="text-neutral-500"> · {m.recipientEmail ?? "no email"}</span>
+                  <span className="text-muted-foreground"> · {m.recipientEmail ?? "no email"}</span>
                 </span>
                 <span className="text-right">
                   <EmailStatusBadge status={m.status} simulated={m.simulated} />
-                  {m.statusReason && !m.simulated && <span className="block text-xs text-neutral-500">{m.statusReason}</span>}
+                  {m.statusReason && !m.simulated && <span className="block text-xs text-muted-foreground">{m.statusReason}</span>}
                 </span>
               </li>
             ))}

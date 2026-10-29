@@ -15,7 +15,7 @@ interface TemplateFields {
   active: boolean;
 }
 
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
 
 export function TemplateEditor({
   id,
@@ -87,7 +87,7 @@ export function TemplateEditor({
                 <option value="RELATIONSHIP">Relationship (thank-yous, birthdays, follow-ups)</option>
                 <option value="MARKETING">Marketing (announcements, promotions, newsletters)</option>
               </select>
-              <p className="mt-1 text-xs text-neutral-500">Marketing email always includes an unsubscribe link and respects marketing preferences.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Marketing email always includes an unsubscribe link and respects marketing preferences.</p>
             </div>
             <div>
               <label htmlFor={`${uid}-rt`} className="block text-sm font-medium text-neutral-700">For</label>
@@ -105,7 +105,7 @@ export function TemplateEditor({
           <div>
             <label htmlFor={`${uid}-body`} className="block text-sm font-medium text-neutral-700">Body</label>
             <textarea id={`${uid}-body`} ref={bodyRef} rows={14} value={fields.body} onChange={(e) => set("body", e.target.value)} className={`${input} font-mono text-[13px]`} />
-            <p className="mt-1 text-xs text-neutral-500">{'Add a fallback with {{inspector.name | "our inspector"}}. Without one, a missing value stops an automatic email rather than sending a blank.'}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{'Add a fallback with {{inspector.name | "our inspector"}}. Without one, a missing value stops an automatic email rather than sending a blank.'}</p>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={fields.active} onChange={(e) => set("active", e.target.checked)} />
@@ -114,15 +114,15 @@ export function TemplateEditor({
         </fieldset>
 
         {preview && (
-          <section aria-label="Preview" className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
-            <p className="text-xs font-medium text-amber-800">Preview with sample data — values in [brackets] are examples, not real records.</p>
-            <p className="mt-2 font-medium text-neutral-900">{preview.subject}</p>
+          <section aria-label="Preview" className="rounded-md border border-border bg-surface-secondary p-3 text-sm">
+            <p className="text-xs font-medium text-warning-strong">Preview with sample data — values in [brackets] are examples, not real records.</p>
+            <p className="mt-2 font-medium text-foreground">{preview.subject}</p>
             <pre className="mt-1 whitespace-pre-wrap font-sans text-neutral-800">{preview.body}</pre>
-            {preview.unknown.length > 0 && <p className="mt-2 text-xs font-medium text-red-600">Unknown fields: {preview.unknown.map((k) => `{{${k}}}`).join(", ")}</p>}
+            {preview.unknown.length > 0 && <p className="mt-2 text-xs font-medium text-danger-strong">Unknown fields: {preview.unknown.map((k) => `{{${k}}}`).join(", ")}</p>}
           </section>
         )}
         {message && (
-          <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-accent-700" : "text-red-600"}`}>
+          <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-success-strong" : "text-danger-strong"}`}>
             {message.text}
           </p>
         )}
@@ -141,26 +141,26 @@ export function TemplateEditor({
                 }
               })
             }
-            className="rounded-md border border-neutral-300 bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-md border border-input bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-hover"
           >
             Preview
           </button>
           {canManage && (
-            <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
               {pending ? "Saving…" : "Save template"}
             </button>
           )}
         </div>
       </form>
 
-      <aside aria-labelledby={`${uid}-vars`} className="rounded-lg border border-neutral-200 bg-surface p-3">
-        <h3 id={`${uid}-vars`} className="text-xs font-medium uppercase tracking-wide text-neutral-500">Available fields</h3>
+      <aside aria-labelledby={`${uid}-vars`} className="rounded-lg border border-border bg-surface p-3">
+        <h3 id={`${uid}-vars`} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available fields</h3>
         <ul className="mt-2 max-h-[32rem] space-y-1 overflow-y-auto text-sm">
           {variables.map((v) => (
             <li key={v.key}>
-              <button type="button" disabled={!canManage} onClick={() => insert(v.key)} className="w-full rounded px-1.5 py-1 text-left hover:bg-neutral-50 disabled:cursor-default">
+              <button type="button" disabled={!canManage} onClick={() => insert(v.key)} className="w-full rounded px-1.5 py-1 text-left hover:bg-hover disabled:cursor-default">
                 <code className="text-xs text-neutral-800">{`{{${v.key}}}`}</code>
-                <span className="block text-xs text-neutral-500">
+                <span className="block text-xs text-muted-foreground">
                   {v.label}
                   {v.sendTime && " — created at send time, never stored"}
                 </span>

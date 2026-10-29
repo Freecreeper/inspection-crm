@@ -70,7 +70,7 @@ export async function OverviewTab({
           <Card title="Brokerage">
             {realtor.brokerage ? (
               <div className="space-y-1 text-sm">
-                <Link href={`/brokerages/${realtor.brokerage.id}`} className="font-medium text-neutral-900 hover:underline">
+                <Link href={`/brokerages/${realtor.brokerage.id}`} className="font-medium text-foreground hover:underline">
                   {realtor.brokerage.name}
                 </Link>
                 {(realtor.brokerage.city || realtor.brokerage.phone) && (
@@ -80,7 +80,7 @@ export async function OverviewTab({
                       .join(" · ")}
                   </p>
                 )}
-                <Link href={`/brokerages/${realtor.brokerage.id}`} className="inline-block text-sm text-accent-700 hover:underline">
+                <Link href={`/brokerages/${realtor.brokerage.id}`} className="inline-block text-sm text-link hover:underline">
                   View brokerage
                 </Link>
               </div>
@@ -89,14 +89,14 @@ export async function OverviewTab({
             )}
             {history.length > 1 && (
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer text-xs text-neutral-500 hover:text-neutral-700">Brokerage history ({history.length})</summary>
+                <summary className="cursor-pointer text-xs text-muted-foreground hover:text-neutral-700">Brokerage history ({history.length})</summary>
                 <ul className="mt-2 space-y-1">
                   {history.map((h) => (
                     <li key={h.id} className="flex justify-between gap-3 text-xs">
                       <Link href={`/brokerages/${h.brokerage.id}`} className="text-neutral-700 hover:underline">
                         {h.brokerage.name}
                       </Link>
-                      <span className="tabular-nums text-neutral-500">
+                      <span className="tabular-nums text-muted-foreground">
                         {formatShortDate(h.startDate)} – {h.endDate ? formatShortDate(h.endDate) : "present"}
                       </span>
                     </li>
@@ -118,9 +118,9 @@ export async function OverviewTab({
           <Card title="Next action" action={{ href: "/tasks", label: "All tasks" }}>
             {nextAction ? (
               <div className="space-y-2">
-                <p className="text-sm text-neutral-900">
+                <p className="text-sm text-foreground">
                   {nextAction.title}
-                  <span className="text-neutral-500"> — {nextAction.dueAt ? `due ${formatShortDate(nextAction.dueAt)}` : "no due date"}</span>
+                  <span className="text-muted-foreground"> — {nextAction.dueAt ? `due ${formatShortDate(nextAction.dueAt)}` : "no due date"}</span>
                 </p>
                 {permissions.canWrite && <RecordTaskActions taskId={nextAction.id} dueAt={nextAction.dueAt?.toISOString() ?? null} />}
               </div>
@@ -170,14 +170,14 @@ export async function OverviewTab({
             {recentTransactions.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-4 py-2.5 text-sm first:pt-0 last:pb-0">
                 <div className="min-w-0">
-                  <Link href={`/transactions/${t.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/transactions/${t.id}`} className="font-medium text-foreground hover:underline">
                     {t.property ?? "No property yet"}
                   </Link>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {t.primaryCustomer ?? "No customer yet"} · {t.roles.join(", ")}
                   </p>
                 </div>
-                <div className="shrink-0 text-right text-xs text-neutral-500">
+                <div className="shrink-0 text-right text-xs text-muted-foreground">
                   <p>{t.inspectionDate ? `Inspection ${formatShortDate(t.inspectionDate)}` : "No inspection yet"}</p>
                   {t.revenue !== null && <p className="tabular-nums text-neutral-700">{formatCurrency(t.revenue)}</p>}
                 </div>
@@ -195,10 +195,10 @@ export async function OverviewTab({
             {recentActivity.map((item) => (
               <li key={item.id} className="flex justify-between gap-4 text-sm">
                 <div className="min-w-0">
-                  <p className="text-neutral-900">{item.title}</p>
-                  {item.detail && <p className="truncate text-xs text-neutral-500">{item.detail}</p>}
+                  <p className="text-foreground">{item.title}</p>
+                  {item.detail && <p className="truncate text-xs text-muted-foreground">{item.detail}</p>}
                 </div>
-                <time dateTime={item.at.toISOString()} className="shrink-0 text-xs tabular-nums text-neutral-500">
+                <time dateTime={item.at.toISOString()} className="shrink-0 text-xs tabular-nums text-muted-foreground">
                   {formatShortDate(item.at)}
                 </time>
               </li>

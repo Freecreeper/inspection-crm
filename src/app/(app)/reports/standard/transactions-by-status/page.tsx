@@ -15,10 +15,10 @@ export default async function TransactionsByStatusPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <Link href="/reports" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/reports" className="text-xs text-muted-foreground hover:underline">
         ← Reports
       </Link>
-      <h1 className="text-xl font-semibold text-neutral-900">Transactions by Status</h1>
+      <h1 className="text-xl font-semibold text-foreground">Transactions by Status</h1>
       <ReportTable rows={result.rows} reconciledTotal={result.reconciledTotal} />
     </div>
   );

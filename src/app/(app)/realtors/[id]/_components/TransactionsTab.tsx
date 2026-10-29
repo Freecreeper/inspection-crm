@@ -17,18 +17,18 @@ export async function TransactionsTab({ realtorId, permissions }: { realtorId: s
   ]);
 
   if (rows.length === 0) {
-    return <p className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">Not on any transactions yet.</p>;
+    return <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">Not on any transactions yet.</p>;
   }
 
   return (
     <div>
       <p className="mb-3 text-sm text-neutral-600">
         {total} transaction{total === 1 ? "" : "s"} where this realtor had a role.{" "}
-        <span className="text-neutral-500">Brokerage shown is the one they were with when added to that deal.</span>
+        <span className="text-muted-foreground">Brokerage shown is the one they were with when added to that deal.</span>
       </p>
-      <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full min-w-[760px] text-sm">
-          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2.5 font-medium">Property</th>
               <th scope="col" className="px-3 py-2.5 font-medium">Customer(s)</th>
@@ -43,21 +43,21 @@ export async function TransactionsTab({ realtorId, permissions }: { realtorId: s
             {rows.map((t) => (
               <tr key={t.id} className="border-t border-neutral-100 first:border-t-0">
                 <td className="px-3 py-2.5">
-                  <Link href={`/transactions/${t.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/transactions/${t.id}`} className="font-medium text-foreground hover:underline">
                     {t.property ?? "No property yet"}
                   </Link>
                 </td>
-                <td className="px-3 py-2.5 text-neutral-600">{t.customers.length ? t.customers.join(", ") : <span className="text-neutral-400">None yet</span>}</td>
+                <td className="px-3 py-2.5 text-neutral-600">{t.customers.length ? t.customers.join(", ") : <span className="text-subtle">None yet</span>}</td>
                 <td className="px-3 py-2.5 text-neutral-600">{t.roles.join(", ")}</td>
-                <td className="px-3 py-2.5 text-neutral-600">{t.brokerageAtTheTime ?? <span className="text-neutral-400">—</span>}</td>
+                <td className="px-3 py-2.5 text-neutral-600">{t.brokerageAtTheTime ?? <span className="text-subtle">—</span>}</td>
                 <td className="px-3 py-2.5 text-neutral-600">
                   {t.inspectionStatus ? (
                     <>
                       {humanStatus(t.inspectionStatus)}
-                      {t.inspectionDate && <span className="text-neutral-500"> · {formatShortDate(t.inspectionDate)}</span>}
+                      {t.inspectionDate && <span className="text-muted-foreground"> · {formatShortDate(t.inspectionDate)}</span>}
                     </>
                   ) : (
-                    <span className="text-neutral-400">None</span>
+                    <span className="text-subtle">None</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 text-neutral-600">{humanStatus(t.status)}</td>
@@ -67,7 +67,7 @@ export async function TransactionsTab({ realtorId, permissions }: { realtorId: s
           </tbody>
         </table>
       </div>
-      {total > rows.length && <p className="mt-2 text-xs text-neutral-500">Showing the {rows.length} most recent of {total}.</p>}
+      {total > rows.length && <p className="mt-2 text-xs text-muted-foreground">Showing the {rows.length} most recent of {total}.</p>}
     </div>
   );
 }

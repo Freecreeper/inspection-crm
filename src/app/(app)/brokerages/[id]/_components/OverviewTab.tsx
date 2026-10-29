@@ -42,14 +42,14 @@ export async function OverviewTab({ brokerage, permissions }: { brokerage: Broke
               {realtors.current.map((r) => (
                 <li key={r.id} className="flex items-start justify-between gap-4 py-2.5 text-sm first:pt-0 last:pb-0">
                   <div className="min-w-0">
-                    <Link href={`/realtors/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                    <Link href={`/realtors/${r.id}`} className="font-medium text-foreground hover:underline">
                       {r.name}
                     </Link>
                     {(r.phone || r.email) && (
-                      <p className="truncate text-xs text-neutral-500">{[r.phone ? formatPhone(r.phone) : null, r.email].filter(Boolean).join(" · ")}</p>
+                      <p className="truncate text-xs text-muted-foreground">{[r.phone ? formatPhone(r.phone) : null, r.email].filter(Boolean).join(" · ")}</p>
                     )}
                   </div>
-                  <span className="shrink-0 text-xs tabular-nums text-neutral-500">
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {r.transactions} transaction{r.transactions === 1 ? "" : "s"}
                   </span>
                 </li>
@@ -59,7 +59,7 @@ export async function OverviewTab({ brokerage, permissions }: { brokerage: Broke
             <Empty>No current realtors.</Empty>
           )}
           {metrics.currentRealtors > realtors.current.length && (
-            <p className="mt-2 text-xs text-neutral-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               Showing {realtors.current.length} of {metrics.currentRealtors}.
             </p>
           )}
@@ -72,14 +72,14 @@ export async function OverviewTab({ brokerage, permissions }: { brokerage: Broke
             {recentTransactions.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-4 py-2.5 text-sm first:pt-0 last:pb-0">
                 <div className="min-w-0">
-                  <Link href={`/transactions/${t.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/transactions/${t.id}`} className="font-medium text-foreground hover:underline">
                     {t.property ?? "No property yet"}
                   </Link>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {t.primaryCustomer ?? "No customer yet"} · {t.realtors.map((r) => r.name).join(", ")}
                   </p>
                 </div>
-                <div className="shrink-0 text-right text-xs text-neutral-500">
+                <div className="shrink-0 text-right text-xs text-muted-foreground">
                   <p>{t.inspectionDate ? `Inspection ${formatShortDate(t.inspectionDate)}` : "No inspection yet"}</p>
                   {t.revenue !== null && <p className="tabular-nums text-neutral-700">{formatCurrency(t.revenue)}</p>}
                 </div>
@@ -97,7 +97,7 @@ export async function OverviewTab({ brokerage, permissions }: { brokerage: Broke
             {recentActivity.map((item) => (
               <li key={item.id} className="flex justify-between gap-4 text-sm">
                 <div className="min-w-0">
-                  <p className="text-neutral-900">
+                  <p className="text-foreground">
                     {item.href ? (
                       <Link href={item.href} className="hover:underline">
                         {item.title}
@@ -106,9 +106,9 @@ export async function OverviewTab({ brokerage, permissions }: { brokerage: Broke
                       item.title
                     )}
                   </p>
-                  {item.detail && <p className="truncate text-xs text-neutral-500">{item.detail}</p>}
+                  {item.detail && <p className="truncate text-xs text-muted-foreground">{item.detail}</p>}
                 </div>
-                <time dateTime={item.at.toISOString()} className="shrink-0 text-xs tabular-nums text-neutral-500">
+                <time dateTime={item.at.toISOString()} className="shrink-0 text-xs tabular-nums text-muted-foreground">
                   {formatShortDate(item.at)}
                 </time>
               </li>

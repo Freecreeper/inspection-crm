@@ -63,8 +63,8 @@ export function RealtorPreviewDrawer({
   return (
     <Drawer open={realtorId !== null} onClose={onClose} title={title} titleId="realtor-preview-title" focusKey={realtorId}>
       {state.status === "loading" && <DrawerSkeleton />}
-      {state.status === "missing" && <p className="p-5 text-sm text-neutral-500">This realtor no longer exists or has been archived.</p>}
-      {state.status === "error" && <p className="p-5 text-sm text-red-600">Couldn&apos;t load this realtor. Try again.</p>}
+      {state.status === "missing" && <p className="p-5 text-sm text-muted-foreground">This realtor no longer exists or has been archived.</p>}
+      {state.status === "error" && <p className="p-5 text-sm text-danger-strong">Couldn&apos;t load this realtor. Try again.</p>}
       {state.status === "ready" && <PreviewBody preview={state.preview} onChanged={refresh} onLayoutSaved={reload} />}
     </Drawer>
   );
@@ -93,26 +93,26 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
       <section className="space-y-3 px-5 py-4" aria-label="Summary">
         {(preview.legalName || on("brokerage")) && (
           <div className="text-sm text-neutral-600">
-            {preview.legalName && <p className="text-xs text-neutral-500">Legal name: {preview.legalName}</p>}
+            {preview.legalName && <p className="text-xs text-muted-foreground">Legal name: {preview.legalName}</p>}
             {on("brokerage") &&
               (preview.brokerage ? (
-                <Link href={`/brokerages/${preview.brokerage.id}`} className="hover:text-neutral-900 hover:underline">
+                <Link href={`/brokerages/${preview.brokerage.id}`} className="hover:text-foreground hover:underline">
                   {brokerageLabel(preview.brokerage)}
                 </Link>
               ) : (
-                <span className="text-neutral-400">No brokerage on file</span>
+                <span className="text-subtle">No brokerage on file</span>
               ))}
           </div>
         )}
 
         {on("nextAction") && (
-          <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-neutral-500">Next action</h3>
+          <div className="rounded-md border border-border bg-surface-secondary px-3 py-2.5">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Next action</h3>
             {preview.nextAction ? (
               <div className="mt-1 space-y-2">
-                <p className="text-sm text-neutral-900">
+                <p className="text-sm text-foreground">
                   {preview.nextAction.title}
-                  <span className="text-neutral-500"> — {preview.nextAction.dueAt ? formatShortDate(preview.nextAction.dueAt) : "no due date"}</span>
+                  <span className="text-muted-foreground"> — {preview.nextAction.dueAt ? formatShortDate(preview.nextAction.dueAt) : "no due date"}</span>
                 </p>
                 <div className="flex flex-wrap items-start gap-2">
                   {permissions.canWrite && <TaskActions taskId={preview.nextAction.id} dueAt={preview.nextAction.dueAt} size="xs" onDone={onChanged} />}
@@ -123,25 +123,25 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
                       label="Prepare follow-up"
                       icon={false}
                       onChanged={onChanged}
-                      className="rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                      className="rounded-md border border-input bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-hover"
                     />
                   )}
                 </div>
               </div>
             ) : (
-              <p className="mt-1 text-sm text-neutral-500">No upcoming follow-up.</p>
+              <p className="mt-1 text-sm text-muted-foreground">No upcoming follow-up.</p>
             )}
           </div>
         )}
 
         {preview.preparedEmails.length > 0 && (
-          <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2.5">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-sky-800">
+          <div className="rounded-md border border-info-border bg-info-soft px-3 py-2.5">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-info-strong">
               {preview.preparedEmails.length === 1 ? "Email ready for review" : `${preview.preparedEmails.length} emails ready for review`}
             </h3>
             <ul className="mt-1 space-y-1.5">
               {preview.preparedEmails.map((d) => (
-                <li key={d.id} className="flex items-center justify-between gap-2 text-sm text-neutral-900">
+                <li key={d.id} className="flex items-center justify-between gap-2 text-sm text-foreground">
                   <span className="min-w-0 truncate">{d.subject}</span>
                   {permissions.canEmail && (
                     <EmailButton
@@ -150,7 +150,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
                       label="Review & send"
                       icon={false}
                       onChanged={onChanged}
-                      className="shrink-0 rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                      className="shrink-0 rounded-md border border-input bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-hover"
                     />
                   )}
                 </li>
@@ -186,13 +186,13 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
           <dl className="grid grid-cols-3 gap-3">
             {stats.map((s) => (
               <div key={s.label}>
-                <dt className="text-xs text-neutral-500">{s.label}</dt>
-                <dd className="mt-0.5 text-lg font-semibold tabular-nums text-neutral-900">{s.value}</dd>
+                <dt className="text-xs text-muted-foreground">{s.label}</dt>
+                <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{s.value}</dd>
               </div>
             ))}
           </dl>
           {showsRevenue && (
-            <p className="mt-2 text-xs text-neutral-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               Associated revenue is billed on deals they were part of — not revenue they referred. See Referrals for that.
             </p>
           )}
@@ -201,7 +201,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
 
       {on("contact") && (
         <section className="px-5 py-4" aria-labelledby="drawer-contact">
-          <h3 id="drawer-contact" className="mb-3 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <h3 id="drawer-contact" className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Contact
           </h3>
           <ProfileFields
@@ -222,7 +222,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
 
       {on("activity") && (
         <section className="px-5 py-4" aria-labelledby="drawer-activity">
-          <h3 id="drawer-activity" className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <h3 id="drawer-activity" className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Recent activity
           </h3>
           {preview.recentActivity.length > 0 ? (
@@ -230,17 +230,17 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
               {preview.recentActivity.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="text-neutral-900">{item.title}</p>
-                    {item.detail && <p className="truncate text-xs text-neutral-500">{item.detail}</p>}
+                    <p className="text-foreground">{item.title}</p>
+                    {item.detail && <p className="truncate text-xs text-muted-foreground">{item.detail}</p>}
                   </div>
-                  <time dateTime={item.at} className="shrink-0 text-xs tabular-nums text-neutral-500">
+                  <time dateTime={item.at} className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {formatShortDate(item.at)}
                   </time>
                 </li>
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-neutral-500">No activity recorded yet.</p>
+            <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
           )}
         </section>
       )}
@@ -248,7 +248,7 @@ function PreviewBody({ preview, onChanged, onLayoutSaved }: { preview: RealtorPr
       <div className="px-5 py-4">
         <Link
           href={`/realtors/${preview.id}`}
-          className="block w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-neutral-solid-800"
+          className="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary-hover"
         >
           Open full realtor record
         </Link>
@@ -305,15 +305,15 @@ function CustomizePanel({
           onClose();
         }
       }}
-      className="rounded-md border border-neutral-200 bg-surface p-3 shadow-sm"
+      className="rounded-md border border-border bg-surface p-3 shadow-sm"
     >
       <div className="flex items-baseline justify-between gap-3">
-        <h3 id={headingId} className="text-sm font-medium text-neutral-900">
+        <h3 id={headingId} className="text-sm font-medium text-foreground">
           Customize card
         </h3>
-        {pending && <span className="text-xs text-neutral-500">Saving…</span>}
+        {pending && <span className="text-xs text-muted-foreground">Saving…</span>}
       </div>
-      <p className="mt-0.5 text-xs text-neutral-500">Choose what this preview shows. Saved to your account.</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Choose what this preview shows. Saved to your account.</p>
       <ul className="mt-3 space-y-1.5">
         {options.map((option) => (
           <li key={option.key}>
@@ -335,7 +335,7 @@ function CustomizePanel({
         ))}
       </ul>
       {error && (
-        <p role="alert" className="mt-2 text-xs text-red-600">
+        <p role="alert" className="mt-2 text-xs text-danger-strong">
           {error}
         </p>
       )}
@@ -343,7 +343,7 @@ function CustomizePanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover"
         >
           Done
         </button>

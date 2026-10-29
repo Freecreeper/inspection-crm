@@ -55,7 +55,7 @@ export function MoreMenu({
     }
   }
 
-  const itemClass = "block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
+  const itemClass = "block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-hover focus:bg-hover focus:outline-none";
 
   return (
     <div ref={containerRef} className="relative">
@@ -72,7 +72,7 @@ export function MoreMenu({
         <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
       {open && (
-        <div id={menuId} role="menu" onKeyDown={onMenuKeyDown} className="absolute right-0 z-20 mt-1 w-52 rounded-md border border-neutral-200 bg-surface py-1 shadow-lg">
+        <div id={menuId} role="menu" onKeyDown={onMenuKeyDown} className="absolute right-0 z-20 mt-1 w-52 rounded-md border border-border bg-surface py-1 shadow-lg">
           {items.map((item) =>
             item.href ? (
               <Link key={item.label} href={item.href} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>

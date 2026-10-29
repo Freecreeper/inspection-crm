@@ -44,7 +44,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex min-h-screen bg-background">
       <AppSidebar displayName={displayName} roleLabel={humanizeRole(session.user.role ?? "")} granted={granted} signOutAction={signOutAction} actions={shellActions}>
         {children}
       </AppSidebar>

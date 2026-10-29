@@ -58,7 +58,7 @@ function CreateRealtorForm({
 
   return (
     <>
-      <h2 className="text-sm font-semibold text-neutral-900">New realtor</h2>
+      <h2 className="text-sm font-semibold text-foreground">New realtor</h2>
       <div className="mt-4 space-y-3">
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -67,7 +67,7 @@ function CreateRealtorForm({
               autoFocus
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
             />
           </div>
           <div>
@@ -75,18 +75,18 @@ function CreateRealtorForm({
             <input
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
             />
           </div>
         </div>
         <PhoneField value={phone} onChange={setPhone} />
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-danger-strong">{error}</p>}
       </div>
       <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover"
         >
           Cancel
         </button>
@@ -94,7 +94,7 @@ function CreateRealtorForm({
           type="button"
           disabled={pending}
           onClick={handleSubmit}
-          className="rounded-md bg-accent-solid-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
         >
           {pending ? "Adding…" : "Add realtor"}
         </button>

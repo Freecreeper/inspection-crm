@@ -131,7 +131,7 @@ export function Combobox({
     <div ref={containerRef} className="relative">
       <input type="hidden" name={name} value={selectedId} required={required} />
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
         <input
           ref={inputRef}
           type="text"
@@ -152,14 +152,14 @@ export function Combobox({
             setHighlighted(0);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full rounded-md border border-neutral-300 py-1.5 pl-8 pr-7 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+          className="w-full rounded-md border border-input py-1.5 pl-8 pr-7 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
         {selectedId && (
           <button
             type="button"
             onClick={clearSelection}
             aria-label="Clear selection"
-            className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+            className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-subtle hover:bg-neutral-100 hover:text-neutral-600"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -167,8 +167,8 @@ export function Combobox({
       </div>
 
       {open && (
-        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-neutral-200 bg-surface py-1 shadow-lg">
-          {filtered.length === 0 && !renderCreateNew && <p className="px-3 py-2 text-sm text-neutral-400">{emptyMessage}</p>}
+        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-surface py-1 shadow-lg">
+          {filtered.length === 0 && !renderCreateNew && <p className="px-3 py-2 text-sm text-subtle">{emptyMessage}</p>}
           {filtered.map((option, index) => (
             <button
               key={option.id}
@@ -178,11 +178,11 @@ export function Combobox({
               onMouseEnter={() => setHighlighted(index)}
               onClick={() => selectOption(option)}
               className={`block w-full px-3 py-1.5 text-left text-sm ${
-                index === highlighted ? "bg-accent-50 text-accent-800" : "text-neutral-700"
+                index === highlighted ? "bg-selected text-accent-800" : "text-neutral-700"
               }`}
             >
               {option.label}
-              {option.sublabel && <span className="ml-1.5 text-xs text-neutral-400">{option.sublabel}</span>}
+              {option.sublabel && <span className="ml-1.5 text-xs text-subtle">{option.sublabel}</span>}
             </button>
           ))}
           {renderCreateNew && (
@@ -193,8 +193,8 @@ export function Combobox({
                 setCreating(true);
                 setOpen(false);
               }}
-              className={`block w-full border-t border-neutral-100 px-3 py-1.5 text-left text-sm font-medium text-accent-700 ${
-                highlighted === filtered.length ? "bg-accent-50" : ""
+              className={`block w-full border-t border-neutral-100 px-3 py-1.5 text-left text-sm font-medium text-link ${
+                highlighted === filtered.length ? "bg-selected" : ""
               }`}
             >
               {createNewLabel}

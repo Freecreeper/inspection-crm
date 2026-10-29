@@ -4,7 +4,7 @@ import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addSuppression, removeSuppression, updateEmailSettings } from "../actions";
 
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
 
 interface SettingsFields {
   companyName: string;
@@ -32,13 +32,13 @@ export function SettingsForm({ initial, canManage, defaultFromEmail }: { initial
         {label}
       </label>
       <input id={`${id}-${key}`} type={type} value={String(f[key])} onChange={(e) => setF({ ...f, [key]: e.target.value })} className={input} />
-      {hint && <p className="mt-1 text-xs text-neutral-500">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 
   return (
     <form
-      className="space-y-4 rounded-lg border border-neutral-200 bg-surface p-4"
+      className="space-y-4 rounded-lg border border-border bg-surface p-4"
       onSubmit={(e) => {
         e.preventDefault();
         startTransition(async () => {
@@ -52,7 +52,7 @@ export function SettingsForm({ initial, canManage, defaultFromEmail }: { initial
         });
       }}
     >
-      <h2 className="text-sm font-semibold text-neutral-900">Sending</h2>
+      <h2 className="text-sm font-semibold text-foreground">Sending</h2>
       <fieldset disabled={!canManage || pending} className="space-y-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {text("companyName", "Company name")}
@@ -73,17 +73,17 @@ export function SettingsForm({ initial, canManage, defaultFromEmail }: { initial
             Inspection preparation instructions
           </label>
           <textarea id={`${id}-prep`} rows={3} value={f.inspectionPrepInstructions} onChange={(e) => setF({ ...f, inspectionPrepInstructions: e.target.value })} className={input} />
-          <p className="mt-1 text-xs text-neutral-500">{"Shown in confirmations and reminders via {{company.prepInstructions}}."}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{"Shown in confirmations and reminders via {{company.prepInstructions}}."}</p>
         </div>
       </fieldset>
 
-      <h2 className="pt-2 text-sm font-semibold text-neutral-900">Marketing</h2>
+      <h2 className="pt-2 text-sm font-semibold text-foreground">Marketing</h2>
       <fieldset disabled={!canManage || pending} className="space-y-3">
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" className="mt-1" checked={f.marketingRequiresOptIn} onChange={(e) => setF({ ...f, marketingRequiresOptIn: e.target.checked })} />
           <span>
             Only send marketing to realtors who have opted in
-            <span className="block text-xs text-neutral-500">
+            <span className="block text-xs text-muted-foreground">
               Recommended. When off, marketing goes to any realtor with an email who hasn&apos;t unsubscribed — check the rules that apply to your business first.
             </span>
           </span>
@@ -106,12 +106,12 @@ export function SettingsForm({ initial, canManage, defaultFromEmail }: { initial
       </fieldset>
 
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-accent-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-success-strong" : "text-danger-strong"}`}>
           {message.text}
         </p>
       )}
       {canManage && (
-        <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
           {pending ? "Saving…" : "Save settings"}
         </button>
       )}
@@ -149,11 +149,11 @@ export function SuppressionManager({
     });
 
   return (
-    <section aria-labelledby={`${id}-h`} className="rounded-lg border border-neutral-200 bg-surface p-4 text-sm">
-      <h2 id={`${id}-h`} className="text-sm font-semibold text-neutral-900">
+    <section aria-labelledby={`${id}-h`} className="rounded-lg border border-border bg-surface p-4 text-sm">
+      <h2 id={`${id}-h`} className="text-sm font-semibold text-foreground">
         Suppressed addresses
       </h2>
-      <p className="mt-1 text-xs text-neutral-500">Bounces and complaints are added automatically. A marketing suppression never blocks operational email.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Bounces and complaints are added automatically. A marketing suppression never blocks operational email.</p>
       {canManage && (
         <form
           className="mt-3 space-y-2"
@@ -170,21 +170,21 @@ export function SuppressionManager({
             <label htmlFor={`${id}-scope`} className="sr-only">
               Scope
             </label>
-            <select id={`${id}-scope`} value={scope} onChange={(e) => setScope(e.target.value as keyof typeof SCOPES)} className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+            <select id={`${id}-scope`} value={scope} onChange={(e) => setScope(e.target.value as keyof typeof SCOPES)} className="flex-1 rounded-md border border-input px-2 py-1.5 text-sm">
               {Object.entries(SCOPES).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
                 </option>
               ))}
             </select>
-            <button type="submit" disabled={pending} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+            <button type="submit" disabled={pending} className="rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover">
               Add
             </button>
           </div>
         </form>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-xs text-red-600">
+        <p role="alert" className="mt-2 text-xs text-danger-strong">
           {error}
         </p>
       )}
@@ -192,19 +192,19 @@ export function SuppressionManager({
         {rows.map((r) => (
           <li key={r.id} className="flex items-start justify-between gap-2 py-2">
             <span className="min-w-0">
-              <span className="block truncate text-neutral-900">{r.email}</span>
-              <span className="block text-xs text-neutral-500">
+              <span className="block truncate text-foreground">{r.email}</span>
+              <span className="block text-xs text-muted-foreground">
                 {SCOPES[r.scope]} · {r.reason}
               </span>
             </span>
             {canManage && (
-              <button type="button" disabled={pending} onClick={() => run(() => removeSuppression(r.id))} className="shrink-0 text-xs text-neutral-500 hover:text-red-700 hover:underline">
+              <button type="button" disabled={pending} onClick={() => run(() => removeSuppression(r.id))} className="shrink-0 text-xs text-muted-foreground hover:text-danger-strong hover:underline">
                 Remove
               </button>
             )}
           </li>
         ))}
-        {rows.length === 0 && <li className="py-3 text-xs text-neutral-500">No suppressed addresses.</li>}
+        {rows.length === 0 && <li className="py-3 text-xs text-muted-foreground">No suppressed addresses.</li>}
       </ul>
     </section>
   );

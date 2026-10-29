@@ -13,14 +13,14 @@ export default async function SavedReportsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Link href="/reports" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/reports" className="text-xs text-muted-foreground hover:underline">
         ← Reports
       </Link>
-      <h1 className="text-xl font-semibold text-neutral-900">Saved reports</h1>
+      <h1 className="text-xl font-semibold text-foreground">Saved reports</h1>
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200 bg-surface">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Name</th>
               <th className="px-4 py-2 font-medium">Entity</th>
@@ -33,7 +33,7 @@ export default async function SavedReportsPage() {
             {reports.map((r) => (
               <tr key={r.id} className="border-t border-neutral-100">
                 <td className="px-4 py-2">
-                  <Link href={`/reports/saved/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/reports/saved/${r.id}`} className="font-medium text-foreground hover:underline">
                     {r.name}
                   </Link>
                 </td>
@@ -43,7 +43,7 @@ export default async function SavedReportsPage() {
                 <td className="px-4 py-2 text-right">
                   {r.ownerId === userId && (
                     <form action={deleteSavedReport.bind(null, r.id)}>
-                      <button type="submit" className="text-xs text-red-600 hover:underline">
+                      <button type="submit" className="text-xs text-danger-strong hover:underline">
                         Delete
                       </button>
                     </form>
@@ -53,7 +53,7 @@ export default async function SavedReportsPage() {
             ))}
             {reports.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-subtle">
                   No saved reports yet.
                 </td>
               </tr>

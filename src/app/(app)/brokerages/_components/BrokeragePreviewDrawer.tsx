@@ -46,8 +46,8 @@ export function BrokeragePreviewDrawer({ brokerageId, onClose, onChanged }: { br
   return (
     <Drawer open={brokerageId !== null} onClose={onClose} title={title} titleId="brokerage-preview-title" focusKey={brokerageId}>
       {state.status === "loading" && <DrawerSkeleton />}
-      {state.status === "missing" && <p className="p-5 text-sm text-neutral-500">This brokerage no longer exists or has been archived.</p>}
-      {state.status === "error" && <p className="p-5 text-sm text-red-600">Couldn&apos;t load this brokerage. Try again.</p>}
+      {state.status === "missing" && <p className="p-5 text-sm text-muted-foreground">This brokerage no longer exists or has been archived.</p>}
+      {state.status === "error" && <p className="p-5 text-sm text-danger-strong">Couldn&apos;t load this brokerage. Try again.</p>}
       {state.status === "ready" && <PreviewBody preview={state.preview} onChanged={refresh} />}
     </Drawer>
   );
@@ -58,59 +58,59 @@ function PreviewBody({ preview, onChanged }: { preview: BrokeragePreview; onChan
   return (
     <div className="divide-y divide-neutral-100">
       <section className="space-y-3 px-5 py-4" aria-label="Summary">
-        <p className="text-sm text-neutral-600">{preview.address || <span className="text-neutral-400">No address on file</span>}</p>
+        <p className="text-sm text-neutral-600">{preview.address || <span className="text-subtle">No address on file</span>}</p>
         <BrokerageQuickActions brokerageId={preview.id} phone={preview.phone} email={preview.email} showOpenRecord />
       </section>
 
       <section className="px-5 py-4" aria-label="At a glance">
         <dl className="grid grid-cols-3 gap-3">
           <div>
-            <dt className="text-xs text-neutral-500">Realtors</dt>
-            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-neutral-900">{stats.currentRealtors}</dd>
+            <dt className="text-xs text-muted-foreground">Realtors</dt>
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{stats.currentRealtors}</dd>
           </div>
           <div>
-            <dt className="text-xs text-neutral-500">Transactions</dt>
-            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-neutral-900">{stats.transactions}</dd>
+            <dt className="text-xs text-muted-foreground">Transactions</dt>
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{stats.transactions}</dd>
           </div>
           <div>
-            <dt className="text-xs text-neutral-500">Last transaction</dt>
-            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-neutral-900">
-              {stats.lastTransactionAt ? formatShortDate(stats.lastTransactionAt) : <span className="text-neutral-400">None</span>}
+            <dt className="text-xs text-muted-foreground">Last transaction</dt>
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
+              {stats.lastTransactionAt ? formatShortDate(stats.lastTransactionAt) : <span className="text-subtle">None</span>}
             </dd>
           </div>
         </dl>
-        <p className="mt-2 text-xs text-neutral-500">Transactions are deals a realtor worked while at this brokerage.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Transactions are deals a realtor worked while at this brokerage.</p>
       </section>
 
       <section className="px-5 py-4" aria-labelledby="brokerage-drawer-contact">
-        <h3 id="brokerage-drawer-contact" className="mb-3 text-xs font-medium uppercase tracking-wide text-neutral-500">
+        <h3 id="brokerage-drawer-contact" className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Contact
         </h3>
         <BrokerageContactFields brokerageId={preview.id} values={preview} canEdit={permissions.canWrite} onSaved={onChanged} />
       </section>
 
       <section className="px-5 py-4" aria-labelledby="brokerage-drawer-realtors">
-        <h3 id="brokerage-drawer-realtors" className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
+        <h3 id="brokerage-drawer-realtors" className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Realtors
         </h3>
         {preview.realtors.length > 0 ? (
           <ul className="space-y-2">
             {preview.realtors.map((r) => (
               <li key={r.id} className="text-sm">
-                <Link href={`/realtors/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                <Link href={`/realtors/${r.id}`} className="font-medium text-foreground hover:underline">
                   {r.name}
                 </Link>
                 {(r.phone || r.email) && (
-                  <p className="truncate text-xs text-neutral-500">{[r.phone ? formatPhone(r.phone) : null, r.email].filter(Boolean).join(" · ")}</p>
+                  <p className="truncate text-xs text-muted-foreground">{[r.phone ? formatPhone(r.phone) : null, r.email].filter(Boolean).join(" · ")}</p>
                 )}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-neutral-500">No current realtors.</p>
+          <p className="text-sm text-muted-foreground">No current realtors.</p>
         )}
         {stats.currentRealtors > preview.realtors.length && (
-          <Link href={`/brokerages/${preview.id}`} className="mt-2 inline-block text-sm text-accent-700 hover:underline">
+          <Link href={`/brokerages/${preview.id}`} className="mt-2 inline-block text-sm text-link hover:underline">
             View all {stats.currentRealtors} realtors
           </Link>
         )}
@@ -119,7 +119,7 @@ function PreviewBody({ preview, onChanged }: { preview: BrokeragePreview; onChan
       <div className="px-5 py-4">
         <Link
           href={`/brokerages/${preview.id}`}
-          className="block w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-neutral-solid-800"
+          className="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary-hover"
         >
           Open full brokerage record
         </Link>

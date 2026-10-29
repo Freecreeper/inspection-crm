@@ -38,12 +38,12 @@ export default async function AutomationsPage() {
   return (
     <div className="space-y-8">
       <section aria-labelledby="rules">
-        <h2 id="rules" className="text-sm font-semibold text-neutral-900">
+        <h2 id="rules" className="text-sm font-semibold text-foreground">
           Automations
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
           Each runs from real CRM events and dates only. Review-before-send prepares a draft in{" "}
-          <Link href="/email/review" className="text-accent-700 hover:underline">
+          <Link href="/email/review" className="text-link hover:underline">
             Needs review
           </Link>{" "}
           instead of sending. Realtor marketing is never automated — it goes through a campaign with human approval.
@@ -63,11 +63,11 @@ export default async function AutomationsPage() {
               modeLocked={key === "report_ready"}
             />
           ))}
-          <li className="rounded-lg border border-dashed border-neutral-300 bg-surface p-4">
-            <h3 className="font-medium text-neutral-900">Marketing campaigns</h3>
+          <li className="rounded-lg border border-dashed border-input bg-surface p-4">
+            <h3 className="font-medium text-foreground">Marketing campaigns</h3>
             <p className="text-sm text-neutral-600">
               Always manual approval: audience previewed, reviewed, and approved by an owner before anything sends.{" "}
-              <Link href="/email/campaigns" className="text-accent-700 hover:underline">
+              <Link href="/email/campaigns" className="text-link hover:underline">
                 Campaigns →
               </Link>
             </p>
@@ -76,10 +76,10 @@ export default async function AutomationsPage() {
       </section>
 
       <section aria-labelledby="log">
-        <h2 id="log" className="text-sm font-semibold text-neutral-900">
+        <h2 id="log" className="text-sm font-semibold text-foreground">
           Automation activity
         </h2>
-        <ul className="mt-3 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface text-sm">
+        <ul className="mt-3 divide-y divide-neutral-100 rounded-lg border border-border bg-surface text-sm">
           {events.map((e) => {
             const detail = (e.detail ?? {}) as { emailMessageId?: string; recipient?: string; reason?: string | null; stage?: string; occasion?: string };
             const msg = detail.emailMessageId ? messageById.get(detail.emailMessageId) : undefined;
@@ -88,22 +88,22 @@ export default async function AutomationsPage() {
             return (
               <li key={e.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-2.5">
                 <div className="min-w-0">
-                  <p className="text-neutral-900">
+                  <p className="text-foreground">
                     {e.automation.name}
                     {detail.recipient && <span className="text-neutral-600"> · {detail.recipient}</span>}
-                    {detail.occasion && <span className="text-neutral-500"> · {detail.occasion}</span>}
-                    {detail.stage && <span className="text-neutral-500"> · {detail.stage}</span>}
+                    {detail.occasion && <span className="text-muted-foreground"> · {detail.occasion}</span>}
+                    {detail.stage && <span className="text-muted-foreground"> · {detail.stage}</span>}
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {RESULT_LABELS[e.result] ?? e.result}
                     {current && current.toUpperCase() !== e.result && ` → now ${current}`}
                     {reason && ` · ${reason}`}
                   </p>
                 </div>
-                <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-neutral-500">
+                <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-muted-foreground">
                   {e.firedAt.toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   {detail.emailMessageId && (
-                    <Link href={`/email/messages/${detail.emailMessageId}`} className="text-accent-700 hover:underline">
+                    <Link href={`/email/messages/${detail.emailMessageId}`} className="text-link hover:underline">
                       View
                     </Link>
                   )}
@@ -111,7 +111,7 @@ export default async function AutomationsPage() {
               </li>
             );
           })}
-          {events.length === 0 && <li className="px-4 py-8 text-center text-neutral-500">No automation activity yet.</li>}
+          {events.length === 0 && <li className="px-4 py-8 text-center text-muted-foreground">No automation activity yet.</li>}
         </ul>
       </section>
     </div>

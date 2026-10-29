@@ -21,13 +21,13 @@ export function Card({
 }) {
   const headingId = `card-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
-    <section aria-labelledby={headingId} className={`rounded-lg border border-neutral-200 bg-surface p-5 ${className}`}>
+    <section aria-labelledby={headingId} className={`rounded-lg border border-border bg-surface p-5 ${className}`}>
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 id={headingId} className="text-sm font-semibold text-neutral-900">
+        <h2 id={headingId} className="text-sm font-semibold text-foreground">
           {title}
         </h2>
         {action && (
-          <Link href={action.href} className="text-sm text-accent-700 hover:underline">
+          <Link href={action.href} className="text-sm text-link hover:underline">
             {action.label}
           </Link>
         )}
@@ -40,9 +40,9 @@ export function Card({
 export function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="text-xs text-neutral-500">{label}</dt>
-      <dd className="mt-0.5 text-2xl font-semibold tabular-nums text-neutral-900">{value}</dd>
-      {hint && <p className="mt-0.5 text-xs text-neutral-500">{hint}</p>}
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-2xl font-semibold tabular-nums text-foreground">{value}</dd>
+      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -62,5 +62,5 @@ export function humanStatus(status: string | null): string {
 }
 
 export function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-neutral-500">{children}</p>;
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 }

@@ -99,7 +99,7 @@ export function DirectoryToolbar({
           <label htmlFor={searchId} className="sr-only">
             Search realtors
           </label>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden="true" />
           <input
             id={searchId}
             type="search"
@@ -107,14 +107,14 @@ export function DirectoryToolbar({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name, brokerage, phone, or email"
             autoComplete="off"
-            className="w-full rounded-md border border-neutral-300 bg-surface py-2 pl-9 pr-9 text-sm placeholder:text-neutral-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 [&::-webkit-search-cancel-button]:hidden"
+            className="w-full rounded-md border border-input bg-surface py-2 pl-9 pr-9 text-sm placeholder:text-subtle focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
               type="button"
               aria-label="Clear search"
               onClick={() => setQuery("")}
-              className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+              className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-subtle hover:bg-neutral-100 hover:text-neutral-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -128,12 +128,12 @@ export function DirectoryToolbar({
             aria-expanded={filtersOpen}
             aria-controls={panelId}
             onClick={() => setFiltersOpen((v) => !v)}
-            className="flex items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="flex items-center gap-1.5 rounded-md border border-input bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-hover"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
             Filters
             {filterCount > 0 && (
-              <span className="rounded-full bg-neutral-solid-900 px-1.5 text-xs font-semibold text-white">
+              <span className="rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
                 {filterCount}
                 <span className="sr-only"> active</span>
               </span>
@@ -144,17 +144,17 @@ export function DirectoryToolbar({
               id={panelId}
               role="group"
               aria-label="Filter realtors"
-              className="absolute right-0 z-20 mt-1 w-72 space-y-4 rounded-lg border border-neutral-200 bg-surface p-4 shadow-lg"
+              className="absolute right-0 z-20 mt-1 w-72 space-y-4 rounded-lg border border-border bg-surface p-4 shadow-lg"
             >
               <div>
-                <label htmlFor={`${panelId}-brokerage`} className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <label htmlFor={`${panelId}-brokerage`} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Brokerage
                 </label>
                 <select
                   id={`${panelId}-brokerage`}
                   value={params.brokerageId ?? ""}
                   onChange={(e) => apply({ brokerageId: e.target.value || null, missingBrokerage: null })}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                  className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
                 >
                   <option value="">Any brokerage</option>
                   {brokerages.map((b) => (
@@ -166,7 +166,7 @@ export function DirectoryToolbar({
               </div>
 
               <fieldset>
-                <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Show only</legend>
+                <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Show only</legend>
                 <div className="mt-2 space-y-1.5 text-sm">
                   {FLAG_FILTER_KEYS.map((key) => (
                     <label key={key} className="flex items-center gap-2">
@@ -184,14 +184,14 @@ export function DirectoryToolbar({
               </fieldset>
 
               <div>
-                <label htmlFor={`${panelId}-activity`} className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <label htmlFor={`${panelId}-activity`} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Last activity
                 </label>
                 <select
                   id={`${panelId}-activity`}
                   value={params.activity ?? ""}
                   onChange={(e) => apply({ activity: e.target.value || null })}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                  className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
                 >
                   <option value="">Any time</option>
                   {ACTIVITY_RANGES.map((r) => (
@@ -213,7 +213,7 @@ export function DirectoryToolbar({
               const [sort, dir] = e.target.value.split(":") as [DirectorySort, string];
               apply({ sort, dir });
             }}
-            className="rounded-md border border-neutral-300 bg-surface px-2 py-2 text-sm text-neutral-700"
+            className="rounded-md border border-input bg-surface px-2 py-2 text-sm text-neutral-700"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -229,7 +229,7 @@ export function DirectoryToolbar({
         <div ref={moreRef} className="relative">
           <MoreMenu
             label="More directory options"
-            buttonClassName="flex h-[38px] items-center rounded-md border border-neutral-300 bg-surface px-3 text-neutral-700 hover:bg-neutral-50"
+            buttonClassName="flex h-[38px] items-center rounded-md border border-input bg-surface px-3 text-neutral-700 hover:bg-hover"
             items={[{ label: "Customize layout", onSelect: () => setCustomizing(true) }]}
           />
           {customizing && (
@@ -250,10 +250,10 @@ export function DirectoryToolbar({
               <button
                 type="button"
                 onClick={() => apply(chip.clear)}
-                className="flex items-center gap-1 rounded-full border border-neutral-200 bg-surface py-0.5 pl-2.5 pr-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                className="flex items-center gap-1 rounded-full border border-border bg-surface py-0.5 pl-2.5 pr-1.5 text-xs text-neutral-700 hover:bg-hover"
               >
                 {chip.label}
-                <X className="h-3 w-3 text-neutral-400" aria-hidden="true" />
+                <X className="h-3 w-3 text-subtle" aria-hidden="true" />
                 <span className="sr-only">(remove filter)</span>
               </button>
             </li>
@@ -264,7 +264,7 @@ export function DirectoryToolbar({
               onClick={() =>
                 apply({ brokerageId: null, activity: null, ...Object.fromEntries(FLAG_FILTER_KEYS.map((k) => [k, null])) })
               }
-              className="text-xs text-neutral-500 hover:text-neutral-700 hover:underline"
+              className="text-xs text-muted-foreground hover:text-neutral-700 hover:underline"
             >
               Clear all
             </button>

@@ -16,10 +16,10 @@ export default async function TemplatePage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-5xl">
-      <Link href="/email/templates" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/email/templates" className="text-xs text-muted-foreground hover:underline">
         ← All templates
       </Link>
-      <h2 className="mt-2 text-lg font-semibold text-neutral-900">{template?.name ?? "New template"}</h2>
+      <h2 className="mt-2 text-lg font-semibold text-foreground">{template?.name ?? "New template"}</h2>
       {template?.automationEligible && (
         <p className="mt-1 text-sm text-neutral-600">An automation uses this template. Edits apply to emails it sends from now on.</p>
       )}

@@ -68,12 +68,12 @@ export function AutomationCard({
   const editable = Object.entries(config).filter(([k, v]) => k in FIELD_LABELS && (typeof v === "number" || typeof v === "boolean" || k === "customers"));
 
   return (
-    <li className="rounded-lg border border-neutral-200 bg-surface p-4">
+    <li className="rounded-lg border border-border bg-surface p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-medium text-neutral-900">{name}</h3>
+          <h3 className="font-medium text-foreground">{name}</h3>
           <p className="text-sm text-neutral-600">{description}</p>
-          <p className="mt-0.5 text-xs text-neutral-500">{category}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{category}</p>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
@@ -86,7 +86,7 @@ export function AutomationCard({
                 setSendMode(next);
                 save({ active, sendMode: next, config });
               }}
-              className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+              className="rounded-md border border-input px-2 py-1 text-sm"
             >
               <option value="AUTOMATIC">Automatic</option>
               <option value="REVIEW">Review before send</option>
@@ -135,7 +135,7 @@ export function AutomationCard({
                   value={String(value)}
                   disabled={!canManage}
                   onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                  className="mt-1 block rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                  className="mt-1 block rounded-md border border-input px-2 py-1 text-sm"
                 >
                   <option value="all">Every customer on the transaction</option>
                   <option value="primary">Primary contact only</option>
@@ -147,20 +147,20 @@ export function AutomationCard({
                   value={Number(value)}
                   disabled={!canManage}
                   onChange={(e) => setConfig({ ...config, [key]: Number(e.target.value) })}
-                  className="mt-1 block w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                  className="mt-1 block w-24 rounded-md border border-input px-2 py-1 text-sm"
                 />
               )}
             </label>
           ))}
           {canManage && (
-            <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
               Save settings
             </button>
           )}
         </form>
       )}
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`mt-2 text-xs ${message.ok ? "text-accent-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`mt-2 text-xs ${message.ok ? "text-success-strong" : "text-danger-strong"}`}>
           {message.text}
         </p>
       )}

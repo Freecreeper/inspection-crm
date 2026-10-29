@@ -189,16 +189,16 @@ export function TimeGrid({
   const nowMin = minutesIntoDay(now, tz);
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-surface">
+    <div className="rounded-lg border border-border bg-surface">
       {/* Day headers + all-day row */}
-      <div className="grid border-b border-neutral-200" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
+      <div className="grid border-b border-border" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
         <div className="border-r border-neutral-100" />
         {days.map((day) => (
           <div key={day} className="border-r border-neutral-100 px-1.5 py-2 last:border-r-0">
-            <p className={`text-center text-xs font-medium uppercase tracking-wide ${day === today ? "text-accent-700" : "text-neutral-500"}`}>
+            <p className={`text-center text-xs font-medium uppercase tracking-wide ${day === today ? "text-link" : "text-muted-foreground"}`}>
               {variant === "day" ? formatDay(day, "long") : formatDay(day, "weekday")}
               {variant === "week" && (
-                <span className={`ml-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-sm ${day === today ? "bg-accent-solid-600 text-white" : "text-neutral-900"}`}>
+                <span className={`ml-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-sm ${day === today ? "bg-accent text-accent-foreground" : "text-foreground"}`}>
                   {formatDay(day, "dayNumber")}
                 </span>
               )}
@@ -207,8 +207,8 @@ export function TimeGrid({
         ))}
       </div>
       {allDay.length > 0 && (
-        <div className="grid border-b border-neutral-200 bg-neutral-50/60" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
-          <div className="border-r border-neutral-100 px-1 py-1.5 text-right text-[10px] uppercase tracking-wide text-neutral-400">All day</div>
+        <div className="grid border-b border-border bg-neutral-50/60" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
+          <div className="border-r border-neutral-100 px-1 py-1.5 text-right text-[10px] uppercase tracking-wide text-subtle">All day</div>
           {days.map((day) => (
             <div key={day} className="space-y-1 border-r border-neutral-100 p-1 last:border-r-0">
               {allDay
@@ -218,7 +218,7 @@ export function TimeGrid({
                     key={e.id}
                     type="button"
                     onClick={() => onEventClick(e)}
-                    className={`flex w-full items-center gap-1 truncate rounded border-l-[3px] px-1.5 py-0.5 text-left text-xs ${eventTone(e)} hover:brightness-95 focus-visible:outline-2 focus-visible:outline-accent-600`}
+                    className={`flex w-full items-center gap-1 truncate rounded border-l-[3px] px-1.5 py-0.5 text-left text-xs ${eventTone(e)} hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring`}
                   >
                     <EventIcon event={e} className="h-3 w-3" />
                     <span className="sr-only">{EVENT_KIND[e.type].label}: </span>
@@ -235,7 +235,7 @@ export function TimeGrid({
         <div className="grid" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
           <div className="relative border-r border-neutral-100" style={{ height: heightPx }}>
             {hours.map((m) => (
-              <span key={m} className="absolute right-1.5 -translate-y-1/2 text-[11px] tabular-nums text-neutral-400" style={{ top: (m - gridStartMin) * PX_PER_MIN }}>
+              <span key={m} className="absolute right-1.5 -translate-y-1/2 text-[11px] tabular-nums text-subtle" style={{ top: (m - gridStartMin) * PX_PER_MIN }}>
                 {m === gridStartMin ? "" : formatTime(new Date(Date.UTC(2000, 0, 1, m / 60)), "UTC")}
               </span>
             ))}
@@ -286,7 +286,7 @@ export function TimeGrid({
                       onEventClick(e);
                     }}
                     aria-label={`${EVENT_KIND[e.type].label}: ${e.title}, ${formatTime(start, tz)} to ${formatTime(end, tz)}${e.inspectorName ? `, ${e.inspectorName}` : ""}${warn ? `. Warnings: ${e.warnings.map((w) => w.label).join(", ")}` : ""}`}
-                    className={`absolute flex flex-col items-stretch justify-start overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-left text-xs shadow-sm ${eventTone(e)} ${e.movable && onDrop ? "cursor-grab touch-none" : ""} ${dragging ? "opacity-40" : "hover:brightness-95"} focus-visible:z-20 focus-visible:outline-2 focus-visible:outline-accent-600`}
+                    className={`absolute flex flex-col items-stretch justify-start overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-left text-xs shadow-sm ${eventTone(e)} ${e.movable && onDrop ? "cursor-grab touch-none" : ""} ${dragging ? "opacity-40" : "hover:brightness-95"} focus-visible:z-20 focus-visible:outline-2 focus-visible:outline-ring`}
                     style={{
                       top: p.top * PX_PER_MIN + 1,
                       height: Math.max(p.height * PX_PER_MIN - 2, 18),
@@ -297,13 +297,13 @@ export function TimeGrid({
                     <span className="flex items-center gap-1 font-medium">
                       <EventIcon event={e} className="h-3 w-3" />
                       <span className="tabular-nums">{formatTime(start, tz)}</span>
-                      {warn && <AlertTriangle className="ml-auto h-3 w-3 shrink-0 text-amber-600" aria-hidden="true" />}
+                      {warn && <AlertTriangle className="ml-auto h-3 w-3 shrink-0 text-warning-strong" aria-hidden="true" />}
                     </span>
                     <span className="block truncate font-medium">{e.title}</span>
                     {e.subtitle && p.height >= 60 && <span className="block truncate text-neutral-600">{e.subtitle}</span>}
-                    {e.inspectorName && e.type === "inspection" && p.height >= 90 && <span className="block truncate text-neutral-500">Inspector: {e.inspectorName}</span>}
+                    {e.inspectorName && e.type === "inspection" && p.height >= 90 && <span className="block truncate text-muted-foreground">Inspector: {e.inspectorName}</span>}
                     {variant === "day" && warn && p.height >= 75 && (
-                      <span className="mt-0.5 block truncate text-amber-800">⚠ {e.warnings.map((w) => w.label).join(" · ")}</span>
+                      <span className="mt-0.5 block truncate text-warning-strong">⚠ {e.warnings.map((w) => w.label).join(" · ")}</span>
                     )}
                   </button>
                 );
@@ -311,7 +311,7 @@ export function TimeGrid({
               {drag && drag.day === day && (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-1 z-20 rounded-md border-2 border-dashed border-accent-600 bg-accent-100/70 px-1.5 py-1 text-xs font-medium text-accent-900"
+                  className="pointer-events-none absolute inset-x-1 z-20 rounded-md border-2 border-dashed border-ring bg-accent-100/70 px-1.5 py-1 text-xs font-medium text-accent-900"
                   style={{
                     top: (drag.min - gridStartMin) * PX_PER_MIN,
                     height: Math.max(((new Date(drag.event.end!).getTime() - new Date(drag.event.start!).getTime()) / 60_000) * PX_PER_MIN, 18),

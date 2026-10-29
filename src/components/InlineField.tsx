@@ -96,16 +96,16 @@ export function InlineField({
   if (!editing) {
     return (
       <div className="group">
-        <dt className="text-xs text-neutral-500">{label}</dt>
-        <dd className="mt-0.5 flex min-w-0 items-start gap-1.5 text-sm text-neutral-900">
-          <span className="min-w-0 break-words">{value ? (display ?? value) : <span className="text-neutral-400">{emptyText}</span>}</span>
+        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5 flex min-w-0 items-start gap-1.5 text-sm text-foreground">
+          <span className="min-w-0 break-words">{value ? (display ?? value) : <span className="text-subtle">{emptyText}</span>}</span>
           {canEdit && (
             <button
               ref={editButtonRef}
               type="button"
               onClick={startEditing}
               aria-label={`Edit ${label.toLowerCase()}`}
-              className="-my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-2 focus-visible:outline-accent-600"
+              className="-my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-subtle hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -116,7 +116,7 @@ export function InlineField({
   }
 
   const inputClass =
-    "w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+    "w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
   const common = {
     id: inputId,
     disabled: pending,
@@ -127,7 +127,7 @@ export function InlineField({
 
   return (
     <div>
-      <label htmlFor={inputId} className="text-xs text-neutral-500">
+      <label htmlFor={inputId} className="text-xs text-muted-foreground">
         {label}
       </label>
       <div className="mt-1 space-y-2">
@@ -153,7 +153,7 @@ export function InlineField({
           />
         )}
         {error && (
-          <p id={errorId} role="alert" className="text-xs text-red-600">
+          <p id={errorId} role="alert" className="text-xs text-danger-strong">
             {error}
           </p>
         )}
@@ -162,7 +162,7 @@ export function InlineField({
             type="button"
             onClick={save}
             disabled={pending}
-            className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save"}
           </button>

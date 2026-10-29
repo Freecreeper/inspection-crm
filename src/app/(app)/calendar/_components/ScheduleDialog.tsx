@@ -21,7 +21,7 @@ import {
 } from "../actions";
 
 export const input =
-  "mt-1 w-full rounded-md border border-neutral-300 bg-surface px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+  "mt-1 w-full rounded-md border border-input bg-surface px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
 export const labelClass = "block text-sm font-medium text-neutral-700";
 
 export const DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180, 210, 240, 300, 360, 480];
@@ -73,7 +73,7 @@ export function ConflictNotice({ conflicts, inspectorName, timeZone, proposed }:
   }, [key]);
   if (conflicts.length === 0) return null;
   return (
-    <div ref={ref} role="alert" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+    <div ref={ref} role="alert" className="rounded-md border border-warning-border bg-warning-soft px-3 py-2.5 text-sm text-warning-strong">
       <p className="flex items-center gap-1.5 font-semibold">
         <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
         Scheduling conflict
@@ -86,8 +86,8 @@ export function ConflictNotice({ conflicts, inspectorName, timeZone, proposed }:
           </li>
         ))}
       </ul>
-      {proposed && <p className="mt-1.5 text-amber-800">Proposed: {proposed}</p>}
-      <p className="mt-1.5 text-xs text-amber-800">Choose another time or inspector — overlapping inspections can&apos;t be saved.</p>
+      {proposed && <p className="mt-1.5 text-warning-strong">Proposed: {proposed}</p>}
+      <p className="mt-1.5 text-xs text-warning-strong">Choose another time or inspector — overlapping inspections can&apos;t be saved.</p>
     </div>
   );
 }
@@ -312,14 +312,14 @@ export function ScheduleDialog({
         </div>
         <div>
           <label htmlFor={`${id}-access`} className={labelClass}>
-            Access notes <span className="font-normal text-neutral-400">(optional)</span>
+            Access notes <span className="font-normal text-subtle">(optional)</span>
           </label>
           <textarea id={`${id}-access`} rows={2} value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} placeholder="Lockbox, occupant, gate code…" className={input} />
         </div>
 
         <ConflictNotice conflicts={conflicts} inspectorName={inspectorName} timeZone={timeZone} proposed={start ? `${property?.label ?? "This inspection"}, ${start} for ${formatDuration(durationMinutes)}` : null} />
         {error && !conflicts.length && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-danger-strong">
             {error}
           </p>
         )}
@@ -327,7 +327,7 @@ export function ScheduleDialog({
           <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             Cancel
           </button>
-          <button type="submit" disabled={pending || conflicts.length > 0} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
+          <button type="submit" disabled={pending || conflicts.length > 0} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
             {pending ? "Scheduling…" : "Schedule"}
           </button>
         </div>
@@ -358,11 +358,11 @@ function DuplicateChoice<D extends { id: string }>({
   return (
     <div className="space-y-3">
       <p className="text-sm text-neutral-600">These existing records look like a match. Use one, or create a new record anyway.</p>
-      <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+      <ul className="divide-y divide-neutral-100 rounded-md border border-border">
         {items.map((d) => (
           <li key={d.id} className="flex items-start justify-between gap-3 p-3 text-sm">
             <div className="min-w-0">{render(d)}</div>
-            <button type="button" onClick={() => onUse(d)} className="shrink-0 font-medium text-accent-700 hover:underline">
+            <button type="button" onClick={() => onUse(d)} className="shrink-0 font-medium text-link hover:underline">
               Use this
             </button>
           </li>
@@ -372,7 +372,7 @@ function DuplicateChoice<D extends { id: string }>({
         <button type="button" onClick={onBack} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back
         </button>
-        <button type="button" disabled={pending} onClick={onCreateAnyway} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
+        <button type="button" disabled={pending} onClick={onCreateAnyway} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
           Create anyway
         </button>
       </div>
@@ -411,9 +411,9 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         pending={pending}
         render={(d) => (
           <>
-            <p className="font-medium text-neutral-900">{d.name}</p>
-            <p className="truncate text-xs text-neutral-500">{[d.phone ? formatPhone(d.phone) : null, d.email].filter(Boolean).join(" · ") || "No contact info"}</p>
-            <p className="text-xs font-medium text-amber-700">{d.exact ? "Likely match" : "Possible match"}: {d.reasons.map((r) => (r === "name" ? "same name" : `same ${r}`)).join(", ")}</p>
+            <p className="font-medium text-foreground">{d.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{[d.phone ? formatPhone(d.phone) : null, d.email].filter(Boolean).join(" · ") || "No contact info"}</p>
+            <p className="text-xs font-medium text-warning-strong">{d.exact ? "Likely match" : "Possible match"}: {d.reasons.map((r) => (r === "name" ? "same name" : `same ${r}`)).join(", ")}</p>
           </>
         )}
         onUse={(d) => onCreated({ id: d.id, label: d.name, sublabel: [d.phone ? formatPhone(d.phone) : null, d.email].filter(Boolean).join(" · ") || "No contact info" })}
@@ -431,7 +431,7 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         create(false);
       }}
     >
-      <p className="text-xs text-neutral-500">Only a name is required — a missing email or phone never blocks scheduling.</p>
+      <p className="text-xs text-muted-foreground">Only a name is required — a missing email or phone never blocks scheduling.</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor={`${id}-first`} className={labelClass}>
@@ -449,12 +449,12 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
       <PhoneField value={phone} onChange={setPhone} />
       <div>
         <label htmlFor={`${id}-email`} className={labelClass}>
-          Email <span className="font-normal text-neutral-400">(optional)</span>
+          Email <span className="font-normal text-subtle">(optional)</span>
         </label>
         <input id={`${id}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
       </div>
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-strong">
           {error}
         </p>
       )}
@@ -462,7 +462,7 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back to scheduling
         </button>
-        <button type="submit" disabled={pending} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
           {pending ? "Checking…" : "Create customer"}
         </button>
       </div>
@@ -500,9 +500,9 @@ function CreatePropertyForm({ query, onCreated, onCancel }: { query: string; onC
         pending={pending}
         render={(d) => (
           <>
-            <p className="font-medium text-neutral-900">{d.label}</p>
-            <p className="text-xs text-neutral-500">{d.sublabel}</p>
-            <p className="text-xs font-medium text-amber-700">Same address</p>
+            <p className="font-medium text-foreground">{d.label}</p>
+            <p className="text-xs text-muted-foreground">{d.sublabel}</p>
+            <p className="text-xs font-medium text-warning-strong">Same address</p>
           </>
         )}
         onUse={(d) => onCreated(d)}
@@ -547,7 +547,7 @@ function CreatePropertyForm({ query, onCreated, onCancel }: { query: string; onC
         </div>
       </div>
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-strong">
           {error}
         </p>
       )}
@@ -555,7 +555,7 @@ function CreatePropertyForm({ query, onCreated, onCancel }: { query: string; onC
         <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back to scheduling
         </button>
-        <button type="submit" disabled={pending} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
           {pending ? "Checking…" : "Create property"}
         </button>
       </div>

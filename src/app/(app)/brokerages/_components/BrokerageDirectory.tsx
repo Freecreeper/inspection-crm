@@ -26,7 +26,7 @@ export interface BrokerageRowView {
   zip: string | null;
 }
 
-const none = <span className="text-neutral-400">—</span>;
+const none = <span className="text-subtle">—</span>;
 
 // Keeps ?selected= in sync without a server round trip, as the realtor
 // directory does — the list doesn't change when the selection does.
@@ -100,10 +100,10 @@ export function BrokerageDirectory({
       </p>
 
       {/* Desktop / tablet: table */}
-      <div className="mt-4 hidden rounded-lg border border-neutral-200 bg-surface md:block">
+      <div className="mt-4 hidden rounded-lg border border-border bg-surface md:block">
         <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Brokerages. Select a brokerage to open its preview.</caption>
-          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <SortTh label="Name" sort="name" params={params} className="w-[28%]" />
               <th scope="col" className="w-[16%] px-3 py-2.5 font-medium">
@@ -123,7 +123,7 @@ export function BrokerageDirectory({
                   key={b.id}
                   onClick={() => select(b.id)}
                   className={`cursor-pointer border-t border-neutral-100 first:border-t-0 ${
-                    selected ? "bg-accent-50/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-neutral-50"
+                    selected ? "bg-selected/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-hover"
                   }`}
                 >
                   <td className={cell}>
@@ -138,7 +138,7 @@ export function BrokerageDirectory({
                         select(b.id);
                       }}
                       onKeyDown={(e) => onRowKeyDown(e, index)}
-                      className="block w-full truncate rounded text-left font-medium text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
+                      className="block w-full truncate rounded text-left font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                       {b.name}
                     </button>
@@ -155,7 +155,7 @@ export function BrokerageDirectory({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-12 text-center text-neutral-500">
+                <td colSpan={4} className="px-3 py-12 text-center text-muted-foreground">
                   <EmptyState page={params.page} />
                 </td>
               </tr>
@@ -177,29 +177,29 @@ export function BrokerageDirectory({
                 aria-haspopup="dialog"
                 aria-current={b.id === selectedId ? "true" : undefined}
                 onClick={() => select(b.id)}
-                className={`block w-full rounded-lg border bg-surface p-4 text-left ${b.id === selectedId ? "border-accent-500" : "border-neutral-200"}`}
+                className={`block w-full rounded-lg border bg-surface p-4 text-left ${b.id === selectedId ? "border-ring" : "border-border"}`}
               >
-                <p className="truncate font-medium text-neutral-900">{b.name}</p>
-                {contact && <p className="truncate text-sm text-neutral-500">{contact}</p>}
-                {address && <p className="truncate text-sm text-neutral-500">{address}</p>}
+                <p className="truncate font-medium text-foreground">{b.name}</p>
+                {contact && <p className="truncate text-sm text-muted-foreground">{contact}</p>}
+                {address && <p className="truncate text-sm text-muted-foreground">{address}</p>}
               </button>
             </li>
           );
         })}
         {rows.length === 0 && (
-          <li className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
+          <li className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
             <EmptyState page={params.page} />
           </li>
         )}
       </ul>
 
-      <nav className="mt-3 flex items-center justify-between text-xs text-neutral-500" aria-label="Pagination">
+      <nav className="mt-3 flex items-center justify-between text-xs text-muted-foreground" aria-label="Pagination">
         <p>{total > 0 ? `Showing ${start}–${end} of ${total}` : " "}</p>
         <div className="flex gap-2">
           {hasPrev && (
             <Link
               href={brokerageDirectoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })}
-              className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50"
+              className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-hover"
             >
               Previous
             </Link>
@@ -207,7 +207,7 @@ export function BrokerageDirectory({
           {hasNext && (
             <Link
               href={brokerageDirectoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })}
-              className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50"
+              className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-hover"
             >
               Next
             </Link>
@@ -225,7 +225,7 @@ function EmptyState({ page }: { page: number }) {
     return (
       <>
         No brokerages on this page.{" "}
-        <Link href="/brokerages" className="text-accent-700 hover:underline">
+        <Link href="/brokerages" className="text-link hover:underline">
           Back to the first page
         </Link>
       </>

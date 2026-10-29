@@ -73,24 +73,24 @@ async function Directory({ raw }: { raw: Record<string, string | string[] | unde
           defaultValue={q}
           placeholder="Search name, email, or phone"
           aria-label="Search customers"
-          className="h-9 min-w-48 flex-1 rounded-md border border-neutral-300 bg-surface px-3 text-sm placeholder:text-neutral-400"
+          className="h-9 min-w-48 flex-1 rounded-md border border-input bg-surface px-3 text-sm placeholder:text-subtle"
         />
-        <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm">
+        <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-input bg-surface px-2 text-sm">
           <option value="newest">Newest first</option>
           <option value="name">Last name (A–Z)</option>
         </select>
-        <button type="submit" className="h-9 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+        <button type="submit" className="h-9 rounded-md border border-input bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-hover">
           Apply
         </button>
         {q && (
-          <Link href="/customers" className="inline-flex h-9 items-center px-2 text-sm text-neutral-500 hover:text-neutral-800 hover:underline">
+          <Link href="/customers" className="inline-flex h-9 items-center px-2 text-sm text-muted-foreground hover:text-neutral-800 hover:underline">
             Clear
           </Link>
         )}
       </form>
-      <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Customer</th>
               <th className="px-4 py-2 font-medium">Contact</th>
@@ -103,21 +103,21 @@ async function Directory({ raw }: { raw: Record<string, string | string[] | unde
             {customers.map((c) => {
               const latest = c.transactions[0]?.transaction;
               return (
-                <tr key={c.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+                <tr key={c.id} className="border-t border-neutral-100 hover:bg-hover">
                   <td className="px-4 py-2">
-                    <Link href={`/customers/${c.id}`} className="font-medium text-neutral-900 hover:underline">
+                    <Link href={`/customers/${c.id}`} className="font-medium text-foreground hover:underline">
                       {c.firstName} {c.lastName}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-neutral-600">{c.email || (c.phone && formatPhone(c.phone)) || <span className="text-neutral-400">Not provided</span>}</td>
+                  <td className="px-4 py-2 text-neutral-600">{c.email || (c.phone && formatPhone(c.phone)) || <span className="text-subtle">Not provided</span>}</td>
                   <td className="px-4 py-2 text-neutral-600">
                     {latest ? (
                       <>
                         {latest.property ? `${latest.property.addressLine1}, ${latest.property.city}` : "No property"}
-                        <span className="text-neutral-400"> · {TRANSACTION_STATUS_LABELS[latest.status]}</span>
+                        <span className="text-subtle"> · {TRANSACTION_STATUS_LABELS[latest.status]}</span>
                       </>
                     ) : (
-                      <span className="text-neutral-400">—</span>
+                      <span className="text-subtle">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2 tabular-nums text-neutral-600">{c.transactions.length}</td>
@@ -127,7 +127,7 @@ async function Directory({ raw }: { raw: Record<string, string | string[] | unde
             })}
             {customers.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-subtle">
                   {q ? "No customers match. Try a different search." : "No customers yet — convert a lead to create one."}
                 </td>
               </tr>
@@ -219,8 +219,8 @@ async function FollowUp({ canComplete }: { canComplete: boolean }) {
                   </>
                 }
               >
-                <p className="truncate text-sm font-medium text-neutral-900">{task.title}</p>
-                <p className="truncate text-xs text-neutral-500">
+                <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {primary && (
                     <Link href={`/customers/${primary.id}`} className="font-medium text-neutral-700 hover:underline">
                       {primary.firstName} {primary.lastName}
@@ -250,10 +250,10 @@ async function FollowUp({ canComplete }: { canComplete: boolean }) {
               </Link>
             }
           >
-            <Link href={`/customers/${c.id}`} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
+            <Link href={`/customers/${c.id}`} className="block truncate text-sm font-medium text-foreground hover:underline">
               {c.firstName} {c.lastName}
             </Link>
-            <p className="truncate text-xs text-neutral-500">{[c.email, c.phone && formatPhone(c.phone)].filter(Boolean).join(" · ") || "No contact details"}</p>
+            <p className="truncate text-xs text-muted-foreground">{[c.email, c.phone && formatPhone(c.phone)].filter(Boolean).join(" · ") || "No contact details"}</p>
           </QueueRow>
         ))}
       </QueueSection>

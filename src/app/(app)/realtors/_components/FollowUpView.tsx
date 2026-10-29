@@ -90,7 +90,7 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
             href={f === "all" ? "/realtors?view=followup" : `/realtors?view=followup&filter=${f}`}
             aria-current={filter === f ? "page" : undefined}
             className={`rounded-full border px-3 py-1 text-sm ${
-              filter === f ? "border-neutral-900 bg-neutral-solid-900 text-white" : "border-neutral-200 bg-surface text-neutral-700 hover:bg-neutral-50"
+              filter === f ? "border-neutral-900 bg-primary text-primary-foreground" : "border-border bg-surface text-neutral-700 hover:bg-hover"
             }`}
           >
             {FILTER_LABELS[f]}
@@ -101,30 +101,30 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
       <div className="mt-6 space-y-8">
         {visibleBuckets.map((bucket) => (
           <section key={bucket} aria-labelledby={`bucket-${bucket}`}>
-            <h2 id={`bucket-${bucket}`} className="flex items-baseline gap-2 text-sm font-semibold text-neutral-900">
+            <h2 id={`bucket-${bucket}`} className="flex items-baseline gap-2 text-sm font-semibold text-foreground">
               {FOLLOW_UP_BUCKET_LABELS[bucket]}
-              <span className="text-xs font-normal text-neutral-500">{totals.get(bucket) ?? groups[bucket].length}</span>
+              <span className="text-xs font-normal text-muted-foreground">{totals.get(bucket) ?? groups[bucket].length}</span>
             </h2>
             {(totals.get(bucket) ?? 0) > groups[bucket].length && (
-              <p className="mt-0.5 text-xs text-neutral-500">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Showing the first {groups[bucket].length} of {totals.get(bucket)} — the oldest due first.
               </p>
             )}
-            <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface">
+            <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-border bg-surface">
               {groups[bucket].map((task) => {
                 const r = task.realtor!;
                 const lastContact = lastContactBy.get(r.id);
                 return (
                   <li key={task.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <Link href={`/realtors?selected=${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                      <Link href={`/realtors?selected=${r.id}`} className="font-medium text-foreground hover:underline">
                         {realtorDisplayName(r)}
                       </Link>
-                      {r.brokerage && <span className="text-sm text-neutral-500"> · {r.brokerage.name}</span>}
+                      {r.brokerage && <span className="text-sm text-muted-foreground"> · {r.brokerage.name}</span>}
                       <p className="mt-0.5 text-sm text-neutral-700">{task.title}</p>
-                      <p className="mt-0.5 text-xs text-neutral-500">
+                      <p className="mt-0.5 text-xs text-muted-foreground">
                         {task.dueAt ? (
-                          <span className={bucket === "overdue" ? "font-medium text-amber-700" : undefined}>Due {formatShortDate(task.dueAt)}</span>
+                          <span className={bucket === "overdue" ? "font-medium text-warning-strong" : undefined}>Due {formatShortDate(task.dueAt)}</span>
                         ) : (
                           "No due date"
                         )}
@@ -144,30 +144,30 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
         ))}
 
         {filter !== "none" && visibleBuckets.length === 0 && (
-          <p className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
+          <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
             Nothing {filter === "all" ? "open" : FILTER_LABELS[filter].toLowerCase()} right now.
           </p>
         )}
 
         {(filter === "all" || filter === "none") && (
           <section aria-labelledby="bucket-none">
-            <h2 id="bucket-none" className="flex items-baseline gap-2 text-sm font-semibold text-neutral-900">
+            <h2 id="bucket-none" className="flex items-baseline gap-2 text-sm font-semibold text-foreground">
               No upcoming action
-              <span className="text-xs font-normal text-neutral-500">{idleCount}</span>
+              <span className="text-xs font-normal text-muted-foreground">{idleCount}</span>
             </h2>
-            <p className="mt-0.5 text-xs text-neutral-500">Realtors with no open follow-up task.</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Realtors with no open follow-up task.</p>
             {idleRealtors.length > 0 ? (
-              <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface">
+              <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-border bg-surface">
                 {idleRealtors.map((r) => {
                   const lastContact = lastContactBy.get(r.id);
                   return (
                     <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                       <div className="min-w-0">
-                        <Link href={`/realtors?selected=${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                        <Link href={`/realtors?selected=${r.id}`} className="font-medium text-foreground hover:underline">
                           {realtorDisplayName(r)}
                         </Link>
-                        {r.brokerage && <span className="text-sm text-neutral-500"> · {r.brokerage.name}</span>}
-                        <p className="text-xs text-neutral-500">{lastContact ? `Last contact: ${formatShortDate(lastContact)}` : "No contact logged"}</p>
+                        {r.brokerage && <span className="text-sm text-muted-foreground"> · {r.brokerage.name}</span>}
+                        <p className="text-xs text-muted-foreground">{lastContact ? `Last contact: ${formatShortDate(lastContact)}` : "No contact logged"}</p>
                       </div>
                       <ContactLinks realtorId={r.id} phone={r.phone} email={r.email} canEmail={canEmail} />
                     </li>
@@ -175,10 +175,10 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
                 })}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-neutral-500">Every realtor has a follow-up scheduled.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Every realtor has a follow-up scheduled.</p>
             )}
             {filter === "all" && idleCount > idleRealtors.length && (
-              <Link href="/realtors?view=followup&filter=none" className="mt-2 inline-block text-sm text-accent-700 hover:underline">
+              <Link href="/realtors?view=followup&filter=none" className="mt-2 inline-block text-sm text-link hover:underline">
                 View all {idleCount} →
               </Link>
             )}
@@ -202,7 +202,7 @@ function ContactLinks({
   canEmail: boolean;
   followUp?: boolean;
 }) {
-  const cls = "inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50";
+  const cls = "inline-flex items-center gap-1 rounded-md border border-input bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-hover";
   return (
     <>
       {phone ? (
@@ -210,7 +210,7 @@ function ContactLinks({
           <Phone className="h-3.5 w-3.5" aria-hidden="true" /> Call
         </a>
       ) : (
-        <span className="px-1 py-1 text-xs text-neutral-400">No phone</span>
+        <span className="px-1 py-1 text-xs text-subtle">No phone</span>
       )}
       {email && canEmail ? (
         <>
@@ -222,7 +222,7 @@ function ContactLinks({
           <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Email
         </a>
       ) : (
-        <span className="px-1 py-1 text-xs text-neutral-400">Email not provided</span>
+        <span className="px-1 py-1 text-xs text-subtle">Email not provided</span>
       )}
     </>
   );

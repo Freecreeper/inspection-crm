@@ -17,7 +17,7 @@ export function CustomerContactFields({ customerId, email, phone, canEdit }: { c
     }
   };
   return (
-    <dl className="mt-4 grid grid-cols-1 gap-4 rounded-lg border border-neutral-200 bg-surface p-4 sm:grid-cols-2">
+    <dl className="mt-4 grid grid-cols-1 gap-4 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2">
       <InlineField label="Email" editor="email" value={email ?? ""} emptyText="Not provided" canEdit={canEdit} onSave={save("email")} />
       <InlineField label="Phone" editor="tel" value={formatPhone(phone)} formatInput={formatPhone} canEdit={canEdit} onSave={save("phone")} />
     </dl>

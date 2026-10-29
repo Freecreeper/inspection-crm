@@ -16,7 +16,7 @@ import { CATEGORY_LABELS } from "./EmailStatusBadge";
 
 export type ComposerContext = { kind: "realtor" | "customer" | "transaction" | "inspection" | "invoice"; id: string };
 
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
 
 // Opens the shared composer. `templateKey` preselects a template (e.g.
 // "realtor_follow_up" for Prepare Follow-up); `draftId` opens a prepared
@@ -48,7 +48,7 @@ export function EmailButton({
         onClick={() => setOpen(true)}
         className={
           className ??
-          "inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          "inline-flex items-center gap-1.5 rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover"
         }
       >
         {icon && <Mail className="h-4 w-4" aria-hidden="true" />}
@@ -180,12 +180,12 @@ export function EmailComposer({
 
   return (
     <Modal open onClose={onClose} title={title} titleId={`${id}-title`}>
-      {loadError && <p className="text-sm text-red-600">{loadError}</p>}
-      {!data && !loadError && <p className="text-sm text-neutral-500">Loading…</p>}
+      {loadError && <p className="text-sm text-danger-strong">{loadError}</p>}
+      {!data && !loadError && <p className="text-sm text-muted-foreground">Loading…</p>}
       {data && (
         <div className="space-y-3">
           {data.recipients.length === 0 ? (
-            <p className="text-sm text-neutral-500">There&apos;s no one to email from this record yet.</p>
+            <p className="text-sm text-muted-foreground">There&apos;s no one to email from this record yet.</p>
           ) : (
             <div>
               <label htmlFor={`${id}-to`} className="block text-sm font-medium text-neutral-700">
@@ -208,7 +208,7 @@ export function EmailComposer({
                 ))}
               </select>
               {recipient?.eligibility && (
-                <p className="mt-1 text-xs text-amber-700" role="status">
+                <p className="mt-1 text-xs text-warning-strong" role="status">
                   Can&apos;t email {recipient.name}: {recipient.eligibility}. Add or fix their email on their record — nothing else is affected.
                 </p>
               )}
@@ -241,19 +241,19 @@ export function EmailComposer({
               Message
             </label>
             <textarea id={`${id}-body`} rows={9} value={body} onChange={(e) => (setBody(e.target.value), setPreview(null))} className={`${input} font-mono text-[13px]`} />
-            <p className="mt-1 text-xs text-neutral-500">{"Fields like {{customer.firstName}} are filled in from the record. Preview to check."}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{"Fields like {{customer.firstName}} are filled in from the record. Preview to check."}</p>
           </div>
 
           {preview && (
-            <section aria-label="Preview" className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
-              <p className="text-xs text-neutral-500">
+            <section aria-label="Preview" className="rounded-md border border-border bg-surface-secondary p-3 text-sm">
+              <p className="text-xs text-muted-foreground">
                 To {preview.recipient.name} &lt;{preview.recipient.email ?? "no email"}&gt; · {CATEGORY_LABELS[preview.category]}
               </p>
-              {preview.recipient.blockedReason && <p className="mt-1 text-xs font-medium text-amber-700">Won&apos;t send: {preview.recipient.blockedReason}</p>}
-              <p className="mt-2 font-medium text-neutral-900">{preview.subject}</p>
+              {preview.recipient.blockedReason && <p className="mt-1 text-xs font-medium text-warning-strong">Won&apos;t send: {preview.recipient.blockedReason}</p>}
+              <p className="mt-2 font-medium text-foreground">{preview.subject}</p>
               <pre className="mt-1 whitespace-pre-wrap font-sans text-neutral-800">{preview.body}</pre>
               {(preview.missing.length > 0 || preview.unknown.length > 0) && (
-                <p className="mt-2 text-xs font-medium text-amber-700">
+                <p className="mt-2 text-xs font-medium text-warning-strong">
                   Not on file (fill in or remove before sending): {[...preview.missing, ...preview.unknown.map((k) => `{{${k}}}`)].join(", ")}
                 </p>
               )}
@@ -261,23 +261,23 @@ export function EmailComposer({
           )}
 
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-danger-strong">
               {error}
             </p>
           )}
           {notice && !error && (
-            <p role="status" className="text-sm text-accent-700">
+            <p role="status" className="text-sm text-success-strong">
               {notice}
             </p>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
             <div className="flex gap-2">
-              <button type="button" onClick={runPreview} disabled={pending || !recipientKey} className="rounded-md border border-neutral-300 bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60">
+              <button type="button" onClick={runPreview} disabled={pending || !recipientKey} className="rounded-md border border-input bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-hover disabled:opacity-60">
                 Preview
               </button>
               {currentDraftId && data.canSend && (
-                <button type="button" onClick={discard} disabled={pending} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-500 hover:bg-neutral-100">
+                <button type="button" onClick={discard} disabled={pending} className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-neutral-100">
                   Discard draft
                 </button>
               )}
@@ -291,13 +291,13 @@ export function EmailComposer({
                   type="button"
                   onClick={() => submit("send")}
                   disabled={pending || !recipientKey || Boolean(recipient?.eligibility)}
-                  className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
                 >
                   {pending ? "Working…" : "Send"}
                 </button>
               </div>
             ) : (
-              <p className="text-xs text-neutral-500">Your role can view email but not send it.</p>
+              <p className="text-xs text-muted-foreground">Your role can view email but not send it.</p>
             )}
           </div>
         </div>

@@ -26,8 +26,8 @@ export function TaskActions({
 
   const button =
     size === "xs"
-      ? "rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
-      : "rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60";
+      ? "rounded-md border border-input bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-hover disabled:opacity-60"
+      : "rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover disabled:opacity-60";
 
   function complete() {
     setError(null);
@@ -77,12 +77,12 @@ export function TaskActions({
                 setRescheduling(false);
               }
             }}
-            className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+            className="rounded-md border border-input px-2 py-1 text-sm"
           />
           <button type="button" onClick={saveDate} disabled={pending || !date} className={button}>
             {pending ? "Saving…" : "Save"}
           </button>
-          <button type="button" onClick={() => setRescheduling(false)} disabled={pending} className="px-1 text-xs text-neutral-500 hover:underline">
+          <button type="button" onClick={() => setRescheduling(false)} disabled={pending} className="px-1 text-xs text-muted-foreground hover:underline">
             Cancel
           </button>
         </div>
@@ -97,7 +97,7 @@ export function TaskActions({
         </div>
       )}
       {error && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-strong">
           {error}
         </p>
       )}

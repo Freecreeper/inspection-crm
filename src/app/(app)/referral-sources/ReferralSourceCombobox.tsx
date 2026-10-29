@@ -54,7 +54,7 @@ function CreateReferralSourceForm({
 
   return (
     <>
-      <h2 className="text-sm font-semibold text-neutral-900">New referral source</h2>
+      <h2 className="text-sm font-semibold text-foreground">New referral source</h2>
       <div className="mt-4 space-y-3">
         <div>
           <label className="block text-sm font-medium text-neutral-700">Name</label>
@@ -62,7 +62,7 @@ function CreateReferralSourceForm({
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
           />
         </div>
         <div>
@@ -71,16 +71,16 @@ function CreateReferralSourceForm({
             value={type}
             onChange={(e) => setType(e.target.value)}
             placeholder="e.g. Realtor, Past Customer, Online"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
           />
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-danger-strong">{error}</p>}
       </div>
       <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover"
         >
           Cancel
         </button>
@@ -88,7 +88,7 @@ function CreateReferralSourceForm({
           type="button"
           disabled={pending}
           onClick={handleSubmit}
-          className="rounded-md bg-accent-solid-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
         >
           {pending ? "Adding…" : "Add referral source"}
         </button>

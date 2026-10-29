@@ -33,26 +33,26 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   return (
     <div className="max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-neutral-900">
+        <h1 className="text-xl font-semibold text-foreground">
           {customer.firstName} {customer.lastName}
         </h1>
         {customer.email && canEmail ? (
           <EmailButton context={{ kind: "customer", id: customer.id }} />
         ) : !customer.email ? (
-          <span className="text-sm text-neutral-400">Email not provided</span>
+          <span className="text-sm text-subtle">Email not provided</span>
         ) : null}
       </div>
       <CustomerContactFields customerId={customer.id} email={customer.email} phone={customer.phone} canEdit={can(session?.user?.role as Role | undefined, "crm:write")} />
 
       <div className="mt-6 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-neutral-900">Transactions</h2>
-        <Link href={`/transactions/new?customerId=${customer.id}`} className="text-sm text-blue-700 hover:underline">
+        <h2 className="text-sm font-semibold text-foreground">Transactions</h2>
+        <Link href={`/transactions/new?customerId=${customer.id}`} className="text-sm text-info-strong hover:underline">
           + New transaction
         </Link>
       </div>
-      <div className="mt-2 overflow-hidden rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-2 overflow-hidden rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Property</th>
               <th className="px-4 py-2 font-medium">Status</th>
@@ -60,14 +60,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </thead>
           <tbody>
             {customer.transactions.map((tc) => (
-              <tr key={tc.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+              <tr key={tc.id} className="border-t border-neutral-100 hover:bg-hover">
                 <td className="px-4 py-2">
-                  <Link href={`/transactions/${tc.transaction.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/transactions/${tc.transaction.id}`} className="font-medium text-foreground hover:underline">
                     {tc.transaction.property
                       ? `${tc.transaction.property.addressLine1}, ${tc.transaction.property.city}`
                       : "No property yet"}
                   </Link>
-                  <span className="ml-2 font-mono text-[11px] text-neutral-400">{tc.role}</span>
+                  <span className="ml-2 font-mono text-[11px] text-subtle">{tc.role}</span>
                 </td>
                 <td className="px-4 py-2">
                   <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
@@ -78,7 +78,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             ))}
             {customer.transactions.length === 0 && (
               <tr>
-                <td colSpan={2} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={2} className="px-4 py-6 text-center text-subtle">
                   No transactions yet.
                 </td>
               </tr>
@@ -87,23 +87,23 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </table>
       </div>
 
-      <h2 className="mt-6 text-sm font-semibold text-neutral-900">Emails</h2>
-      <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface text-sm">
+      <h2 className="mt-6 text-sm font-semibold text-foreground">Emails</h2>
+      <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-border bg-surface text-sm">
         {emails.map((m) => (
           <li key={m.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-2.5">
             <span className="min-w-0">
-              <Link href={`/email/messages/${m.id}`} className="text-neutral-900 hover:underline">
+              <Link href={`/email/messages/${m.id}`} className="text-foreground hover:underline">
                 {m.subject || "(no subject)"}
               </Link>
-              {m.statusReason && !m.simulated && <span className="block text-xs text-neutral-500">{m.statusReason}</span>}
+              {m.statusReason && !m.simulated && <span className="block text-xs text-muted-foreground">{m.statusReason}</span>}
             </span>
-            <span className="text-right text-xs tabular-nums text-neutral-500">
+            <span className="text-right text-xs tabular-nums text-muted-foreground">
               <EmailStatusBadge status={m.status} simulated={m.simulated} />
               <span className="block">{(m.sentAt ?? m.createdAt).toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}</span>
             </span>
           </li>
         ))}
-        {emails.length === 0 && <li className="px-4 py-4 text-neutral-500">No emails yet.</li>}
+        {emails.length === 0 && <li className="px-4 py-4 text-muted-foreground">No emails yet.</li>}
       </ul>
     </div>
   );

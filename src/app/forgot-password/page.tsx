@@ -16,13 +16,13 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
-      <div className="w-full max-w-sm rounded-lg border border-neutral-200 bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">Inspection CRM</p>
-        <h1 className="mt-1 text-xl font-semibold text-neutral-900">Reset your password</h1>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">Reset your password</h1>
         {sent ? (
           <div role="status" className="mt-4 space-y-3 text-sm text-neutral-700">
-            <p className="rounded-md bg-accent-50 px-3 py-2 text-accent-900">
+            <p className="rounded-md border border-success-border bg-success-soft px-3 py-2 text-success-strong">
               If that email belongs to an account, we&apos;ve sent a link to choose a new password. It works for one hour.
             </p>
             <p>Nothing arrived after a few minutes? Check spam, or ask your account owner to reset it for you from the Users screen.</p>
@@ -34,17 +34,17 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
               <label htmlFor="email" className="block text-sm font-medium text-neutral-700">
                 Email
               </label>
-              <input id="email" name="email" type="email" autoComplete="username" required className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <input id="email" name="email" type="email" autoComplete="username" required className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring" />
             </div>
-            <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
+            <button type="submit" className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               Send reset link
             </button>
           </form>
         )}
-        <p className="mt-6 text-xs text-neutral-500">
+        <p className="mt-6 text-xs text-muted-foreground">
           Not sure which email you use? Your account owner can see it on the Users screen.{" "}
         </p>
-        <Link href="/login" className="mt-3 inline-block text-sm text-accent-700 hover:underline">
+        <Link href="/login" className="mt-3 inline-block text-sm text-link hover:underline">
           ← Back to sign in
         </Link>
       </div>

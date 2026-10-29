@@ -17,11 +17,11 @@ type Sort = keyof typeof SORTS;
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 const STATUS_BADGE: Record<LeadStatus, string> = {
-  NEW: "bg-blue-100 text-blue-800",
-  CONTACTED: "bg-amber-100 text-amber-800",
-  QUALIFIED: "bg-accent-100 text-accent-800",
+  NEW: "bg-info-soft text-info-strong",
+  CONTACTED: "bg-warning-soft text-warning-strong",
+  QUALIFIED: "bg-success-soft text-success-strong",
   CONVERTED: "bg-neutral-100 text-neutral-700",
-  LOST: "bg-neutral-100 text-neutral-500",
+  LOST: "bg-neutral-100 text-muted-foreground",
 };
 
 function StatusBadge({ status }: { status: LeadStatus }) {
@@ -47,7 +47,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
         current={view}
         actions={
           canWrite && (
-            <Link href="/leads#new-lead" className="rounded-md bg-accent-solid-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-solid-700">
+            <Link href="/leads#new-lead" className="rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               + Add Lead
             </Link>
           )
@@ -88,9 +88,9 @@ async function Records({ raw, canWrite }: { raw: Record<string, string | string[
             defaultValue={q}
             placeholder="Search name, email, or phone"
             aria-label="Search leads"
-            className="h-9 min-w-48 flex-1 rounded-md border border-neutral-300 bg-surface px-3 text-sm placeholder:text-neutral-400"
+            className="h-9 min-w-48 flex-1 rounded-md border border-input bg-surface px-3 text-sm placeholder:text-subtle"
           />
-          <select name="status" defaultValue={status ?? ""} aria-label="Status" className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm">
+          <select name="status" defaultValue={status ?? ""} aria-label="Status" className="h-9 rounded-md border border-input bg-surface px-2 text-sm">
             <option value="">All statuses</option>
             {(Object.keys(LEAD_STATUS_LABELS) as LeadStatus[]).map((s) => (
               <option key={s} value={s}>
@@ -98,24 +98,24 @@ async function Records({ raw, canWrite }: { raw: Record<string, string | string[
               </option>
             ))}
           </select>
-          <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm">
+          <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-input bg-surface px-2 text-sm">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="name">Last name (A–Z)</option>
           </select>
-          <button type="submit" className="h-9 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+          <button type="submit" className="h-9 rounded-md border border-input bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-hover">
             Apply
           </button>
           {filtered && (
-            <Link href="/leads" className="inline-flex h-9 items-center px-2 text-sm text-neutral-500 hover:text-neutral-800 hover:underline">
+            <Link href="/leads" className="inline-flex h-9 items-center px-2 text-sm text-muted-foreground hover:text-neutral-800 hover:underline">
               Clear
             </Link>
           )}
         </form>
 
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+            <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">Lead</th>
                 <th className="px-4 py-2 font-medium">Contact</th>
@@ -126,23 +126,23 @@ async function Records({ raw, canWrite }: { raw: Record<string, string | string[
             </thead>
             <tbody>
               {leads.map((lead) => (
-                <tr key={lead.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+                <tr key={lead.id} className="border-t border-neutral-100 hover:bg-hover">
                   <td className="px-4 py-2">
-                    <Link href={`/leads/${lead.id}`} className="font-medium text-neutral-900 hover:underline">
+                    <Link href={`/leads/${lead.id}`} className="font-medium text-foreground hover:underline">
                       {lead.firstName} {lead.lastName}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-neutral-600">{lead.email || (lead.phone && formatPhone(lead.phone)) || <span className="text-neutral-400">Not provided</span>}</td>
+                  <td className="px-4 py-2 text-neutral-600">{lead.email || (lead.phone && formatPhone(lead.phone)) || <span className="text-subtle">Not provided</span>}</td>
                   <td className="px-4 py-2">
                     <StatusBadge status={lead.status} />
                   </td>
-                  <td className="px-4 py-2 text-neutral-600">{lead.referralSource?.name ?? <span className="text-neutral-400">—</span>}</td>
+                  <td className="px-4 py-2 text-neutral-600">{lead.referralSource?.name ?? <span className="text-subtle">—</span>}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-neutral-600">{formatShortDate(lead.createdAt)}</td>
                 </tr>
               ))}
               {leads.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-subtle">
                     {filtered ? "No leads match. Try a different search or clear the filters." : "No leads yet."}
                   </td>
                 </tr>
@@ -153,17 +153,17 @@ async function Records({ raw, canWrite }: { raw: Record<string, string | string[
       </div>
 
       {canWrite && (
-        <div id="new-lead" className="scroll-mt-20 self-start rounded-lg border border-neutral-200 bg-surface p-4">
-          <h2 className="text-sm font-semibold text-neutral-900">New lead</h2>
+        <div id="new-lead" className="scroll-mt-20 self-start rounded-lg border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold text-foreground">New lead</h2>
           <form action={createLead} className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <input name="firstName" placeholder="First name" required aria-label="First name" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-              <input name="lastName" placeholder="Last name" required aria-label="Last name" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+              <input name="firstName" placeholder="First name" required aria-label="First name" className="rounded-md border border-input px-2 py-1.5 text-sm" />
+              <input name="lastName" placeholder="Last name" required aria-label="Last name" className="rounded-md border border-input px-2 py-1.5 text-sm" />
             </div>
-            <input name="email" type="email" placeholder="Email (optional)" aria-label="Email" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-            <input name="phone" placeholder="Phone (optional)" aria-label="Phone" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-            <textarea name="notes" placeholder="Notes (optional)" aria-label="Notes" rows={2} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-            <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+            <input name="email" type="email" placeholder="Email (optional)" aria-label="Email" className="w-full rounded-md border border-input px-2 py-1.5 text-sm" />
+            <input name="phone" placeholder="Phone (optional)" aria-label="Phone" className="w-full rounded-md border border-input px-2 py-1.5 text-sm" />
+            <textarea name="notes" placeholder="Notes (optional)" aria-label="Notes" rows={2} className="w-full rounded-md border border-input px-2 py-1.5 text-sm" />
+            <button type="submit" className="w-full rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               Add lead
             </button>
           </form>
@@ -210,7 +210,7 @@ async function Pipeline({ canWrite }: { canWrite: boolean }) {
             ))}
           {canWrite && (lead.status === "CONTACTED" || lead.status === "QUALIFIED") && (
             <form action={convertLead.bind(null, lead.id)}>
-              <button type="submit" className={`${rowAction} border-accent-300 text-accent-800 hover:bg-accent-50`}>
+              <button type="submit" className={`${rowAction} border-accent-300 text-accent-800 hover:bg-selected`}>
                 Convert
               </button>
             </form>
@@ -221,10 +221,10 @@ async function Pipeline({ canWrite }: { canWrite: boolean }) {
         </>
       }
     >
-      <Link href={`/leads/${lead.id}`} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
+      <Link href={`/leads/${lead.id}`} className="block truncate text-sm font-medium text-foreground hover:underline">
         {lead.firstName} {lead.lastName}
       </Link>
-      <p className="truncate text-xs text-neutral-500">
+      <p className="truncate text-xs text-muted-foreground">
         {[lead.email, lead.phone && formatPhone(lead.phone)].filter(Boolean).join(" · ") || "No contact details"} · in stage since {formatShortDate(lead.updatedAt)}
       </p>
     </QueueRow>
