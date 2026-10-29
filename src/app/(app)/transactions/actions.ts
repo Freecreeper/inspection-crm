@@ -11,6 +11,7 @@ import { assertCan } from "@/lib/rbac";
 import { validateUpload, safeFileName, scanForMalware } from "@/lib/documents";
 import { logActivity } from "@/lib/activity";
 import { dateOnlyKey, dayKeyToDateOnly, isDayKey } from "@/lib/calendar/time";
+import { isAllowedTransactionMove } from "@/lib/transactionStages";
 import type { RealtorParticipantRole, Role } from "@prisma/client";
 
 const REALTOR_ROLES: RealtorParticipantRole[] = ["BUYER_AGENT", "LISTING_AGENT", "TRANSACTION_COORDINATOR", "OTHER"];
@@ -93,6 +94,28 @@ export async function createTransaction(formData: FormData) {
 // row was primary before it — application-enforced, since Prisma has no
 // partial-unique-index syntax to enforce "at most one primary" at the DB
 // layer.
+// Moves a transaction to its next stage, or cancels / reopens it (bound to
+// the transaction id; the form posts `status`). The move is checked against
+// the stage it's in now, inside the transaction, so a double click or a
+// stale page can't skip a stage. Inspections are untouched: their status
+// is separate.
+export async function setTransactionStatus(transactionId: string, formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  const to = formData.get("status");
+
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.transaction.findUnique({ where: { id: transactionId }, select: { status: true, archivedAt: true } });
+    if (!current || current.archivedAt) throw new Error("Transaction not found.");
+    if (current.status === to) return;
+    if (!isAllowedTransactionMove(current.status, to)) throw new Error("That stage change isn't allowed from here.");
+    await tx.transaction.update({ where: { id: transactionId }, data: { status: to } });
+    await logActivity(tx, { actorId: session?.user?.id, action: "transaction.status_changed", entityType: "Transaction", entityId: transactionId, before: { status: current.status }, after: { status: to } });
+  });
+  revalidatePath("/transactions");
+  revalidatePath(`/transactions/${transactionId}`);
+}
+
 export async function addCustomerToTransaction(transactionId: string, formData: FormData) {
   const session = await auth();
   assertCan(session?.user?.role as Role | undefined, "crm:write");

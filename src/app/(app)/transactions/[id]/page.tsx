@@ -11,7 +11,9 @@ import {
   setTransactionDates,
   addCommunication,
   uploadDocument,
+  setTransactionStatus,
 } from "../actions";
+import { TRANSACTION_STATUS_LABELS, transactionMoves } from "@/lib/transactionStages";
 import { createTask, completeTask } from "../../tasks/actions";
 import { createAppointment, cancelAppointment } from "../../calendar/actions";
 import { createInspection } from "../../inspections/actions";
@@ -78,9 +80,19 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         <h1 className="text-xl font-semibold text-neutral-900">
           {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
         </h1>
-        <span className="mt-1 inline-block rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
-          {transaction.status}
-        </span>
+        {/* The transaction's own stage; its inspections' status is separate. */}
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700">{TRANSACTION_STATUS_LABELS[transaction.status]}</span>
+          {can(role, "crm:write") &&
+            transactionMoves(transaction.status).map((m) => (
+              <form key={m.to} action={setTransactionStatus.bind(null, transaction.id)}>
+                <input type="hidden" name="status" value={m.to} />
+                <button type="submit" className={`rounded-md border border-neutral-200 bg-surface px-2 py-0.5 text-xs font-medium hover:bg-neutral-50 ${m.to === "CANCELLED" ? "text-red-700" : "text-neutral-700"}`}>
+                  {m.label}
+                </button>
+              </form>
+            ))}
+        </div>
       </div>
 
       <section className="rounded-lg border border-neutral-200 bg-surface p-4">
