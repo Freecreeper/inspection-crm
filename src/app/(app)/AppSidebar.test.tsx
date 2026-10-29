@@ -80,6 +80,22 @@ describe("mobile sidebar", () => {
   });
 });
 
+describe("back to dashboard", () => {
+  const topBar = () => screen.getByRole("main").previousElementSibling as HTMLElement;
+
+  it("shows a Dashboard link in the top bar on every other page", () => {
+    renderSidebar();
+    expect(within(topBar()).getByRole("link", { name: "Dashboard" }).getAttribute("href")).toBe("/dashboard");
+  });
+
+  it("shows the app name instead on the dashboard itself", () => {
+    pathname = "/dashboard";
+    renderSidebar();
+    expect(within(topBar()).queryByRole("link", { name: "Dashboard" })).toBeNull();
+    expect(within(topBar()).getByText("Inspection CRM")).toBeTruthy();
+  });
+});
+
 describe("desktop sidebar collapse", () => {
   it("animates collapsing, keeps collapsed links out of reach, and restores a saved collapse without animating", async () => {
     localStorage.setItem("sidebar-collapsed", "true");
