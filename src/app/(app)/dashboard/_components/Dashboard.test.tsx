@@ -36,44 +36,12 @@ import { ActionQueueWidget } from "./widgets";
 import { discardDraft, retryEmail } from "../../email/actions";
 import { completeTask, rescheduleTask } from "../../tasks/actions";
 import type { WidgetData } from "@/lib/dashboard/types";
-import { NewMenu } from "./NewMenu";
 
 beforeAll(() => {
   // The shared Drawer asks whether the screen is wide.
   window.matchMedia = ((query: string) => ({ matches: true, media: query, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia;
 });
 afterEach(cleanup);
-
-describe("+ New respects RBAC", () => {
-  it("office staff see every create action", async () => {
-    const user = userEvent.setup();
-    render(<NewMenu canSchedule canWriteCrm canAddTask onAction={() => {}} />);
-    await user.click(screen.getByRole("button", { name: "New" }));
-    expect(within(screen.getByRole("menu")).getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
-      "Schedule inspection",
-      "New customer",
-      "New realtor",
-      "New transaction",
-      "New lead",
-      "New task",
-    ]);
-  });
-
-  it("roles that can't create anything get no menu at all", () => {
-    const { container } = render(<NewMenu canSchedule={false} canWriteCrm={false} canAddTask={false} onAction={() => {}} />);
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("dialog actions hand off to the Dashboard", async () => {
-    const user = userEvent.setup();
-    const onAction = vi.fn();
-    render(<NewMenu canSchedule canWriteCrm={false} canAddTask={false} onAction={onAction} />);
-    await user.click(screen.getByRole("button", { name: "New" }));
-    expect(screen.getAllByRole("menuitem")).toHaveLength(1);
-    await user.click(screen.getByRole("menuitem", { name: "Schedule inspection" }));
-    expect(onAction).toHaveBeenCalledWith("schedule");
-  });
-});
 
 function Harness({ initial = defaultPreferences("OWNER_ADMIN"), onRestore = async () => {} }: { initial?: DashboardPreferences; onRestore?: () => Promise<void> }) {
   const [prefs, setPrefs] = useState(initial);

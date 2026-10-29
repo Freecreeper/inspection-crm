@@ -36,6 +36,7 @@ import {
   X,
   ArrowLeft,
   Palette,
+  LogOut,
 } from "lucide-react";
 
 // `requires` hides a link from roles that can't use the page (the page
@@ -322,6 +323,7 @@ export function AppSidebar({
   roleLabel,
   granted = [],
   signOutAction,
+  actions,
   children,
 }: {
   displayName: string;
@@ -329,6 +331,8 @@ export function AppSidebar({
   // The permissions the signed-in role has (decided on the server).
   granted?: Permission[];
   signOutAction: () => Promise<void>;
+  // The top bar's right side (global search, "+ New").
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -381,22 +385,23 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Desktop: in the layout, collapsible, remembered per browser. The
-          width eases shut while the contents slide out and fade; collapsed,
-          they're inert so Tab can't reach links that aren't on screen. */}
+      {/* Desktop: in the layout, remembered per browser. Collapsed, it eases
+          down to an icon rail (every page still one click away, names in
+          tooltips) instead of disappearing; the new contents fade in. */}
       <aside
-        className={`hidden shrink-0 overflow-hidden border-r bg-surface bg-clip-padding lg:block ${
-          animateCollapse ? "transition-[width,border-color] duration-300 ease-in-out motion-reduce:transition-none" : ""
-        } ${collapsed ? "w-0 border-transparent" : "w-64 border-neutral-200"}`}
+        className={`hidden shrink-0 overflow-hidden border-r border-neutral-200 bg-surface lg:block ${
+          animateCollapse ? "transition-[width] duration-300 ease-in-out motion-reduce:transition-none" : ""
+        } ${collapsed ? "w-16" : "w-64"}`}
       >
-        <div
-          inert={collapsed}
-          className={`flex h-full w-64 flex-col ${animateCollapse ? "transition-[opacity,translate] duration-300 ease-in-out motion-reduce:transition-none" : ""} ${
-            collapsed ? "-translate-x-6 opacity-0" : "translate-x-0 opacity-100"
-          }`}
-        >
-          {content(() => setCollapsedPersisted(true))}
-        </div>
+        {collapsed ? (
+          <div key="rail" className={`flex h-full w-16 flex-col ${animateCollapse ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
+            <SidebarRail pathname={pathname} displayName={displayName} roleLabel={roleLabel} granted={granted} signOutAction={signOutAction} />
+          </div>
+        ) : (
+          <div key="full" className={`flex h-full w-64 flex-col ${animateCollapse ? "animate-fade-in motion-reduce:animate-none" : ""}`}>
+            {content(() => setCollapsedPersisted(true))}
+          </div>
+        )}
       </aside>
 
       {mobileOpen && (
@@ -451,9 +456,10 @@ export function AppSidebar({
               className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Dashboard
+              <span className="sr-only sm:not-sr-only">Dashboard</span>
             </Link>
           )}
+          {actions}
         </div>
         <main className="flex-1 overflow-x-hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
@@ -517,6 +523,105 @@ function MobileSidebar({ onClose, pathname, children }: { onClose: () => void; p
         {children}
       </div>
     </div>
+  );
+}
+
+// The collapsed desktop sidebar: the same groups, in the viewer's order and
+// filtered by permission, as icons. Each link is named for screen readers
+// (aria-label) and shows its name in a tooltip on hover or keyboard focus.
+// The tooltip is fixed-position so the rail's scrolling can't clip it.
+function SidebarRail({
+  pathname,
+  displayName,
+  roleLabel,
+  granted,
+  signOutAction,
+}: {
+  pathname: string;
+  displayName: string;
+  roleLabel: string;
+  granted: Permission[];
+  signOutAction: () => Promise<void>;
+}) {
+  const { order } = useGroupOrder();
+  const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
+  const groups = orderGroups(NAV_GROUPS, order)
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) }))
+    .filter((g) => g.items.length > 0);
+
+  const tipProps = (label: string) => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => showTip(e.currentTarget, label),
+    onMouseLeave: () => setTip(null),
+    onFocus: (e: React.FocusEvent<HTMLElement>) => showTip(e.currentTarget, label),
+    onBlur: () => setTip(null),
+  });
+  function showTip(el: HTMLElement, label: string) {
+    const rect = el.getBoundingClientRect();
+    setTip({ label, top: rect.top + rect.height / 2, left: rect.right + 8 });
+  }
+
+  const iconButton = "relative flex h-10 w-10 items-center justify-center rounded-md";
+  return (
+    <>
+      <div className="flex justify-center border-b border-neutral-200 py-5">
+        <Link href="/dashboard" aria-label="Dashboard" {...tipProps("Inspection CRM")} className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-solid-600">
+          <Home className="h-5 w-5 text-white" strokeWidth={2.25} aria-hidden="true" />
+        </Link>
+      </div>
+
+      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-3" onScroll={() => setTip(null)}>
+        {groups.map((group, index) => (
+          <ul key={group.label} aria-label={group.label} className={`space-y-1 ${index > 0 ? "mt-2 border-t border-neutral-200 pt-2" : ""}`}>
+            {group.items.map((item) => {
+              const active = isActivePath(pathname, item.href);
+              const Icon = item.icon;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-label={item.label}
+                    aria-current={active ? "page" : undefined}
+                    {...tipProps(item.label)}
+                    className={`${iconButton} ${active ? "bg-accent-50 text-accent-700" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"}`}
+                  >
+                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ))}
+      </nav>
+
+      <div className="flex flex-col items-center gap-1 border-t border-neutral-200 py-3">
+        <span
+          tabIndex={0}
+          aria-label={`${displayName}, ${roleLabel}`}
+          {...tipProps(`${displayName} · ${roleLabel}`)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-100 text-xs font-semibold text-accent-800 focus-visible:outline-2 focus-visible:outline-accent-600"
+        >
+          {initialsOf(displayName)}
+        </span>
+        <Link href="/account/appearance" aria-label="Appearance" {...tipProps("Appearance")} className={`${iconButton} text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900`}>
+          <Palette className="h-4 w-4" aria-hidden="true" />
+        </Link>
+        <form action={signOutAction}>
+          <button type="submit" aria-label="Sign out" {...tipProps("Sign out")} className={`${iconButton} cursor-pointer text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900`}>
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </form>
+      </div>
+
+      {tip && (
+        <span
+          aria-hidden="true"
+          style={{ top: tip.top, left: tip.left }}
+          className="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-neutral-solid-900 px-2 py-1 text-xs font-medium text-white shadow-md"
+        >
+          {tip.label}
+        </span>
+      )}
+    </>
   );
 }
 

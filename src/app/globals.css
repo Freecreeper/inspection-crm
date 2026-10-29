@@ -7,6 +7,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --animate-fade-in: fade-in 200ms ease-out;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-neutral-900);

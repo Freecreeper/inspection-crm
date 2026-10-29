@@ -50,7 +50,7 @@ export default async function LeadsPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <div id="new-lead" className="scroll-mt-20 rounded-lg border border-neutral-200 bg-surface p-4">
           <h2 className="text-sm font-semibold text-neutral-900">New lead</h2>
           <form action={createLead} className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2">

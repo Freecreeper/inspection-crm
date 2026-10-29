@@ -97,25 +97,50 @@ describe("back to dashboard", () => {
 });
 
 describe("desktop sidebar collapse", () => {
-  it("animates collapsing, keeps collapsed links out of reach, and restores a saved collapse without animating", async () => {
+  it("collapses to an icon rail, remembered, and restores a saved collapse without animating", async () => {
     localStorage.setItem("sidebar-collapsed", "true");
     const user = userEvent.setup();
     const { container } = renderSidebar();
     const aside = container.querySelector("aside")!;
-    expect(aside.className).toContain("w-0");
+    expect(aside.className).toContain("w-16");
     expect(aside.className).not.toContain("transition-");
-    expect(aside.firstElementChild!.hasAttribute("inert")).toBe(true);
+    // Every page is still one click away, named for screen readers.
+    const rail = within(aside).getByRole("navigation", { name: "Main" });
+    expect(within(rail).getByRole("link", { name: "Realtors" }).getAttribute("aria-current")).toBe("page");
+    expect(within(rail).getByRole("list", { name: "Clients & deals" })).toBeTruthy();
 
     await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
     await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
     expect(aside.className).toContain("w-64");
-    expect(aside.className).toContain("transition-[width,border-color]");
-    expect(aside.firstElementChild!.hasAttribute("inert")).toBe(false);
+    expect(aside.className).toContain("transition-[width]");
+    expect(within(aside).getByRole("button", { name: "Reorder sections" })).toBeTruthy();
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
 
     await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
-    expect(aside.className).toContain("w-0");
-    expect(aside.firstElementChild!.className).toContain("opacity-0");
+    expect(aside.className).toContain("w-16");
+  });
+
+  it("shows each rail icon's name in a tooltip on hover and keyboard focus", async () => {
+    localStorage.setItem("sidebar-collapsed", "true");
+    const user = userEvent.setup();
+    const { container } = renderSidebar();
+    const rail = within(container.querySelector("aside")!);
+    await user.hover(rail.getByRole("link", { name: "Brokerages" }));
+    expect(screen.getByText("Brokerages", { selector: "span[aria-hidden]" })).toBeTruthy();
+    await user.unhover(rail.getByRole("link", { name: "Brokerages" }));
+    expect(screen.queryByText("Brokerages", { selector: "span[aria-hidden]" })).toBeNull();
+
+    rail.getByRole("link", { name: "Tasks" }).focus();
+    await act(async () => {});
+    expect(screen.getByText("Tasks", { selector: "span[aria-hidden]" })).toBeTruthy();
+  });
+
+  it("hides rail links the role can't use", () => {
+    localStorage.setItem("sidebar-collapsed", "true");
+    const { container } = renderSidebar();
+    const rail = within(container.querySelector("aside")!);
+    expect(rail.queryByRole("link", { name: "Invoices" })).toBeNull();
+    expect(rail.queryByRole("list", { name: "Tools" })).toBeNull();
   });
 });
 

@@ -16,8 +16,6 @@ import type { InspectionPreview } from "@/lib/calendar/preview";
 import { ScheduleDialog } from "../../calendar/_components/ScheduleDialog";
 import { restoreDashboardDefaults, saveDashboardPreferences } from "../actions";
 import { CustomizePanel, type SaveStatus } from "./CustomizePanel";
-import { GlobalSearch } from "./GlobalSearch";
-import { NewCustomerDialog, NewMenu, type NewAction } from "./NewMenu";
 import {
   ActionQueueWidget,
   ActivityWidget,
@@ -40,7 +38,6 @@ const SAVE_DELAY_MS = 400;
 type Dialog =
   | { kind: "schedule" }
   | { kind: "task" }
-  | { kind: "customer" }
   | { kind: "reschedule"; target: RescheduleTarget }
   | { kind: "cancel"; preview: InspectionPreview };
 
@@ -83,8 +80,6 @@ export function DashboardApp({
   attention,
   data,
   viewer,
-  canWriteCrm,
-  canSearch,
   canViewReports,
 }: {
   greeting: string;
@@ -99,8 +94,6 @@ export function DashboardApp({
   attention: { required: { key: string; label: string }[]; optional: { key: OptionalAttentionCategory; label: string }[] };
   data: Partial<Record<WidgetKey, WidgetResult>>;
   viewer: Viewer & { userId: string };
-  canWriteCrm: boolean;
-  canSearch: boolean;
   canViewReports: boolean;
 }) {
   const router = useRouter();
@@ -193,8 +186,9 @@ export function DashboardApp({
     else if (target.type === "inspection" || target.type === "task") setSelected(previewEvent(target.type, target.id, target.title));
   };
 
-  async function onNew(action: NewAction) {
-    if (action === "customer") return setDialog({ kind: "customer" });
+  // Search and "+ New" live in the top bar on every page (../_shell); the
+  // dialogs here serve the widgets (e.g. Email & Task Actions' Add task).
+  async function onNew(action: "schedule" | "task") {
     if (await ensureOptions()) setDialog({ kind: action });
   }
 
@@ -269,7 +263,6 @@ export function DashboardApp({
           <p className="text-lg font-semibold text-neutral-900">{dateLabel}</p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          {canSearch && <GlobalSearch />}
           <button
             type="button"
             onClick={() => setCustomizing(true)}
@@ -279,7 +272,6 @@ export function DashboardApp({
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Customize
             <span className="sr-only"> Dashboard</span>
           </button>
-          <NewMenu canSchedule={viewer.canSchedule} canWriteCrm={canWriteCrm} canAddTask={viewer.canUpdateTasks} onAction={onNew} />
         </div>
       </header>
 
@@ -363,7 +355,6 @@ export function DashboardApp({
         />
       )}
       {dialog?.kind === "task" && options && <AddTaskDialog initialDay={today} people={options.inspectors} onClose={() => setDialog(null)} onDone={() => afterChange("Task added.")} />}
-      {dialog?.kind === "customer" && <NewCustomerDialog onClose={() => setDialog(null)} />}
       {dialog?.kind === "reschedule" && options && (
         <RescheduleDialog target={dialog.target} proposed={null} options={options} timeZone={timeZone} onClose={() => setDialog(null)} onDone={() => afterChange("Inspection rescheduled.")} />
       )}

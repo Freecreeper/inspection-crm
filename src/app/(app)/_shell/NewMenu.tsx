@@ -8,15 +8,16 @@ import { Modal } from "@/components/Modal";
 import { PhoneField } from "@/components/PhoneField";
 import { Popover } from "@/components/Popover";
 import type { CustomerDuplicate } from "@/lib/scheduling/records";
-import { createCustomerQuick } from "../../calendar/actions";
+import { createCustomerQuick } from "../calendar/actions";
 
-export type NewAction = "schedule" | "customer" | "task";
+export type NewAction = "schedule" | "customer" | "brokerage" | "task";
 
 const itemClass = "block w-full rounded-md px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 focus-visible:bg-neutral-100 focus-visible:outline-none";
 
-// "+ New": the common starting points, each shown only to roles that may
-// do it (the server actions enforce the same permissions). Dialogs reuse
-// the Calendar's scheduling and task dialogs; the rest open existing pages.
+// "+ New" (top bar, every page): the common starting points, each shown only
+// to roles that may do it (the server actions enforce the same permissions).
+// Dialogs reuse the existing create dialogs; the rest open the page whose
+// create form already exists, so nothing here bypasses its validation.
 export function NewMenu({
   canSchedule,
   canWriteCrm,
@@ -29,12 +30,16 @@ export function NewMenu({
   onAction: (action: NewAction) => void;
 }) {
   const items: ({ label: string; action: NewAction } | { label: string; href: string })[] = [];
-  if (canSchedule) items.push({ label: "Schedule inspection", action: "schedule" });
   if (canWriteCrm) {
     items.push({ label: "New customer", action: "customer" });
-    items.push({ label: "New realtor", href: "/realtors/new" });
+    items.push({ label: "New lead", href: "/leads#new-lead" });
     items.push({ label: "New transaction", href: "/transactions/new" });
-    items.push({ label: "New lead", href: "/leads" });
+  }
+  if (canSchedule) items.push({ label: "Schedule inspection", action: "schedule" });
+  if (canWriteCrm) {
+    items.push({ label: "New realtor", href: "/realtors?new=1" });
+    items.push({ label: "New brokerage", action: "brokerage" });
+    items.push({ label: "New property", href: "/properties#new-property" });
   }
   if (canAddTask) items.push({ label: "New task", action: "task" });
   if (items.length === 0) return null;
@@ -43,7 +48,8 @@ export function NewMenu({
     <Popover
       label={
         <>
-          <Plus className="h-4 w-4" aria-hidden="true" /> New
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only sm:not-sr-only">New</span>
         </>
       }
       buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-solid-600 px-3.5 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
