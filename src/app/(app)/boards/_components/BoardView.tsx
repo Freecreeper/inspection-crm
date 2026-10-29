@@ -277,7 +277,7 @@ export function BoardView({ board, layout, data, widgets, hideClear: initialHide
             const def = defs.get(t.widget)!;
             const clear = !editing && isClear(t);
             const size: TileSize = clear ? "S" : t.size;
-            const paint = tilePaint(t.style);
+            const paint = tilePaint(t.style, clear ? null : data[t.id]?.severity);
             const shape = t.style.shape === "circle" && size !== "S" ? "squircle" : t.style.shape;
             return (
               <div
