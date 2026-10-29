@@ -35,7 +35,8 @@ describe("email composer: Save draft, then Send", () => {
 
     // A second save updates the same draft; Send sends that draft.
     await user.click(screen.getByRole("button", { name: "Save draft" }));
-    await user.click(screen.getByRole("button", { name: "Send" }));
+    // The buttons relabel while that save is pending; wait for Send to return.
+    await user.click(await screen.findByRole("button", { name: "Send" }));
     await waitFor(() => expect(submitComposedEmail).toHaveBeenCalledTimes(3));
     expect(vi.mocked(submitComposedEmail).mock.calls[1][0]).toMatchObject({ action: "draft", draftId: "draft-1" });
     expect(vi.mocked(submitComposedEmail).mock.calls[2][0]).toMatchObject({ action: "send", draftId: "draft-1" });
