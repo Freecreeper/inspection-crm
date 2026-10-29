@@ -23,6 +23,7 @@ import {
   addRealtorToTransaction,
   addCommunication,
   uploadDocument,
+  setTransactionStatus,
 } from "./actions";
 
 const mockAuth = vi.mocked(auth);
@@ -258,5 +259,43 @@ describe("uploadDocument", () => {
         uploadedById: "user-1",
       }),
     });
+  });
+});
+
+describe("setTransactionStatus", () => {
+  const db = prisma as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
+  const form = (status: string) => {
+    const f = new FormData();
+    f.set("status", status);
+    return f;
+  };
+
+  it("rejects roles without CRM write access", async () => {
+    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR", id: "u" } } as never);
+    await expect(setTransactionStatus("t1", form("SCHEDULED"))).rejects.toThrow();
+    expect(db.transaction.update).not.toHaveBeenCalled();
+  });
+
+  it("moves one stage forward and records it", async () => {
+    db.transaction.findUnique.mockResolvedValue({ status: "LEAD_IN_PROGRESS", archivedAt: null });
+    await setTransactionStatus("t1", form("SCHEDULED"));
+    expect(db.transaction.update).toHaveBeenCalledWith({ where: { id: "t1" }, data: { status: "SCHEDULED" } });
+    expect(db.activityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorId: "user-1", action: "transaction.status_changed", before: { status: "LEAD_IN_PROGRESS" }, after: { status: "SCHEDULED" } }),
+    });
+  });
+
+  it("refuses skipped stages and changes to archived transactions", async () => {
+    db.transaction.findUnique.mockResolvedValue({ status: "LEAD_IN_PROGRESS", archivedAt: null });
+    await expect(setTransactionStatus("t1", form("CLOSED"))).rejects.toThrow();
+    db.transaction.findUnique.mockResolvedValue({ status: "SCHEDULED", archivedAt: new Date() });
+    await expect(setTransactionStatus("t1", form("IN_PROGRESS"))).rejects.toThrow();
+    expect(db.transaction.update).not.toHaveBeenCalled();
+  });
+
+  it("treats a repeat of the move already made as done", async () => {
+    db.transaction.findUnique.mockResolvedValue({ status: "SCHEDULED", archivedAt: null });
+    await setTransactionStatus("t1", form("SCHEDULED"));
+    expect(db.transaction.update).not.toHaveBeenCalled();
   });
 });
