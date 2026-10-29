@@ -14,6 +14,16 @@
       opacity: 0;
     }
   }
+  /* Edit mode on boards: tiles wiggle, like a phone's home screen. */
+  --animate-wiggle: wiggle 0.32s ease-in-out infinite alternate;
+  @keyframes wiggle {
+    from {
+      transform: rotate(-0.6deg);
+    }
+    to {
+      transform: rotate(0.6deg);
+    }
+  }
 }
 
 body {
