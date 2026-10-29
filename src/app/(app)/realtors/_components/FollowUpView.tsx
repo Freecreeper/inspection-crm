@@ -169,7 +169,10 @@ export async function FollowUpView({ filter, canWrite, canEmail }: { filter: Fol
                         {r.brokerage && <span className="text-sm text-muted-foreground"> · {r.brokerage.name}</span>}
                         <p className="text-xs text-muted-foreground">{lastContact ? `Last contact: ${formatShortDate(lastContact)}` : "No contact logged"}</p>
                       </div>
-                      <ContactLinks realtorId={r.id} phone={r.phone} email={r.email} canEmail={canEmail} />
+                      {/* Kept together on the right, like the task rows' actions. */}
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
+                        <ContactLinks realtorId={r.id} phone={r.phone} email={r.email} canEmail={canEmail} />
+                      </div>
                     </li>
                   );
                 })}
