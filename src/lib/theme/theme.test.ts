@@ -78,3 +78,15 @@ describe("custom themes and saved preferences", () => {
     expect(css).toMatch(/--color-accent-foreground: oklch\(/);
   });
 });
+
+describe("choosing between the account's theme and this browser's", () => {
+  it("uses whichever was chosen more recently", async () => {
+    const { pickTheme } = await import(".");
+    expect(pickTheme("dark:slate@200", "light:earth@100")).toMatchObject({ appearance: "dark", palette: "slate" });
+    // Just after a save on this page, or a local change the save hasn't reached yet.
+    expect(pickTheme("dark:slate@100", "light:earth@200")).toMatchObject({ appearance: "light", palette: "earth" });
+    expect(pickTheme("dark:slate", "light:earth")).toMatchObject({ palette: "slate" });
+    expect(pickTheme(undefined, "light%3Aearth%40100")).toMatchObject({ palette: "earth", savedAt: 100 });
+    expect(pickTheme(undefined, undefined)).toEqual(DEFAULT_THEME);
+  });
+});
