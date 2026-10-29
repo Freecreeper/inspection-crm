@@ -110,7 +110,10 @@ describe("desktop sidebar collapse", () => {
     expect(within(rail).getByRole("list", { name: "Clients & deals" })).toBeTruthy();
 
     await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    // Nothing fades on load, only after a toggle.
+    expect(aside.firstElementChild!.className).not.toContain("animate-fade-in");
     await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(aside.firstElementChild!.className).toContain("animate-fade-in");
     expect(aside.className).toContain("w-64");
     expect(aside.className).toContain("transition-[width]");
     expect(within(aside).getByRole("button", { name: "Reorder sections" })).toBeTruthy();
