@@ -31,7 +31,7 @@ export function AddBrokerageButton() {
 
 // Only the name is required. Likely duplicates are shown for a person to
 // judge, the same way Add Realtor does — "Create anyway" is always there.
-function AddBrokerageModal({ onClose }: { onClose: () => void }) {
+export function AddBrokerageModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [fields, setFields] = useState(EMPTY);
   const [error, setError] = useState<string | null>(null);

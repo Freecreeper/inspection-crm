@@ -59,8 +59,6 @@ export default async function DashboardPage() {
         canUpdateTasks: can(role, "task:update"),
         canEmail: can(role, "email:send"),
       }}
-      canWriteCrm={can(role, "crm:write")}
-      canSearch={can(role, "search:global")}
       canViewReports={can(role, "report-builder:use")}
     />
   );

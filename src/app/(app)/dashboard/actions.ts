@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan, type Permission } from "@/lib/rbac";
 import { defaultPreferences, validatePreferences, type DashboardPreferences } from "@/lib/dashboard/preferences";
-import { globalSearch } from "@/lib/search/global";
-import type { GlobalSearchResult } from "@/lib/search/kinds";
 
 type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -37,10 +35,4 @@ export async function restoreDashboardDefaults(): Promise<Result<DashboardPrefer
   const { role, userId } = await requireUser("dashboard:view");
   await prisma.user.update({ where: { id: userId }, data: { dashboardPreferences: Prisma.DbNull } });
   return { ok: true, data: defaultPreferences(role) };
-}
-
-export async function searchEverything(query: string): Promise<GlobalSearchResult[]> {
-  const { role } = await requireUser("search:global");
-  if (typeof query !== "string") return [];
-  return globalSearch(query, role);
 }

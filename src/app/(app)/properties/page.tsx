@@ -40,7 +40,7 @@ export default async function PropertiesPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <div id="new-property" className="scroll-mt-20 rounded-lg border border-neutral-200 bg-surface p-4">
           <h2 className="text-sm font-semibold text-neutral-900">New property</h2>
           <form action={createProperty} className="mt-3 space-y-3">
             <input name="addressLine1" placeholder="Street address" required className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />

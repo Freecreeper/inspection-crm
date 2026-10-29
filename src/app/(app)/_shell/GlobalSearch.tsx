@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { MIN_QUERY_LENGTH, SEARCH_KIND_LABELS, SEARCH_KINDS, type GlobalSearchResult } from "@/lib/search/kinds";
-import { searchEverything } from "../actions";
+import { searchEverything } from "./actions";
 
 const DEBOUNCE_MS = 200;
 
@@ -95,7 +95,7 @@ export function GlobalSearch() {
   let index = -1;
 
   return (
-    <div ref={boxRef} className="relative w-full sm:w-72">
+    <div ref={boxRef} className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
       <label htmlFor={`${listId}-input`} className="sr-only">
         Search customers, realtors, brokerages, properties, transactions, inspections
       </label>
