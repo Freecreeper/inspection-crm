@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { cookies } from "next/headers";
 import { businessTimeZone } from "@/lib/businessTime";
-import { THEME_COOKIE, parseThemeCookie } from "@/lib/theme";
+import { auth } from "@/lib/auth";
+import { CUSTOM_THEME_STYLE_ID, THEME_COOKIE, parseThemeCookie } from "@/lib/theme";
+import { customThemeCss } from "@/lib/theme/custom";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -32,9 +34,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // (src/proxy.ts); a page prerendered at build time would carry none and
   // its scripts would be blocked.
   await connection();
-  // The viewer's appearance and palette, set on <html> before anything
-  // paints; "system" is resolved by the stylesheet's prefers-color-scheme.
-  const theme = parseThemeCookie((await cookies()).get(THEME_COOKIE)?.value);
+  // The viewer's theme, set on <html> before anything paints: the signed-in
+  // user's saved one (from the session token, so it follows them to any
+  // device), else this browser's cookie. "System" is resolved by the
+  // stylesheet's prefers-color-scheme; a custom theme's colors are inlined.
+  const session = await auth();
+  const theme = parseThemeCookie(session?.user?.theme ?? (await cookies()).get(THEME_COOKIE)?.value);
   return (
     <html
       lang="en"
@@ -42,6 +47,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-palette={theme.palette}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      {theme.palette === "custom" && theme.custom && (
+        <head>
+          {/* Generated from validated colors only (hex + allow-listed choices). */}
+          <style id={CUSTOM_THEME_STYLE_ID} dangerouslySetInnerHTML={{ __html: customThemeCss(theme.custom) }} />
+        </head>
+      )}
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

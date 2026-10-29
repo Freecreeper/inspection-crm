@@ -253,6 +253,10 @@ model User {
   // KPIs, and a few approved per-widget options — a versioned, allow-listed
   // document (src/lib/dashboard/preferences.ts). NULL = the role default.
   dashboardPreferences   Json?
+  // The user's own interface settings — today the theme (appearance,
+  // palette, custom colors) — as a versioned, allow-listed document
+  // (src/lib/theme). NULL = defaults. Room for navigation/workspace prefs.
+  uiPreferences          Json?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 

@@ -84,6 +84,14 @@ describe("session re-check (deactivated / demoted / revoked staff)", () => {
     expect(await refreshSessionToken(token, NOW, async () => ({ ...user, sessionVersion: 4 }))).toBeNull();
   });
 
+  it("carries the user's saved theme, and drops a malformed one", async () => {
+    const token = { id: "u1", role: "OFFICE_STAFF", sv: 3, checkedAt: NOW - RECHECK_MS - 1 };
+    const saved = { version: 1, theme: { appearance: "dark", palette: "coastal" } };
+    expect(await refreshSessionToken(token, NOW, async () => ({ ...user, uiPreferences: saved }))).toMatchObject({ theme: "dark:coastal" });
+    expect((await refreshSessionToken(token, NOW, async () => ({ ...user, uiPreferences: { version: 99, theme: {} } })))?.theme).toBeUndefined();
+    expect((await refreshSessionToken(token, NOW, async () => ({ ...user, uiPreferences: null })))?.theme).toBeUndefined();
+  });
+
   it("a forged token for a made-up id is rejected", async () => {
     expect(await refreshSessionToken({ id: "nobody", role: "OWNER_ADMIN" }, NOW, async () => null)).toBeNull();
     expect(await refreshSessionToken({ role: "OWNER_ADMIN" }, NOW, async () => user)).toBeNull();
