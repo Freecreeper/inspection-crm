@@ -17,14 +17,14 @@ export default async function TemplatesPage() {
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-neutral-600">The copy every email starts from. Only the listed fields can be filled in — templates are text, never code.</p>
         {canManage && (
-          <Link href="/email/templates/new" className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+          <Link href="/email/templates/new" className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
             New template
           </Link>
         )}
       </div>
-      <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2.5 font-medium">Template</th>
               <th scope="col" className="px-3 py-2.5 font-medium">Type</th>
@@ -36,15 +36,15 @@ export default async function TemplatesPage() {
             {templates.map((t) => (
               <tr key={t.id} className="border-t border-neutral-100 first:border-t-0">
                 <td className="px-3 py-2.5">
-                  <Link href={`/email/templates/${t.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/email/templates/${t.id}`} className="font-medium text-foreground hover:underline">
                     {t.name}
                   </Link>
-                  <span className="block text-xs text-neutral-500">{t.subject || "(no subject)"}</span>
+                  <span className="block text-xs text-muted-foreground">{t.subject || "(no subject)"}</span>
                 </td>
                 <td className="px-3 py-2.5 text-neutral-600">{CATEGORY_LABELS[t.category]}</td>
                 <td className="px-3 py-2.5 text-neutral-600">
                   {RECIPIENT[t.recipientType]}
-                  {t.automationEligible && <span className="block text-xs text-neutral-500">Used by an automation</span>}
+                  {t.automationEligible && <span className="block text-xs text-muted-foreground">Used by an automation</span>}
                 </td>
                 <td className="px-3 py-2.5 text-neutral-600">{t.active ? "Active" : "Inactive"}</td>
               </tr>

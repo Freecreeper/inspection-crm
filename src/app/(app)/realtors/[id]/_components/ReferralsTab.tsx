@@ -41,8 +41,8 @@ export async function ReferralsTab({ realtorId, permissions }: { realtorId: stri
             {sources.map((s, i) => (
               <span key={s.id}>
                 {i > 0 && (i === sources.length - 1 ? " or " : ", ")}
-                <span className="font-medium text-neutral-900">{s.name}</span>
-                {!s.active && <span className="text-neutral-500"> (inactive)</span>}
+                <span className="font-medium text-foreground">{s.name}</span>
+                {!s.active && <span className="text-muted-foreground"> (inactive)</span>}
               </span>
             ))}
             .
@@ -61,10 +61,10 @@ export async function ReferralsTab({ realtorId, permissions }: { realtorId: stri
       </Card>
 
       {rows.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
           <table className="w-full min-w-[680px] text-sm">
             <caption className="sr-only">Transactions referred by this realtor</caption>
-            <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+            <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th scope="col" className="px-3 py-2.5 font-medium">Customer</th>
                 <th scope="col" className="px-3 py-2.5 font-medium">Property</th>
@@ -77,15 +77,15 @@ export async function ReferralsTab({ realtorId, permissions }: { realtorId: stri
             <tbody>
               {rows.map((t) => (
                 <tr key={t.id} className="border-t border-neutral-100 first:border-t-0">
-                  <td className="px-3 py-2.5 font-medium text-neutral-900">{t.customers.length ? t.customers.join(", ") : <span className="font-normal text-neutral-400">Not yet recorded</span>}</td>
-                  <td className="px-3 py-2.5 text-neutral-600">{t.property ?? <span className="text-neutral-400">No property yet</span>}</td>
+                  <td className="px-3 py-2.5 font-medium text-foreground">{t.customers.length ? t.customers.join(", ") : <span className="font-normal text-subtle">Not yet recorded</span>}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">{t.property ?? <span className="text-subtle">No property yet</span>}</td>
                   <td className="px-3 py-2.5">
                     <Link href={`/transactions/${t.id}`} className="text-neutral-700 hover:underline">
                       {humanStatus(t.status)}
                     </Link>
                   </td>
                   <td className="px-3 py-2.5 text-neutral-600">
-                    {t.inspectionStatus ? `${humanStatus(t.inspectionStatus)}${t.inspectionDate ? ` · ${formatShortDate(t.inspectionDate)}` : ""}` : <span className="text-neutral-400">None</span>}
+                    {t.inspectionStatus ? `${humanStatus(t.inspectionStatus)}${t.inspectionDate ? ` · ${formatShortDate(t.inspectionDate)}` : ""}` : <span className="text-subtle">None</span>}
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-neutral-600">{formatShortDate(t.createdAt)}</td>
                   {permissions.canViewFinancials && <td className="px-3 py-2.5 text-right tabular-nums text-neutral-700">{formatCurrency(t.revenue)}</td>}
@@ -95,7 +95,7 @@ export async function ReferralsTab({ realtorId, permissions }: { realtorId: stri
           </table>
         </div>
       ) : (
-        sources.length > 0 && <p className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">No referred business recorded yet.</p>
+        sources.length > 0 && <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">No referred business recorded yet.</p>
       )}
     </div>
   );

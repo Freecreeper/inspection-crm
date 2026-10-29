@@ -18,7 +18,7 @@ export default async function BrokeragesPage({ searchParams }: { searchParams: P
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-neutral-900">Brokerages</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Brokerages</h1>
         {canWrite && <AddBrokerageButton />}
       </div>
       <BrokeragesToolbar params={params} />

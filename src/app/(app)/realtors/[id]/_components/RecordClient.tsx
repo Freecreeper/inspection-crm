@@ -42,7 +42,7 @@ export function BrokerageEditor({ options, realtorId, hasBrokerage }: { options:
 
   if (!editing) {
     return (
-      <button type="button" onClick={() => setEditing(true)} className="text-sm font-medium text-accent-700 hover:underline">
+      <button type="button" onClick={() => setEditing(true)} className="text-sm font-medium text-link hover:underline">
         {hasBrokerage ? "Change brokerage" : "Set brokerage"}
       </button>
     );
@@ -68,14 +68,14 @@ export function BrokerageEditor({ options, realtorId, hasBrokerage }: { options:
           });
         }}
       />
-      <p className="text-xs text-neutral-500">Past transactions keep the brokerage they had at the time.</p>
-      {pending && <p className="text-xs text-neutral-500">Saving…</p>}
+      <p className="text-xs text-muted-foreground">Past transactions keep the brokerage they had at the time.</p>
+      {pending && <p className="text-xs text-muted-foreground">Saving…</p>}
       {error && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-strong">
           {error}
         </p>
       )}
-      <button type="button" onClick={() => setEditing(false)} className="text-xs text-neutral-500 hover:underline">
+      <button type="button" onClick={() => setEditing(false)} className="text-xs text-muted-foreground hover:underline">
         Cancel
       </button>
     </div>
@@ -106,13 +106,13 @@ export function ReferralSourceLinker({ realtorId, unlinkedSources }: { realtorId
         type="button"
         disabled={pending}
         onClick={() => run(() => createReferralSourceForRealtor(realtorId).then((r) => (r.ok ? { ok: true as const } : r)))}
-        className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60"
+        className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
       >
         Create a referral source for this realtor
       </button>
       {unlinkedSources.length > 0 && (
         <div>
-          <p className="text-xs text-neutral-500">Or link an existing, unlinked referral source:</p>
+          <p className="text-xs text-muted-foreground">Or link an existing, unlinked referral source:</p>
           <div className="mt-1 max-w-sm">
             <Combobox
               name="referralSourceId"
@@ -126,7 +126,7 @@ export function ReferralSourceLinker({ realtorId, unlinkedSources }: { realtorId
         </div>
       )}
       {error && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-strong">
           {error}
         </p>
       )}

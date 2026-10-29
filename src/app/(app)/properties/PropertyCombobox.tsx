@@ -58,7 +58,7 @@ function CreatePropertyForm({
 
   return (
     <>
-      <h2 className="text-sm font-semibold text-neutral-900">New property</h2>
+      <h2 className="text-sm font-semibold text-foreground">New property</h2>
       <div className="mt-4 space-y-3">
         <div>
           <label className="block text-sm font-medium text-neutral-700">Address</label>
@@ -66,30 +66,30 @@ function CreatePropertyForm({
             autoFocus
             value={addressLine1}
             onChange={(e) => setAddressLine1(e.target.value)}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
           />
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-1">
             <label className="block text-sm font-medium text-neutral-700">City</label>
-            <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-neutral-700">State</label>
-            <input value={state} onChange={(e) => setState(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input value={state} onChange={(e) => setState(e.target.value)} className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-neutral-700">Zip</label>
-            <input value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm" />
           </div>
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-danger-strong">{error}</p>}
       </div>
       <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover"
         >
           Cancel
         </button>
@@ -97,7 +97,7 @@ function CreatePropertyForm({
           type="button"
           disabled={pending}
           onClick={handleSubmit}
-          className="rounded-md bg-accent-solid-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
         >
           {pending ? "Adding…" : "Add property"}
         </button>

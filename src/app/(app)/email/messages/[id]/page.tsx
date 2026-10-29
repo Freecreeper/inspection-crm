@@ -48,12 +48,12 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
 
   return (
     <div className="max-w-3xl space-y-5">
-      <Link href="/email" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/email" className="text-xs text-muted-foreground hover:underline">
         ← All messages
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-neutral-900">{m.subject || "(no subject)"}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{m.subject || "(no subject)"}</h2>
           <p className="mt-1 text-sm text-neutral-600">
             To {m.recipientName} &lt;{m.recipientEmail ?? "no email"}&gt;
           </p>
@@ -71,7 +71,7 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
       </div>
 
       {m.status === "SKIPPED" && m.statusReason?.includes("email not provided") && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-sm text-warning-strong">
           Add the missing address on{" "}
           {m.customer ? (
             <Link href={`/customers/${m.customer.id}`} className="font-medium underline">
@@ -88,25 +88,25 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
         </p>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border border-neutral-200 bg-surface p-4 text-sm sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border border-border bg-surface p-4 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-xs text-neutral-500">Type</dt>
+          <dt className="text-xs text-muted-foreground">Type</dt>
           <dd>{CATEGORY_LABELS[m.category]}</dd>
         </div>
         <div>
-          <dt className="text-xs text-neutral-500">Mode</dt>
+          <dt className="text-xs text-muted-foreground">Mode</dt>
           <dd>{m.campaignId ? "Campaign (owner-approved)" : MODE_LABELS[m.mode]}</dd>
         </div>
         <div>
-          <dt className="text-xs text-neutral-500">Source</dt>
+          <dt className="text-xs text-muted-foreground">Source</dt>
           <dd>{m.automation?.name ?? (m.campaign ? `Campaign: ${m.campaign.name}` : m.createdBy?.name ? `Sent by ${m.createdBy.name}` : "—")}</dd>
         </div>
         <div>
-          <dt className="text-xs text-neutral-500">Template</dt>
+          <dt className="text-xs text-muted-foreground">Template</dt>
           <dd>{m.template?.name ?? "None"}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-xs text-neutral-500">Related</dt>
+          <dt className="text-xs text-muted-foreground">Related</dt>
           <dd className="flex flex-wrap gap-x-3">
             {m.customer && <Link className="hover:underline" href={`/customers/${m.customer.id}`}>{m.customer.firstName} {m.customer.lastName}</Link>}
             {m.realtor && <Link className="hover:underline" href={`/realtors/${m.realtor.id}`}>{realtorDisplayName(m.realtor)}</Link>}
@@ -118,27 +118,27 @@ export default async function EmailMessagePage({ params }: { params: Promise<{ i
         </div>
       </dl>
 
-      <section aria-label="Message" className="rounded-lg border border-neutral-200 bg-surface p-4">
+      <section aria-label="Message" className="rounded-lg border border-border bg-surface p-4">
         <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-800">{redactSendTime(m.bodyText)}</pre>
       </section>
 
-      <section aria-labelledby="history" className="rounded-lg border border-neutral-200 bg-surface p-4 text-sm">
-        <h3 id="history" className="text-sm font-semibold text-neutral-900">History</h3>
+      <section aria-labelledby="history" className="rounded-lg border border-border bg-surface p-4 text-sm">
+        <h3 id="history" className="text-sm font-semibold text-foreground">History</h3>
         <ul className="mt-2 space-y-1">
           {timeline.map(([label, when]) => (
             <li key={label} className="flex justify-between gap-3">
               <span className="text-neutral-700">{label}</span>
-              <span className="tabular-nums text-neutral-500">{when}</span>
+              <span className="tabular-nums text-muted-foreground">{when}</span>
             </li>
           ))}
           {m.events.map((e) => (
             <li key={e.id} className="flex justify-between gap-3">
               <span className="text-neutral-700">Provider: {e.type.toLowerCase().replace("_", " ")}</span>
-              <span className="tabular-nums text-neutral-500">{fmt(e.occurredAt)}</span>
+              <span className="tabular-nums text-muted-foreground">{fmt(e.occurredAt)}</span>
             </li>
           ))}
         </ul>
-        {m.attempts > 1 && <p className="mt-2 text-xs text-neutral-500">{m.attempts} send attempts.</p>}
+        {m.attempts > 1 && <p className="mt-2 text-xs text-muted-foreground">{m.attempts} send attempts.</p>}
       </section>
     </div>
   );

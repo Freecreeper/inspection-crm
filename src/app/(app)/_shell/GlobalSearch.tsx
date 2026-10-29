@@ -99,7 +99,7 @@ export function GlobalSearch() {
       <label htmlFor={`${listId}-input`} className="sr-only">
         Search customers, realtors, brokerages, properties, transactions, inspections
       </label>
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden="true" />
       <input
         ref={inputRef}
         id={`${listId}-input`}
@@ -115,17 +115,17 @@ export function GlobalSearch() {
         onChange={(e) => onInput(e.target.value)}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        className="h-9 w-full rounded-md border border-neutral-300 bg-surface pl-8 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:outline-2 focus-visible:outline-accent-600"
+        className="h-9 w-full rounded-md border border-input bg-surface pl-8 pr-3 text-sm text-foreground placeholder:text-subtle focus-visible:outline-2 focus-visible:outline-ring"
       />
       {showPanel && (
-        <div className="absolute right-0 z-40 mt-1 max-h-[70vh] w-full min-w-72 overflow-y-auto rounded-lg border border-neutral-200 bg-surface p-1.5 shadow-lg sm:w-96">
+        <div className="absolute right-0 z-40 mt-1 max-h-[70vh] w-full min-w-72 overflow-y-auto rounded-lg border border-border bg-surface p-1.5 shadow-lg sm:w-96">
           <div id={listId} role="listbox" aria-label="Search results">
             {SEARCH_KINDS.map((kind) => {
               const group = items.filter((r) => r.kind === kind);
               if (group.length === 0) return null;
               return (
                 <div key={kind} role="group" aria-labelledby={`${listId}-${kind}`}>
-                  <p id={`${listId}-${kind}`} className="px-2 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                  <p id={`${listId}-${kind}`} className="px-2 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
                     {SEARCH_KIND_LABELS[kind]}
                   </p>
                   {group.map((r) => {
@@ -140,10 +140,10 @@ export function GlobalSearch() {
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => go(r)}
                         onMouseEnter={() => setActive(i)}
-                        className={`cursor-pointer rounded-md px-2 py-1.5 ${i === active ? "bg-accent-50" : ""}`}
+                        className={`cursor-pointer rounded-md px-2 py-1.5 ${i === active ? "bg-selected" : ""}`}
                       >
-                        <span className="block truncate text-sm font-medium text-neutral-900">{r.label}</span>
-                        {r.sublabel && <span className="block truncate text-xs text-neutral-500">{r.sublabel}</span>}
+                        <span className="block truncate text-sm font-medium text-foreground">{r.label}</span>
+                        {r.sublabel && <span className="block truncate text-xs text-muted-foreground">{r.sublabel}</span>}
                       </div>
                     );
                   })}
@@ -151,7 +151,7 @@ export function GlobalSearch() {
               );
             })}
           </div>
-          <p className="px-2 py-1.5 text-xs text-neutral-500" aria-live="polite">
+          <p className="px-2 py-1.5 text-xs text-muted-foreground" aria-live="polite">
             {loading ? "Searching…" : failed === trimmed ? "Search failed — try again." : items.length === 0 ? `No records match “${trimmed}”.` : `${items.length} result${items.length === 1 ? "" : "s"}`}
           </p>
         </div>

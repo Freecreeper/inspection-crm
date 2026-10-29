@@ -27,12 +27,12 @@ const include = {
 type Row = Prisma.TransactionGetPayload<{ include: typeof include }>;
 
 const STATUS_BADGE: Record<TransactionStatus, string> = {
-  LEAD_IN_PROGRESS: "bg-blue-100 text-blue-800",
-  SCHEDULED: "bg-amber-100 text-amber-800",
+  LEAD_IN_PROGRESS: "bg-info-soft text-info-strong",
+  SCHEDULED: "bg-warning-soft text-warning-strong",
   IN_PROGRESS: "bg-accent-100 text-accent-800",
-  COMPLETED: "bg-accent-100 text-accent-800",
+  COMPLETED: "bg-success-soft text-success-strong",
   CLOSED: "bg-neutral-100 text-neutral-700",
-  CANCELLED: "bg-neutral-100 text-neutral-500",
+  CANCELLED: "bg-neutral-100 text-muted-foreground",
 };
 
 const customerName = (t: Row) => {
@@ -66,7 +66,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         current={view}
         actions={
           canWrite && (
-            <Link href="/transactions/new" className="rounded-md bg-accent-solid-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-solid-700">
+            <Link href="/transactions/new" className="rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               + New Transaction
             </Link>
           )
@@ -112,9 +112,9 @@ async function List({ raw }: { raw: Record<string, string | string[] | undefined
           defaultValue={q}
           placeholder="Search customer, realtor, or address"
           aria-label="Search transactions"
-          className="h-9 min-w-48 flex-1 rounded-md border border-neutral-300 bg-surface px-3 text-sm placeholder:text-neutral-400"
+          className="h-9 min-w-48 flex-1 rounded-md border border-input bg-surface px-3 text-sm placeholder:text-subtle"
         />
-        <select name="status" defaultValue={status ?? ""} aria-label="Stage" className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm">
+        <select name="status" defaultValue={status ?? ""} aria-label="Stage" className="h-9 rounded-md border border-input bg-surface px-2 text-sm">
           <option value="">All stages</option>
           {(Object.keys(TRANSACTION_STATUS_LABELS) as TransactionStatus[]).map((s) => (
             <option key={s} value={s}>
@@ -122,24 +122,24 @@ async function List({ raw }: { raw: Record<string, string | string[] | undefined
             </option>
           ))}
         </select>
-        <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm">
+        <select name="sort" defaultValue={sort} aria-label="Sort" className="h-9 rounded-md border border-input bg-surface px-2 text-sm">
           <option value="newest">Newest first</option>
           <option value="deadline">Inspection deadline</option>
           <option value="closing">Closing date</option>
         </select>
-        <button type="submit" className="h-9 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+        <button type="submit" className="h-9 rounded-md border border-input bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-hover">
           Apply
         </button>
         {filtered && (
-          <Link href="/transactions" className="inline-flex h-9 items-center px-2 text-sm text-neutral-500 hover:text-neutral-800 hover:underline">
+          <Link href="/transactions" className="inline-flex h-9 items-center px-2 text-sm text-muted-foreground hover:text-neutral-800 hover:underline">
             Clear
           </Link>
         )}
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Customer</th>
               <th className="px-4 py-2 font-medium">Property</th>
@@ -151,24 +151,24 @@ async function List({ raw }: { raw: Record<string, string | string[] | undefined
           </thead>
           <tbody>
             {transactions.map((t) => (
-              <tr key={t.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+              <tr key={t.id} className="border-t border-neutral-100 hover:bg-hover">
                 <td className="px-4 py-2">
-                  <Link href={`/transactions/${t.id}`} className="font-medium text-neutral-900 hover:underline">
-                    {customerName(t) ?? <span className="text-neutral-400">No customer yet</span>}
+                  <Link href={`/transactions/${t.id}`} className="font-medium text-foreground hover:underline">
+                    {customerName(t) ?? <span className="text-subtle">No customer yet</span>}
                   </Link>
                 </td>
-                <td className="px-4 py-2 text-neutral-600">{address(t) ?? <span className="text-neutral-400">Not set</span>}</td>
-                <td className="px-4 py-2 text-neutral-600">{t.realtors.map((r) => realtorDisplayName(r.realtor)).join(", ") || <span className="text-neutral-400">—</span>}</td>
+                <td className="px-4 py-2 text-neutral-600">{address(t) ?? <span className="text-subtle">Not set</span>}</td>
+                <td className="px-4 py-2 text-neutral-600">{t.realtors.map((r) => realtorDisplayName(r.realtor)).join(", ") || <span className="text-subtle">—</span>}</td>
                 <td className="px-4 py-2">
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_BADGE[t.status]}`}>{TRANSACTION_STATUS_LABELS[t.status]}</span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-2 text-neutral-600">{dateLabel(t.inspectionDeadline) ?? <span className="text-neutral-400">—</span>}</td>
-                <td className="whitespace-nowrap px-4 py-2 text-neutral-600">{dateLabel(t.closingDate) ?? <span className="text-neutral-400">—</span>}</td>
+                <td className="whitespace-nowrap px-4 py-2 text-neutral-600">{dateLabel(t.inspectionDeadline) ?? <span className="text-subtle">—</span>}</td>
+                <td className="whitespace-nowrap px-4 py-2 text-neutral-600">{dateLabel(t.closingDate) ?? <span className="text-subtle">—</span>}</td>
               </tr>
             ))}
             {transactions.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-subtle">
                   {filtered ? "No transactions match. Try a different search or clear the filters." : "No transactions yet."}
                 </td>
               </tr>
@@ -203,7 +203,7 @@ async function Workflow({ canWrite }: { canWrite: boolean }) {
               transactionMoves(t.status).map((m) => (
                 <form key={m.to} action={setTransactionStatus.bind(null, t.id)}>
                   <input type="hidden" name="status" value={m.to} />
-                  <button type="submit" className={m.to === "CANCELLED" ? `${rowAction} text-red-700` : rowAction}>
+                  <button type="submit" className={m.to === "CANCELLED" ? `${rowAction} text-danger-strong` : rowAction}>
                     {m.label}
                   </button>
                 </form>
@@ -214,10 +214,10 @@ async function Workflow({ canWrite }: { canWrite: boolean }) {
           </>
         }
       >
-        <Link href={`/transactions/${t.id}`} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
+        <Link href={`/transactions/${t.id}`} className="block truncate text-sm font-medium text-foreground hover:underline">
           {customerName(t) ?? "No customer yet"}
         </Link>
-        <p className="truncate text-xs text-neutral-500">
+        <p className="truncate text-xs text-muted-foreground">
           {[address(t) ?? "No property", deadline && `Inspection by ${deadline}`, closing && `Closing ${closing}`].filter(Boolean).join(" · ")}
         </p>
       </QueueRow>

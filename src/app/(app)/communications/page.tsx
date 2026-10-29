@@ -12,15 +12,15 @@ export default async function CommunicationsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-neutral-900">Communications</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className="text-xl font-semibold text-foreground">Communications</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         A read-only log across every transaction. Entries are logged from the transaction they belong
         to — communication history is never edited after the fact.
       </p>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-surface-secondary text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">When</th>
               <th className="px-4 py-2 font-medium">Transaction</th>
@@ -37,11 +37,11 @@ export default async function CommunicationsPage() {
                   <td className="px-4 py-2 tabular-nums text-neutral-600">{formatBusinessDateTime(c.occurredAt)}</td>
                   <td className="px-4 py-2">
                     {c.transaction ? (
-                      <Link href={`/transactions/${c.transaction.id}`} className="font-medium text-neutral-900 hover:underline">
+                      <Link href={`/transactions/${c.transaction.id}`} className="font-medium text-foreground hover:underline">
                         {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                       </Link>
                     ) : (
-                      <span className="text-neutral-400">—</span>
+                      <span className="text-subtle">—</span>
                     )}
                   </td>
                   <td className="px-4 py-2 text-neutral-600">{c.channel}</td>
@@ -52,7 +52,7 @@ export default async function CommunicationsPage() {
             })}
             {communications.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-subtle">
                   No communications logged yet.
                 </td>
               </tr>

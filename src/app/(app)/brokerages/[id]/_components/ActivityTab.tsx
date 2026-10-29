@@ -38,7 +38,7 @@ export async function ActivityTab({ brokerageId, filter }: { brokerageId: string
             href={f === "all" ? `/brokerages/${brokerageId}?tab=activity` : `/brokerages/${brokerageId}?tab=activity&type=${f}`}
             aria-current={filter === f ? "page" : undefined}
             className={`rounded-full border px-3 py-1 text-sm ${
-              filter === f ? "border-neutral-900 bg-neutral-solid-900 text-white" : "border-neutral-200 bg-surface text-neutral-700 hover:bg-neutral-50"
+              filter === f ? "border-neutral-900 bg-primary text-primary-foreground" : "border-border bg-surface text-neutral-700 hover:bg-hover"
             }`}
           >
             {BROKERAGE_TIMELINE_FILTER_LABELS[f]}
@@ -47,18 +47,18 @@ export async function ActivityTab({ brokerageId, filter }: { brokerageId: string
       </nav>
 
       {groups.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
+        <p className="mt-6 rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
           {filter === "all" ? "No activity recorded yet." : `No ${BROKERAGE_TIMELINE_FILTER_LABELS[filter].toLowerCase()} recorded.`}
         </p>
       ) : (
         <ol className="mt-6 space-y-6">
           {groups.map((group) => (
             <li key={group.key}>
-              <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">{group.label}</h2>
-              <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{group.label}</h2>
+              <ul className="mt-2 divide-y divide-neutral-100 rounded-lg border border-border bg-surface">
                 {group.items.map((item) => (
                   <li key={item.id} className="px-4 py-3 text-sm">
-                    <p className="text-neutral-900">
+                    <p className="text-foreground">
                       {item.href ? (
                         <Link href={item.href} className="hover:underline">
                           {item.title}
@@ -75,7 +75,7 @@ export async function ActivityTab({ brokerageId, filter }: { brokerageId: string
           ))}
         </ol>
       )}
-      {all.length >= LIMIT && <p className="mt-3 text-xs text-neutral-500">Showing the {LIMIT} most recent events.</p>}
+      {all.length >= LIMIT && <p className="mt-3 text-xs text-muted-foreground">Showing the {LIMIT} most recent events.</p>}
     </div>
   );
 }

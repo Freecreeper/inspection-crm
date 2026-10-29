@@ -15,17 +15,17 @@ const LABELS: Record<EmailStatus, string> = {
 };
 
 const TONE: Record<EmailStatus, string> = {
-  DRAFT: "bg-sky-solid-500",
+  DRAFT: "bg-info",
   SCHEDULED: "bg-neutral-400",
   QUEUED: "bg-neutral-400",
   SENDING: "bg-neutral-400",
-  SENT: "bg-accent-solid-500",
-  DELIVERED: "bg-accent-solid-600",
-  FAILED: "bg-red-solid-500",
-  BOUNCED: "bg-red-solid-500",
+  SENT: "bg-info",
+  DELIVERED: "bg-success",
+  FAILED: "bg-danger",
+  BOUNCED: "bg-danger",
   CANCELLED: "bg-neutral-300",
-  SUPPRESSED: "bg-amber-solid-500",
-  SKIPPED: "bg-amber-solid-500",
+  SUPPRESSED: "bg-warning",
+  SKIPPED: "bg-warning",
 };
 
 // Status in words (the dot is decoration). A simulated send is always
@@ -36,7 +36,7 @@ export function EmailStatusBadge({ status, simulated = false }: { status: EmailS
       <span className={`h-1.5 w-1.5 rounded-full ${TONE[status]}`} aria-hidden="true" />
       {LABELS[status]}
       {simulated && (status === "SENT" || status === "DELIVERED") && (
-        <span className="rounded bg-amber-50 px-1 text-[11px] font-medium text-amber-800">simulated — not delivered</span>
+        <span className="rounded bg-warning-soft px-1 text-[11px] font-medium text-warning-strong">simulated — not delivered</span>
       )}
     </span>
   );

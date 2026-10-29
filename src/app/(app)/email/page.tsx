@@ -55,7 +55,7 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
               key={key}
               href={qs({ filter: key, page: null })}
               aria-current={filter === key ? "page" : undefined}
-              className={`rounded-full border px-3 py-1 text-sm ${filter === key ? "border-neutral-900 bg-neutral-solid-900 text-white" : "border-neutral-200 bg-surface text-neutral-700 hover:bg-neutral-50"}`}
+              className={`rounded-full border px-3 py-1 text-sm ${filter === key ? "border-neutral-900 bg-primary text-primary-foreground" : "border-border bg-surface text-neutral-700 hover:bg-hover"}`}
             >
               {f.label}
             </Link>
@@ -64,10 +64,10 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
         {can(role, "email:automation_manage") && <ProcessQueueButton />}
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full min-w-[820px] text-sm">
           <caption className="sr-only">Email messages</caption>
-          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2.5 font-medium">When</th>
               <th scope="col" className="px-3 py-2.5 font-medium">To</th>
@@ -82,25 +82,25 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
               <tr key={m.id} className="border-t border-neutral-100 align-top first:border-t-0">
                 <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-neutral-600">
                   {(m.sentAt ?? m.scheduledFor ?? m.createdAt).toLocaleString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                  {m.status === "SCHEDULED" && <span className="block text-xs text-neutral-400">scheduled</span>}
+                  {m.status === "SCHEDULED" && <span className="block text-xs text-subtle">scheduled</span>}
                 </td>
                 <td className="px-3 py-2.5">
-                  <span className="text-neutral-900">{m.recipientName}</span>
-                  <span className="block text-xs text-neutral-500">{m.recipientEmail ?? "no email"}</span>
+                  <span className="text-foreground">{m.recipientName}</span>
+                  <span className="block text-xs text-muted-foreground">{m.recipientEmail ?? "no email"}</span>
                 </td>
                 <td className="px-3 py-2.5">
-                  <Link href={`/email/messages/${m.id}`} className="text-neutral-900 hover:underline">
+                  <Link href={`/email/messages/${m.id}`} className="text-foreground hover:underline">
                     {m.subject || "(no subject)"}
                   </Link>
-                  <span className="block text-xs text-neutral-500">{CATEGORY_LABELS[m.category]}</span>
+                  <span className="block text-xs text-muted-foreground">{CATEGORY_LABELS[m.category]}</span>
                 </td>
                 <td className="px-3 py-2.5 text-xs text-neutral-600">
                   {m.campaignId ? "Campaign" : MODE_LABELS[m.mode]}
-                  <span className="block text-neutral-500">{m.automation?.name ?? m.campaign?.name ?? m.template?.name ?? ""}</span>
+                  <span className="block text-muted-foreground">{m.automation?.name ?? m.campaign?.name ?? m.template?.name ?? ""}</span>
                 </td>
                 <td className="px-3 py-2.5">
                   <EmailStatusBadge status={m.status} simulated={m.simulated} />
-                  {m.statusReason && !m.simulated && <span className="mt-0.5 block max-w-xs text-xs text-neutral-500">{m.statusReason}</span>}
+                  {m.statusReason && !m.simulated && <span className="mt-0.5 block max-w-xs text-xs text-muted-foreground">{m.statusReason}</span>}
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <MessageActions id={m.id} status={m.status} canSend={can(role, "email:send")} campaign={m.campaignId !== null} />
@@ -109,7 +109,7 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
             ))}
             {messages.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-neutral-500">
+                <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
                   No emails here yet.
                 </td>
               </tr>
@@ -117,11 +117,11 @@ export default async function EmailMessagesPage({ searchParams }: { searchParams
           </tbody>
         </table>
       </div>
-      <nav aria-label="Pagination" className="mt-3 flex items-center justify-between text-xs text-neutral-500">
+      <nav aria-label="Pagination" className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
         <p>{total > 0 ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total}` : ""}</p>
         <div className="flex gap-2">
-          {page > 1 && <Link href={qs({ page: String(page - 1) })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700">Previous</Link>}
-          {page * PAGE_SIZE < total && <Link href={qs({ page: String(page + 1) })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700">Next</Link>}
+          {page > 1 && <Link href={qs({ page: String(page - 1) })} className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700">Previous</Link>}
+          {page * PAGE_SIZE < total && <Link href={qs({ page: String(page + 1) })} className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700">Next</Link>}
         </div>
       </nav>
     </div>

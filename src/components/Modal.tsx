@@ -57,14 +57,14 @@ export function Modal({
         className="max-h-[92vh] w-full overflow-y-auto rounded-t-xl bg-surface p-5 shadow-xl focus:outline-none sm:max-w-lg sm:rounded-xl"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h2 id={titleId} className="text-lg font-semibold text-neutral-900">
+          <h2 id={titleId} className="text-lg font-semibold text-foreground">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 -mt-1 flex h-9 w-9 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100"
+            className="-mr-1 -mt-1 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-neutral-100"
           >
             <X className="h-5 w-5" />
           </button>

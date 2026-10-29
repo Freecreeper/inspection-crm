@@ -38,23 +38,23 @@ export function CustomizeLayoutPanel({ onClose }: { onClose: () => void }) {
           onClose();
         }
       }}
-      className="absolute right-0 top-full z-20 mt-1 w-72 space-y-4 rounded-lg border border-neutral-200 bg-surface p-4 shadow-lg"
+      className="absolute right-0 top-full z-20 mt-1 w-72 space-y-4 rounded-lg border border-border bg-surface p-4 shadow-lg"
     >
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <h2 id={headingId} className="text-sm font-medium text-neutral-900">
+          <h2 id={headingId} className="text-sm font-medium text-foreground">
             Customize layout
           </h2>
-          {saving && <span className="text-xs text-neutral-500">Saving…</span>}
+          {saving && <span className="text-xs text-muted-foreground">Saving…</span>}
         </div>
-        <p className="mt-0.5 text-xs text-neutral-500">Saved to your account.</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Saved to your account.</p>
       </div>
 
       <fieldset>
-        <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Columns</legend>
+        <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Columns</legend>
         <ul className="mt-2 space-y-1.5">
           <li>
-            <label className="flex items-center gap-2 text-sm text-neutral-400">
+            <label className="flex items-center gap-2 text-sm text-subtle">
               <input type="checkbox" checked disabled />
               Realtor <span className="text-xs">(always shown)</span>
             </label>
@@ -82,7 +82,7 @@ export function CustomizeLayoutPanel({ onClose }: { onClose: () => void }) {
       </fieldset>
 
       <fieldset>
-        <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Row density</legend>
+        <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Row density</legend>
         <div className="mt-2 flex gap-4 text-sm text-neutral-700">
           {(["comfortable", "compact"] as const).map((density) => (
             <label key={density} className="flex items-center gap-1.5">
@@ -94,13 +94,13 @@ export function CustomizeLayoutPanel({ onClose }: { onClose: () => void }) {
       </fieldset>
 
       {error && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-danger-strong">
           {error}
         </p>
       )}
 
       <div className="flex gap-2">
-        <button type="button" onClick={onClose} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800">
+        <button type="button" onClick={onClose} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover">
           Done
         </button>
         <button

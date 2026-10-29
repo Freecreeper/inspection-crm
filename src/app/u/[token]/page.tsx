@@ -16,8 +16,8 @@ export default async function EmailPreferencesPage({ params }: { params: Promise
 
   return (
     <main className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-xl font-semibold text-neutral-900">Email preferences</h1>
-      <p className="mt-1 text-sm text-neutral-500">{settings.companyName}</p>
+      <h1 className="text-xl font-semibold text-foreground">Email preferences</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{settings.companyName}</p>
       {!realtor ? (
         <p className="mt-6 text-sm text-neutral-700">This link isn&apos;t valid. If you&apos;d like to change the emails you receive, reply to any of our emails.</p>
       ) : (

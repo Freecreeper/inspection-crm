@@ -8,16 +8,16 @@ export default async function ResetPasswordPage({ params }: { params: Promise<{ 
   const { token } = await params;
   const valid = await findResetToken(token);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
-      <div className="w-full max-w-sm rounded-lg border border-neutral-200 bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">Inspection CRM</p>
-        <h1 className="mt-1 text-xl font-semibold text-neutral-900">Choose a new password</h1>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">Choose a new password</h1>
         {valid ? (
           <ResetForm token={token} />
         ) : (
           <div className="mt-4 space-y-3 text-sm">
-            <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-900">This reset link has expired or was already used.</p>
-            <Link href="/forgot-password" className="inline-block text-accent-700 hover:underline">
+            <p className="rounded-md bg-warning-soft px-3 py-2 text-warning-strong">This reset link has expired or was already used.</p>
+            <Link href="/forgot-password" className="inline-block text-link hover:underline">
               Get a new link
             </Link>
           </div>

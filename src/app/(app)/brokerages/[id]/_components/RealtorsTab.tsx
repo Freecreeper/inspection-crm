@@ -7,20 +7,20 @@ import { loadBrokerageRealtors } from "@/lib/brokerages/record";
 // which is never rewritten).
 export async function RealtorsTab({ brokerageId }: { brokerageId: string }) {
   const { current, former } = await loadBrokerageRealtors(brokerageId);
-  const none = <span className="text-neutral-400">—</span>;
+  const none = <span className="text-subtle">—</span>;
 
   return (
     <div className="space-y-8">
       <section aria-labelledby="current-realtors">
-        <h2 id="current-realtors" className="mb-3 text-sm font-semibold text-neutral-900">
-          Current realtors <span className="font-normal text-neutral-500">{current.length}</span>
+        <h2 id="current-realtors" className="mb-3 text-sm font-semibold text-foreground">
+          Current realtors <span className="font-normal text-muted-foreground">{current.length}</span>
         </h2>
         {current.length === 0 ? (
-          <p className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">No current realtors.</p>
+          <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">No current realtors.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
             <table className="w-full min-w-[640px] text-sm">
-              <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+              <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-3 py-2.5 font-medium">Realtor</th>
                   <th scope="col" className="px-3 py-2.5 font-medium">Phone</th>
@@ -33,7 +33,7 @@ export async function RealtorsTab({ brokerageId }: { brokerageId: string }) {
                 {current.map((r) => (
                   <tr key={r.id} className="border-t border-neutral-100 first:border-t-0">
                     <td className="px-3 py-2.5">
-                      <Link href={`/realtors/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                      <Link href={`/realtors/${r.id}`} className="font-medium text-foreground hover:underline">
                         {r.name}
                       </Link>
                     </td>
@@ -50,15 +50,15 @@ export async function RealtorsTab({ brokerageId }: { brokerageId: string }) {
       </section>
 
       <section aria-labelledby="former-realtors">
-        <h2 id="former-realtors" className="mb-3 text-sm font-semibold text-neutral-900">
-          Former realtors <span className="font-normal text-neutral-500">{former.length}</span>
+        <h2 id="former-realtors" className="mb-3 text-sm font-semibold text-foreground">
+          Former realtors <span className="font-normal text-muted-foreground">{former.length}</span>
         </h2>
         {former.length === 0 ? (
-          <p className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">No former realtors on record.</p>
+          <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">No former realtors on record.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
             <table className="w-full min-w-[560px] text-sm">
-              <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+              <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-3 py-2.5 font-medium">Realtor</th>
                   <th scope="col" className="px-3 py-2.5 font-medium">Here</th>
@@ -78,11 +78,11 @@ export async function RealtorsTab({ brokerageId }: { brokerageId: string }) {
                     </td>
                     <td className="px-3 py-2.5 text-neutral-600">
                       {h.nowAt ? (
-                        <Link href={`/brokerages/${h.nowAt.id}`} className="hover:text-neutral-900 hover:underline">
+                        <Link href={`/brokerages/${h.nowAt.id}`} className="hover:text-foreground hover:underline">
                           {h.nowAt.name}
                         </Link>
                       ) : (
-                        <span className="text-neutral-400">No brokerage</span>
+                        <span className="text-subtle">No brokerage</span>
                       )}
                     </td>
                   </tr>

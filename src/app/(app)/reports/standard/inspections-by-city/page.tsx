@@ -29,10 +29,10 @@ export default async function InspectionsByCityPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <Link href="/reports" className="text-xs text-neutral-500 hover:underline">
+      <Link href="/reports" className="text-xs text-muted-foreground hover:underline">
         ← Reports
       </Link>
-      <h1 className="text-xl font-semibold text-neutral-900">Inspections by City</h1>
+      <h1 className="text-xl font-semibold text-foreground">Inspections by City</h1>
       <ReportTable rows={rows} reconciledTotal={reconciledTotal} />
     </div>
   );

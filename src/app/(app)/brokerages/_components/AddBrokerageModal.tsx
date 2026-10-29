@@ -8,8 +8,8 @@ import { PhoneField } from "@/components/PhoneField";
 import { formatPhone, isValidPhoneInput } from "@/lib/phone";
 import { createBrokerageQuick, type BrokerageDuplicate, type NewBrokerageInput } from "../actions";
 
-const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
-const optional = <span className="font-normal text-neutral-400">(optional)</span>;
+const input = "mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring";
+const optional = <span className="font-normal text-subtle">(optional)</span>;
 
 const EMPTY: Omit<NewBrokerageInput, "confirmDuplicates"> = { name: "", phone: "", email: "", addressLine1: "", city: "", state: "", zip: "" };
 
@@ -20,7 +20,7 @@ export function AddBrokerageButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-accent-solid-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
+        className="rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         + Add Brokerage
       </button>
@@ -66,27 +66,27 @@ export function AddBrokerageModal({ onClose }: { onClose: () => void }) {
       {duplicates ? (
         <div className="space-y-4">
           <p className="text-sm text-neutral-600">
-            These existing brokerages look similar to <span className="font-medium text-neutral-900">{fields.name.trim()}</span>. Open one if it&apos;s
+            These existing brokerages look similar to <span className="font-medium text-foreground">{fields.name.trim()}</span>. Open one if it&apos;s
             the same office, or create a new record anyway.
           </p>
-          <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+          <ul className="divide-y divide-neutral-100 rounded-md border border-border">
             {duplicates.map((d) => (
               <li key={d.id} className="flex items-start justify-between gap-3 p-3">
                 <div className="min-w-0 text-sm">
-                  <p className="font-medium text-neutral-900">{d.name}</p>
-                  <p className="truncate text-xs text-neutral-500">
+                  <p className="font-medium text-foreground">{d.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
                     {[d.phone ? formatPhone(d.phone) : null, [d.city, d.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No other details"}
                   </p>
-                  <p className="mt-1 text-xs font-medium text-amber-700">{d.reason === "name" ? "Same name" : "Same phone"}</p>
+                  <p className="mt-1 text-xs font-medium text-warning-strong">{d.reason === "name" ? "Same name" : "Same phone"}</p>
                 </div>
-                <Link href={`/brokerages/${d.id}`} className="shrink-0 text-sm font-medium text-accent-700 hover:underline">
+                <Link href={`/brokerages/${d.id}`} className="shrink-0 text-sm font-medium text-link hover:underline">
                   Open
                 </Link>
               </li>
             ))}
           </ul>
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-danger-strong">
               {error}
             </p>
           )}
@@ -98,7 +98,7 @@ export function AddBrokerageModal({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={() => submit(true)}
               disabled={pending}
-              className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60"
+              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
             >
               {pending ? "Creating…" : "Create anyway"}
             </button>
@@ -152,7 +152,7 @@ export function AddBrokerageModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-danger-strong">
               {error}
             </p>
           )}
@@ -160,7 +160,7 @@ export function AddBrokerageModal({ onClose }: { onClose: () => void }) {
             <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
               Cancel
             </button>
-            <button type="submit" disabled={pending} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
               {pending ? "Checking…" : "Add brokerage"}
             </button>
           </div>

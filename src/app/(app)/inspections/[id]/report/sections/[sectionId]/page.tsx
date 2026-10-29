@@ -50,13 +50,13 @@ export default async function SectionEditorPage({
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href={`/inspections/${id}/report`} className="text-xs text-neutral-500 hover:underline">
+        <Link href={`/inspections/${id}/report`} className="text-xs text-muted-foreground hover:underline">
           ← Back to report
         </Link>
-        <h1 className="mt-1 text-xl font-semibold text-neutral-900">{section.name}</h1>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">{section.name}</h1>
       </div>
 
-      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+      <section className="rounded-lg border border-border bg-surface p-4">
         <form action={notApplicableAction} className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-neutral-700">
             <input type="checkbox" name="notApplicable" value="true" defaultChecked={section.notApplicable} disabled={!editable} />
@@ -67,10 +67,10 @@ export default async function SectionEditorPage({
             defaultValue={section.defaultNarrative ?? ""}
             placeholder="Reason (optional)"
             disabled={!editable}
-            className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50"
+            className="flex-1 rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary"
           />
           {editable && (
-            <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+            <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               Save
             </SubmitButton>
           )}
@@ -84,11 +84,11 @@ export default async function SectionEditorPage({
           const needsReason = ["NOT_INSPECTED", "NOT_ACCESSIBLE", "LIMITED_INSPECTION"].includes(component.inspectionStatus);
 
           return (
-            <section key={component.id} className="rounded-lg border border-neutral-200 bg-surface p-4">
-              <h2 className="text-sm font-semibold text-neutral-900">{component.name}</h2>
+            <section key={component.id} className="rounded-lg border border-border bg-surface p-4">
+              <h2 className="text-sm font-semibold text-foreground">{component.name}</h2>
 
               <form action={statusAction} className="mt-2 grid grid-cols-2 gap-2">
-                <select name="inspectionStatus" defaultValue={component.inspectionStatus} disabled={!editable} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50">
+                <select name="inspectionStatus" defaultValue={component.inspectionStatus} disabled={!editable} className="rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary">
                   <option value="INSPECTED">Inspected</option>
                   <option value="NOT_INSPECTED">Not inspected</option>
                   <option value="NOT_PRESENT">Not present</option>
@@ -96,17 +96,17 @@ export default async function SectionEditorPage({
                   <option value="LIMITED_INSPECTION">Limited inspection</option>
                   <option value="NOT_APPLICABLE">Not applicable</option>
                 </select>
-                <input name="materialType" defaultValue={component.materialType ?? ""} placeholder="Material / type" disabled={!editable} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
+                <input name="materialType" defaultValue={component.materialType ?? ""} placeholder="Material / type" disabled={!editable} className="rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
                 <input
                   name="limitationNote"
                   defaultValue={component.limitationNote ?? ""}
                   placeholder={needsReason ? "Reason (recommended for finalization)" : "Limitation note (optional)"}
                   disabled={!editable}
-                  className="col-span-2 rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50"
+                  className="col-span-2 rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary"
                 />
-                <textarea name="notes" defaultValue={component.notes ?? ""} placeholder="Notes" rows={2} disabled={!editable} className="col-span-2 rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
+                <textarea name="notes" defaultValue={component.notes ?? ""} placeholder="Notes" rows={2} disabled={!editable} className="col-span-2 rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
                 {editable && (
-                  <SubmitButton className="col-span-2 rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+                  <SubmitButton className="col-span-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
                     Save component
                   </SubmitButton>
                 )}
@@ -118,11 +118,11 @@ export default async function SectionEditorPage({
                   const deleteAction = deleteFinding.bind(null, finding.id);
                   const mediaAction = uploadMedia.bind(null, section.report.inspectionId, finding.id);
                   return (
-                    <div key={`${finding.id}:${finding.updatedAt.getTime()}`} className="rounded-md border border-neutral-200 p-3">
+                    <div key={`${finding.id}:${finding.updatedAt.getTime()}`} className="rounded-md border border-border p-3">
                       <form action={updateAction} className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
-                          <input name="title" defaultValue={finding.title} required disabled={!editable} placeholder="Title" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
-                          <select name="categoryId" defaultValue={finding.categoryId ?? ""} disabled={!editable} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50">
+                          <input name="title" defaultValue={finding.title} required disabled={!editable} placeholder="Title" className="rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
+                          <select name="categoryId" defaultValue={finding.categoryId ?? ""} disabled={!editable} className="rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary">
                             <option value="">No category</option>
                             {categories.map((c) => (
                               <option key={c.id} value={c.id}>
@@ -131,10 +131,10 @@ export default async function SectionEditorPage({
                             ))}
                           </select>
                         </div>
-                        <textarea name="description" defaultValue={finding.description} required rows={2} disabled={!editable} placeholder="Description" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
-                        <input name="location" defaultValue={finding.location ?? ""} placeholder="Location" disabled={!editable} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
-                        <textarea name="recommendation" defaultValue={finding.recommendation ?? ""} rows={2} placeholder="Recommendation" disabled={!editable} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
-                        <input name="recommendedProfessional" defaultValue={finding.recommendedProfessional ?? ""} placeholder="Recommended professional (e.g. licensed electrician)" disabled={!editable} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm disabled:bg-neutral-50" />
+                        <textarea name="description" defaultValue={finding.description} required rows={2} disabled={!editable} placeholder="Description" className="w-full rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
+                        <input name="location" defaultValue={finding.location ?? ""} placeholder="Location" disabled={!editable} className="w-full rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
+                        <textarea name="recommendation" defaultValue={finding.recommendation ?? ""} rows={2} placeholder="Recommendation" disabled={!editable} className="w-full rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
+                        <input name="recommendedProfessional" defaultValue={finding.recommendedProfessional ?? ""} placeholder="Recommended professional (e.g. licensed electrician)" disabled={!editable} className="w-full rounded-md border border-input px-2 py-1.5 text-sm disabled:bg-surface-secondary" />
                         <div className="flex flex-wrap gap-3 text-xs text-neutral-600">
                           {(
                             [
@@ -152,7 +152,7 @@ export default async function SectionEditorPage({
                           ))}
                         </div>
                         {editable && (
-                          <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800">
+                          <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover">
                             Save finding
                           </SubmitButton>
                         )}
@@ -175,8 +175,8 @@ export default async function SectionEditorPage({
                       {editable && (
                         <form action={mediaAction} className="mt-2 flex gap-2">
                           <input name="file" type="file" accept="image/*" required className="text-xs" />
-                          <input name="caption" placeholder="Caption (optional)" className="flex-1 rounded-md border border-neutral-300 px-2 py-1 text-xs" />
-                          <SubmitButton className="rounded-md border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-50">
+                          <input name="caption" placeholder="Caption (optional)" className="flex-1 rounded-md border border-input px-2 py-1 text-xs" />
+                          <SubmitButton className="rounded-md border border-input px-2 py-1 text-xs hover:bg-hover">
                             Add photo
                           </SubmitButton>
                         </form>
@@ -184,7 +184,7 @@ export default async function SectionEditorPage({
 
                       {editable && (
                         <form action={deleteAction} className="mt-2">
-                          <SubmitButton className="text-xs text-red-600 hover:underline" confirm="Remove this finding and its photos?">
+                          <SubmitButton className="text-xs text-danger-strong hover:underline" confirm="Remove this finding and its photos?">
                             Remove finding
                           </SubmitButton>
                         </form>
@@ -199,8 +199,8 @@ export default async function SectionEditorPage({
                   <p className="text-xs font-medium text-neutral-600">Add a finding</p>
                   <form action={findingAction} className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      <input name="title" placeholder="Title" required className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-                      <select name="categoryId" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+                      <input name="title" placeholder="Title" required className="rounded-md border border-input px-2 py-1.5 text-sm" />
+                      <select name="categoryId" className="rounded-md border border-input px-2 py-1.5 text-sm">
                         <option value="">No category</option>
                         {categories.map((c) => (
                           <option key={c.id} value={c.id}>
@@ -209,8 +209,8 @@ export default async function SectionEditorPage({
                         ))}
                       </select>
                     </div>
-                    <textarea name="description" placeholder="Description" required rows={2} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-                    <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800">
+                    <textarea name="description" placeholder="Description" required rows={2} className="w-full rounded-md border border-input px-2 py-1.5 text-sm" />
+                    <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover">
                       Add custom finding
                     </SubmitButton>
                   </form>
@@ -225,10 +225,10 @@ export default async function SectionEditorPage({
                         </summary>
                         <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
                           {fitting.map((n) => (
-                            <li key={n.id} className="flex items-center justify-between rounded bg-neutral-50 px-2 py-1">
+                            <li key={n.id} className="flex items-center justify-between rounded bg-surface-secondary px-2 py-1">
                               <span>{n.title}</span>
                               <form action={createFindingFromNarrative.bind(null, component.id, n.id)}>
-                                <SubmitButton className="text-blue-700 hover:underline">Insert</SubmitButton>
+                                <SubmitButton className="text-info-strong hover:underline">Insert</SubmitButton>
                               </form>
                             </li>
                           ))}

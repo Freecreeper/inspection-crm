@@ -27,10 +27,10 @@ export interface Viewer {
 }
 
 const actionClass =
-  "inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600 disabled:opacity-60";
-const primaryClass = "inline-flex items-center justify-center rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800";
-const heading = "text-xs font-medium uppercase tracking-wide text-neutral-500";
-const notProvided = <span className="text-neutral-400">Not provided</span>;
+  "inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60";
+const primaryClass = "inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover";
+const heading = "text-xs font-medium uppercase tracking-wide text-muted-foreground";
+const notProvided = <span className="text-subtle">Not provided</span>;
 
 // SCAN → PREVIEW → ACT → OPEN FULL RECORD: opening an event shows what's
 // most likely needed and the next actions, without leaving the Calendar.
@@ -93,13 +93,13 @@ function Status({ state }: { state: { status: string } }) {
         <div className="h-24 w-full animate-pulse rounded bg-neutral-100" />
       </div>
     );
-  if (state.status === "missing") return <p className="p-5 text-sm text-neutral-500">This record no longer exists.</p>;
-  return <p className="p-5 text-sm text-red-600">Couldn&apos;t load this. Try again.</p>;
+  if (state.status === "missing") return <p className="p-5 text-sm text-muted-foreground">This record no longer exists.</p>;
+  return <p className="p-5 text-sm text-danger-strong">Couldn&apos;t load this. Try again.</p>;
 }
 
 function CheckIcon({ item }: { item: ChecklistItem }) {
-  if (item.state === "done") return <Check className="h-4 w-4 text-accent-600" aria-label="Done" />;
-  if (item.state === "warn") return <AlertTriangle className="h-4 w-4 text-amber-600" aria-label="Needs attention" />;
+  if (item.state === "done") return <Check className="h-4 w-4 text-success-strong" aria-label="Done" />;
+  if (item.state === "warn") return <AlertTriangle className="h-4 w-4 text-warning-strong" aria-label="Needs attention" />;
   if (item.state === "na") return <Minus className="h-4 w-4 text-neutral-300" aria-label="Not applicable" />;
   return <Circle className="h-4 w-4 text-neutral-300" aria-label="Not yet" />;
 }
@@ -138,22 +138,22 @@ function InspectionBody({
       <section className="space-y-1 px-5 py-4" aria-label="When and what">
         <p className="text-sm text-neutral-600">{p.cityLine}</p>
         {p.day && p.start && p.end ? (
-          <p className="text-sm font-medium text-neutral-900">
+          <p className="text-sm font-medium text-foreground">
             {formatDay(p.day, "long")}
             <span className="block font-normal text-neutral-700">
               {formatTimeRange(new Date(p.start), new Date(p.end), timeZone)} · {formatDuration(p.durationMinutes)}
             </span>
           </p>
         ) : (
-          <p className="text-sm text-neutral-500">Not scheduled yet</p>
+          <p className="text-sm text-muted-foreground">Not scheduled yet</p>
         )}
-        <p className="text-sm text-neutral-700">{p.services.length ? p.services.join(" + ") : <span className="text-amber-700">No services selected</span>}</p>
-        {p.status !== "SCHEDULED" && <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{p.status.replace("_", " ").toLowerCase()}</p>}
+        <p className="text-sm text-neutral-700">{p.services.length ? p.services.join(" + ") : <span className="text-warning-strong">No services selected</span>}</p>
+        {p.status !== "SCHEDULED" && <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{p.status.replace("_", " ").toLowerCase()}</p>}
       </section>
 
       {p.warnings.length > 0 && (
         <section className="px-5 py-3" aria-label="Warnings">
-          <ul className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <ul className="space-y-1 rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-sm text-warning-strong">
             {p.warnings.map((w) => (
               <li key={w.code} className="flex items-center gap-1.5">
                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -161,7 +161,7 @@ function InspectionBody({
               </li>
             ))}
             {p.conflicts.map((c) => (
-              <li key={c.start + c.title} className="pl-6 text-xs text-amber-800">
+              <li key={c.start + c.title} className="pl-6 text-xs text-warning-strong">
                 Overlaps {c.kind === "block" ? "blocked time" : "inspection"}: {c.title}, {formatTimeRange(new Date(c.start), new Date(c.end), timeZone)}
               </li>
             ))}
@@ -174,12 +174,12 @@ function InspectionBody({
           <h3 className={heading}>Customer</h3>
           {p.customer ? (
             <div className="mt-1">
-              <Link href={`/customers/${p.customer.id}`} className="font-medium text-neutral-900 hover:underline">
+              <Link href={`/customers/${p.customer.id}`} className="font-medium text-foreground hover:underline">
                 {p.customer.name}
               </Link>
-              <p className="text-neutral-600">{p.customer.phone ? formatPhone(p.customer.phone) : <span className="text-neutral-400">Phone not provided</span>}</p>
-              <p className="truncate text-neutral-600">{p.customer.email ?? <span className="text-neutral-400">Email not provided</span>}</p>
-              {p.otherCustomers > 0 && <p className="text-xs text-neutral-500">+{p.otherCustomers} more on the transaction</p>}
+              <p className="text-neutral-600">{p.customer.phone ? formatPhone(p.customer.phone) : <span className="text-subtle">Phone not provided</span>}</p>
+              <p className="truncate text-neutral-600">{p.customer.email ?? <span className="text-subtle">Email not provided</span>}</p>
+              {p.otherCustomers > 0 && <p className="text-xs text-muted-foreground">+{p.otherCustomers} more on the transaction</p>}
             </div>
           ) : (
             <p className="mt-1">{notProvided}</p>
@@ -191,7 +191,7 @@ function InspectionBody({
             <ul className="mt-1 space-y-1.5">
               {p.realtors.map((r) => (
                 <li key={r.id + r.role}>
-                  <Link href={`/realtors/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+                  <Link href={`/realtors/${r.id}`} className="font-medium text-foreground hover:underline">
                     {r.name}
                   </Link>
                   <p className="text-neutral-600">{[r.brokerage, r.role].filter(Boolean).join(" · ")}</p>
@@ -204,7 +204,7 @@ function InspectionBody({
         </div>
         <div>
           <h3 className={heading}>Inspector</h3>
-          <p className="mt-1">{p.inspector?.name ?? <span className="text-amber-700">Not assigned</span>}</p>
+          <p className="mt-1">{p.inspector?.name ?? <span className="text-warning-strong">Not assigned</span>}</p>
         </div>
         {p.accessNotes && (
           <div>
@@ -222,9 +222,9 @@ function InspectionBody({
           {p.checklist.map((item) => (
             <li key={item.key} className="flex items-center gap-2">
               <CheckIcon item={item} />
-              <span className={item.state === "warn" ? "text-amber-900" : "text-neutral-700"}>{item.label}</span>
+              <span className={item.state === "warn" ? "text-warning-strong" : "text-neutral-700"}>{item.label}</span>
               {item.key === "agreement" && p.permissions.canEditAgreement && p.status !== "CANCELLED" && (
-                <button type="button" disabled={pending} onClick={() => toggleAgreement(!p.agreementSignedAt)} className="ml-auto text-xs font-medium text-accent-700 hover:underline disabled:opacity-60">
+                <button type="button" disabled={pending} onClick={() => toggleAgreement(!p.agreementSignedAt)} className="ml-auto text-xs font-medium text-link hover:underline disabled:opacity-60">
                   {p.agreementSignedAt ? "Undo" : "Mark signed"}
                 </button>
               )}
@@ -232,7 +232,7 @@ function InspectionBody({
           ))}
         </ul>
         {error && (
-          <p role="alert" className="mt-2 text-xs text-red-600">
+          <p role="alert" className="mt-2 text-xs text-danger-strong">
             {error}
           </p>
         )}
@@ -253,17 +253,17 @@ function InspectionBody({
             </button>
           )}
           {p.permissions.canCancel && (
-            <button type="button" onClick={() => onCancel(p)} className={`${actionClass} text-red-700`}>
+            <button type="button" onClick={() => onCancel(p)} className={`${actionClass} text-danger-strong`}>
               Cancel inspection
             </button>
           )}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-sm">
-          <Link href={`/transactions/${p.transactionId}`} className="text-accent-700 hover:underline">
+          <Link href={`/transactions/${p.transactionId}`} className="text-link hover:underline">
             Open transaction
           </Link>
           {p.reportId && (
-            <Link href={`/inspections/${p.id}/report`} className="text-accent-700 hover:underline">
+            <Link href={`/inspections/${p.id}/report`} className="text-link hover:underline">
               Open report
             </Link>
           )}
@@ -300,7 +300,7 @@ function TaskBody({ event, viewer, onChanged, onClose }: { event: CalendarEvent;
   return (
     <div className="divide-y divide-neutral-100">
       <section className="space-y-1 px-5 py-4">
-        <p className="font-medium text-neutral-900">{t.title}</p>
+        <p className="font-medium text-foreground">{t.title}</p>
         {t.day && <p className="text-sm text-neutral-600">Due {formatDay(t.day, "long")}</p>}
         {t.assignee && <p className="text-sm text-neutral-600">Assigned to {t.assignee}</p>}
         {t.description && <p className="whitespace-pre-line text-sm text-neutral-700">{t.description}</p>}
@@ -309,7 +309,7 @@ function TaskBody({ event, viewer, onChanged, onClose }: { event: CalendarEvent;
         <section className="space-y-2 px-5 py-4 text-sm">
           <h3 className={heading}>Realtor</h3>
           <div>
-            <Link href={`/realtors/${t.realtor.id}`} className="font-medium text-neutral-900 hover:underline">
+            <Link href={`/realtors/${t.realtor.id}`} className="font-medium text-foreground hover:underline">
               {t.realtor.name}
             </Link>
             <p className="text-neutral-600">{t.realtor.brokerage ?? "No brokerage"}</p>
@@ -333,7 +333,7 @@ function TaskBody({ event, viewer, onChanged, onClose }: { event: CalendarEvent;
           <div className="flex items-end gap-2">
             <label className="flex-1 text-xs text-neutral-600">
               Reschedule to
-              <input type="date" value={newDay} onChange={(e) => setNewDay(e.target.value)} className="mt-1 block w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+              <input type="date" value={newDay} onChange={(e) => setNewDay(e.target.value)} className="mt-1 block w-full rounded-md border border-input px-2 py-1.5 text-sm" />
             </label>
             <button type="button" disabled={pending || !newDay} onClick={() => run(() => rescheduleTask(t.id, newDay))} className={actionClass}>
               Reschedule
@@ -342,7 +342,7 @@ function TaskBody({ event, viewer, onChanged, onClose }: { event: CalendarEvent;
         </section>
       )}
       {error && (
-        <p role="alert" className="px-5 py-2 text-sm text-red-600">
+        <p role="alert" className="px-5 py-2 text-sm text-danger-strong">
           {error}
         </p>
       )}
@@ -368,7 +368,7 @@ function RealtorOccasionBody({ event }: { event: CalendarEvent }) {
   return (
     <div className="divide-y divide-neutral-100">
       <section className="space-y-1 px-5 py-4">
-        <p className="flex items-center gap-1.5 text-sm font-medium text-neutral-900">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           <EventIcon event={event} className="h-4 w-4" />
           {event.title}
         </p>
@@ -376,19 +376,19 @@ function RealtorOccasionBody({ event }: { event: CalendarEvent }) {
       </section>
       <section className="space-y-2 px-5 py-4 text-sm">
         <div>
-          <Link href={`/realtors/${r.id}`} className="font-medium text-neutral-900 hover:underline">
+          <Link href={`/realtors/${r.id}`} className="font-medium text-foreground hover:underline">
             {r.name}
           </Link>
           <p className="text-neutral-600">{r.brokerage ?? "No brokerage"}</p>
         </div>
         <dl className="grid grid-cols-2 gap-3">
           <div>
-            <dt className="text-xs text-neutral-500">Transactions</dt>
-            <dd className="text-lg font-semibold tabular-nums text-neutral-900">{r.transactions}</dd>
+            <dt className="text-xs text-muted-foreground">Transactions</dt>
+            <dd className="text-lg font-semibold tabular-nums text-foreground">{r.transactions}</dd>
           </div>
           <div>
-            <dt className="text-xs text-neutral-500">Referrals</dt>
-            <dd className="text-lg font-semibold tabular-nums text-neutral-900">{r.referrals}</dd>
+            <dt className="text-xs text-muted-foreground">Referrals</dt>
+            <dd className="text-lg font-semibold tabular-nums text-foreground">{r.referrals}</dd>
           </div>
         </dl>
         <div className="flex flex-wrap gap-2 pt-1">
@@ -401,7 +401,7 @@ function RealtorOccasionBody({ event }: { event: CalendarEvent }) {
           {r.permissions.canEmail && r.email && (
             <EmailButton context={{ kind: "realtor", id: r.id }} templateKey={OCCASION_TEMPLATE[event.type]} label={event.type === "birthday" ? "Prepare birthday email" : "Prepare email"} className={actionClass} />
           )}
-          {!r.email && <span className="text-xs text-neutral-500">No email on file.</span>}
+          {!r.email && <span className="text-xs text-muted-foreground">No email on file.</span>}
         </div>
       </section>
       <div className="px-5 py-4">
@@ -427,7 +427,7 @@ function GenericBody({ event, timeZone, viewer, onChanged, onClose }: { event: C
   return (
     <div className="divide-y divide-neutral-100">
       <section className="space-y-1 px-5 py-4">
-        <p className="flex items-center gap-1.5 font-medium text-neutral-900">
+        <p className="flex items-center gap-1.5 font-medium text-foreground">
           <EventIcon event={event} className="h-4 w-4" />
           {event.title}
         </p>
@@ -436,10 +436,10 @@ function GenericBody({ event, timeZone, viewer, onChanged, onClose }: { event: C
           {!event.allDay && event.start && event.end && <span className="block">{formatTimeRange(new Date(event.start), new Date(event.end), timeZone)}</span>}
         </p>
         {event.subtitle && <p className="text-sm text-neutral-700">{event.subtitle}</p>}
-        {event.type === "reportDue" && <p className="text-xs text-neutral-500">Based on the report turnaround after the inspection date. It leaves the Calendar once the report is delivered.</p>}
+        {event.type === "reportDue" && <p className="text-xs text-muted-foreground">Based on the report turnaround after the inspection date. It leaves the Calendar once the report is delivered.</p>}
       </section>
       {error && (
-        <p role="alert" className="px-5 py-2 text-sm text-red-600">
+        <p role="alert" className="px-5 py-2 text-sm text-danger-strong">
           {error}
         </p>
       )}
@@ -456,7 +456,7 @@ function GenericBody({ event, timeZone, viewer, onChanged, onClose }: { event: C
                 onClose();
               })
             }
-            className={`${actionClass} w-full text-red-700`}
+            className={`${actionClass} w-full text-danger-strong`}
           >
             Remove blocked time
           </button>

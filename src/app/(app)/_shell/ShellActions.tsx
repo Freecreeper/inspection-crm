@@ -75,7 +75,7 @@ export function ShellActions({ viewer, today, timeZone, defaultDurationMinutes }
       {dialog === "brokerage" && <AddBrokerageModal onClose={() => setDialog(null)} />}
 
       {notice && (
-        <p role="status" className="fixed bottom-4 right-4 z-50 flex max-w-sm items-start gap-2 rounded-lg border border-accent-200 bg-accent-50 px-3 py-2 text-sm text-accent-800 shadow-lg">
+        <p role="status" className="fixed bottom-4 right-4 z-50 flex max-w-sm items-start gap-2 rounded-lg border border-success-border bg-success-soft px-3 py-2 text-sm text-success-strong shadow-lg">
           {notice}
           <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="shrink-0 rounded p-0.5 hover:bg-accent-100">
             <X className="h-4 w-4" aria-hidden="true" />

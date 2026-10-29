@@ -58,12 +58,12 @@ export default async function InspectionDetailPage({ params }: { params: Promise
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">Inspection</p>
-        <h1 className="text-xl font-semibold text-neutral-900">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection</p>
+        <h1 className="text-xl font-semibold text-foreground">
           {inspection.property.addressLine1}, {inspection.property.city}, {inspection.property.state}{" "}
           {inspection.property.zip}
         </h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           <Link href={`/transactions/${inspection.transactionId}`} className="hover:underline">
             {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
           </Link>
@@ -73,26 +73,26 @@ export default async function InspectionDetailPage({ params }: { params: Promise
         </span>
       </div>
 
-      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
-        <h2 className="text-sm font-semibold text-neutral-900">Status</h2>
+      <section className="rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-semibold text-foreground">Status</h2>
         <form action={statusAction} className="mt-2 flex gap-2">
-          <select name="status" defaultValue={inspection.status} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+          <select name="status" defaultValue={inspection.status} className="rounded-md border border-input px-2 py-1.5 text-sm">
             <option value="SCHEDULED">Scheduled</option>
             <option value="IN_PROGRESS">In progress</option>
             <option value="COMPLETED">Completed</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
-          <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+          <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
             Update
           </SubmitButton>
         </form>
 
-        <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">Scheduled for</h3>
+        <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scheduled for</h3>
         <p className="mt-1 text-sm text-neutral-700">
           {start && end ? (
             <>
               {formatDay(toDayKey(start, timeZone), "long")} · {formatTimeRange(start, end, timeZone)} ({formatDuration(inspection.durationMinutes)})
-              <Link href={`/calendar?view=day&date=${toDayKey(start, timeZone)}`} className="ml-2 text-accent-700 hover:underline">
+              <Link href={`/calendar?view=day&date=${toDayKey(start, timeZone)}`} className="ml-2 text-link hover:underline">
                 View on calendar
               </Link>
             </>
@@ -101,32 +101,32 @@ export default async function InspectionDetailPage({ params }: { params: Promise
           )}
         </p>
         <p className="mt-1 text-sm text-neutral-600">
-          Agreement: {inspection.agreementSignedAt ? `signed ${formatDay(toDayKey(inspection.agreementSignedAt, timeZone), "short")}` : <span className="text-amber-700">not signed yet</span>}
+          Agreement: {inspection.agreementSignedAt ? `signed ${formatDay(toDayKey(inspection.agreementSignedAt, timeZone), "short")}` : <span className="text-warning-strong">not signed yet</span>}
         </p>
         {canSchedule && inspection.status === "SCHEDULED" && (
           <form action={rescheduleAction} className="mt-2 flex flex-wrap gap-2">
             <label htmlFor="scheduledAt" className="sr-only">
               New date and time
             </label>
-            <input id="scheduledAt" name="scheduledAt" type="datetime-local" step={900} required defaultValue={localValue(inspection.scheduledAt)} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input id="scheduledAt" name="scheduledAt" type="datetime-local" step={900} required defaultValue={localValue(inspection.scheduledAt)} className="rounded-md border border-input px-2 py-1.5 text-sm" />
             <label htmlFor="durationMinutes" className="sr-only">
               Duration
             </label>
-            <select id="durationMinutes" name="durationMinutes" defaultValue={inspection.durationMinutes} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+            <select id="durationMinutes" name="durationMinutes" defaultValue={inspection.durationMinutes} className="rounded-md border border-input px-2 py-1.5 text-sm">
               {[...new Set([30, 45, 60, 90, 120, 150, 180, 210, 240, 300, 360, 480, inspection.durationMinutes])].sort((a, b) => a - b).map((m) => (
                 <option key={m} value={m}>
                   {formatDuration(m)}
                 </option>
               ))}
             </select>
-            <SubmitButton className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+            <SubmitButton className="rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover">
               {inspection.scheduledAt ? "Reschedule" : "Schedule"}
             </SubmitButton>
           </form>
         )}
-        <p className="mt-1 text-xs text-neutral-500">Changing the date or time updates reminders and notifies customers per the email automations. Overlapping bookings for the inspector are refused.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Changing the date or time updates reminders and notifies customers per the email automations. Overlapping bookings for the inspector are refused.</p>
 
-        <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">Inspector</h3>
+        <h3 className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">Inspector</h3>
         <p className="mt-1 text-sm text-neutral-700">{inspection.inspector?.name || "Unassigned"}</p>
         <form action={assignAction} className="mt-2 flex gap-2">
           <div className="flex-1">
@@ -137,30 +137,30 @@ export default async function InspectionDetailPage({ params }: { params: Promise
               options={inspectors.map((u) => ({ id: u.id, label: u.name }))}
             />
           </div>
-          <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+          <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
             Assign
           </SubmitButton>
         </form>
       </section>
 
-      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+      <section className="rounded-lg border border-border bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-neutral-900">Emails</h2>
+          <h2 className="text-sm font-semibold text-foreground">Emails</h2>
           {canEmail && (
             <EmailButton
               context={{ kind: "inspection", id: inspection.id }}
-              className="rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              className="rounded-md border border-input bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-hover"
             />
           )}
         </div>
         <ul className="mt-2 space-y-1 text-sm">
           {emails.map((m) => (
-            <li key={m.id} className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-neutral-50 px-3 py-2">
+            <li key={m.id} className="flex flex-wrap items-start justify-between gap-2 rounded-md bg-surface-secondary px-3 py-2">
               <span className="min-w-0">
                 <Link href={`/email/messages/${m.id}`} className="text-neutral-800 hover:underline">
                   {m.subject || "(no subject)"}
                 </Link>
-                <span className="block text-xs text-neutral-500">
+                <span className="block text-xs text-muted-foreground">
                   To {m.recipientName}
                   {m.status === "SCHEDULED" && m.scheduledFor && ` · sends ${m.scheduledFor.toLocaleString("en-US", { timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
                   {m.statusReason && !m.simulated && ` · ${m.statusReason}`}
@@ -169,45 +169,45 @@ export default async function InspectionDetailPage({ params }: { params: Promise
               <EmailStatusBadge status={m.status} simulated={m.simulated} />
             </li>
           ))}
-          {emails.length === 0 && <p className="text-sm text-neutral-400">No emails for this inspection yet.</p>}
+          {emails.length === 0 && <p className="text-sm text-subtle">No emails for this inspection yet.</p>}
         </ul>
       </section>
 
-      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
-        <h2 className="text-sm font-semibold text-neutral-900">Conditions on site</h2>
-        <p className="mt-1 text-xs text-neutral-500">
+      <section className="rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-semibold text-foreground">Conditions on site</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
           Optional — missing conditions never block documenting the property (§ &quot;Property Data Collection&quot;).
         </p>
         <form action={conditionsAction} className="mt-3 grid grid-cols-2 gap-2">
-          <input name="weather" defaultValue={inspection.weather ?? ""} placeholder="Weather" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-          <input name="temperatureF" type="number" defaultValue={inspection.temperatureF ?? ""} placeholder="Temp (°F)" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-          <input name="occupancyStatus" defaultValue={inspection.occupancyStatus ?? ""} placeholder="Occupancy status" className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
-          <select name="utilitiesOn" defaultValue={inspection.utilitiesOn === null ? "" : String(inspection.utilitiesOn)} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+          <input name="weather" defaultValue={inspection.weather ?? ""} placeholder="Weather" className="rounded-md border border-input px-2 py-1.5 text-sm" />
+          <input name="temperatureF" type="number" defaultValue={inspection.temperatureF ?? ""} placeholder="Temp (°F)" className="rounded-md border border-input px-2 py-1.5 text-sm" />
+          <input name="occupancyStatus" defaultValue={inspection.occupancyStatus ?? ""} placeholder="Occupancy status" className="rounded-md border border-input px-2 py-1.5 text-sm" />
+          <select name="utilitiesOn" defaultValue={inspection.utilitiesOn === null ? "" : String(inspection.utilitiesOn)} className="rounded-md border border-input px-2 py-1.5 text-sm">
             <option value="">Utilities: unknown</option>
             <option value="true">Utilities on</option>
             <option value="false">Utilities off</option>
           </select>
-          <SubmitButton className="col-span-2 rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+          <SubmitButton className="col-span-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
             Save conditions
           </SubmitButton>
         </form>
       </section>
 
-      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
-        <h2 className="text-sm font-semibold text-neutral-900">Inspection report</h2>
+      <section className="rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-semibold text-foreground">Inspection report</h2>
         {report ? (
           <div className="mt-2 flex items-center justify-between">
             <div>
               <p className="text-sm text-neutral-800">{report.reportNumber}</p>
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[11px] text-blue-700">{report.status}</span>
+              <span className="rounded-full bg-info-soft px-2 py-0.5 font-mono text-[11px] text-info-strong">{report.status}</span>
             </div>
-            <Link href={`/inspections/${inspection.id}/report`} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+            <Link href={`/inspections/${inspection.id}/report`} className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               Open report
             </Link>
           </div>
         ) : (
           <form action={createReportAction} className="mt-3 flex gap-2">
-            <select name="templateId" required className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+            <select name="templateId" required className="flex-1 rounded-md border border-input px-2 py-1.5 text-sm">
               <option value="" disabled selected>
                 Select a template
               </option>
@@ -217,7 +217,7 @@ export default async function InspectionDetailPage({ params }: { params: Promise
                 </option>
               ))}
             </select>
-            <SubmitButton className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
+            <SubmitButton className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
               Start report
             </SubmitButton>
           </form>

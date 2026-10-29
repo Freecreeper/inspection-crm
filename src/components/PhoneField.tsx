@@ -28,7 +28,7 @@ export function PhoneField({
         value={value}
         onChange={(e) => onChange(formatPhone(e.target.value))}
         placeholder="(555)123-4567"
-        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+        className="mt-1 w-full rounded-md border border-input px-2 py-1.5 text-sm"
       />
     </div>
   );

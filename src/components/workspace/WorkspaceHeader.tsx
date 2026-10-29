@@ -18,7 +18,7 @@ export function ModeSwitch({ label, modes, current }: { label: string; modes: Wo
           key={m.key}
           href={m.href}
           aria-current={m.key === current ? "page" : undefined}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium ${m.key === current ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900"}`}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium ${m.key === current ? "bg-surface text-foreground shadow-sm" : "text-neutral-600 hover:text-foreground"}`}
         >
           {m.label}
         </Link>
@@ -45,7 +45,7 @@ export function WorkspaceHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-4">
-        <h1 className="text-2xl font-semibold text-neutral-900">{title}</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
         {modes && current && <ModeSwitch label={modesLabel ?? `${title} views`} modes={modes} current={current} />}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -74,21 +74,21 @@ export function QueueSection({
 }) {
   const badge = {
     neutral: "bg-neutral-100 text-neutral-600",
-    warning: "bg-amber-100 text-amber-800",
-    danger: "bg-red-100 text-red-800",
+    warning: "bg-warning-soft text-warning-strong",
+    danger: "bg-danger-soft text-danger-strong",
     accent: "bg-accent-100 text-accent-800",
   }[tone];
   return (
-    <section aria-labelledby={id} className="rounded-lg border border-neutral-200 bg-surface">
+    <section aria-labelledby={id} className="rounded-lg border border-border bg-surface">
       <header className="flex items-baseline justify-between gap-3 border-b border-neutral-100 px-4 py-2.5">
         <div className="min-w-0">
-          <h2 id={id} className="text-sm font-semibold text-neutral-900">
+          <h2 id={id} className="text-sm font-semibold text-foreground">
             {title} <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${badge}`}>{count}</span>
           </h2>
-          {hint && <p className="mt-0.5 text-xs text-neutral-500">{hint}</p>}
+          {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
         </div>
       </header>
-      {count === 0 ? <p className="px-4 py-3 text-sm text-neutral-400">{empty}</p> : <ul className="divide-y divide-neutral-100">{children}</ul>}
+      {count === 0 ? <p className="px-4 py-3 text-sm text-subtle">{empty}</p> : <ul className="divide-y divide-neutral-100">{children}</ul>}
     </section>
   );
 }
@@ -106,4 +106,4 @@ export function QueueRow({ children, actions }: { children: React.ReactNode; act
 
 // Small, consistent buttons for queue-row actions.
 export const rowAction =
-  "inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-surface px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600 disabled:opacity-50";
+  "inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50";

@@ -15,12 +15,12 @@ export default async function EmailLayout({ children }: { children: React.ReactN
   return (
     <div className="max-w-6xl">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-neutral-900">Email</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Email</h1>
       </div>
       <p
         role="status"
         className={`mt-3 rounded-md border px-3 py-2 text-sm ${
-          delivery.delivers ? "border-neutral-200 bg-surface text-neutral-700" : "border-amber-200 bg-amber-50 text-amber-900"
+          delivery.delivers ? "border-border bg-surface text-neutral-700" : "border-warning-border bg-warning-soft text-warning-strong"
         }`}
       >
         <span className="font-medium">{delivery.mode === "live" ? "Live delivery." : delivery.mode === "redirect" ? "Redirected delivery." : "Delivery simulated."}</span>{" "}

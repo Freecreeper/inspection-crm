@@ -24,29 +24,29 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <div className="rounded-lg border border-neutral-200 bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">{snapshot.reportNumber}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-neutral-900">{snapshot.title || "Property Inspection Report"}</h1>
+      <div className="rounded-lg border border-border bg-surface p-8 shadow-sm">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{snapshot.reportNumber}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">{snapshot.title || "Property Inspection Report"}</h1>
         <p className="mt-2 text-sm text-neutral-600">
           {snapshot.property.addressLine1}, {snapshot.property.city}, {snapshot.property.state}{" "}
           {snapshot.property.zip}
         </p>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Version {snapshot.versionNumber} — finalized {formatBusinessDate(snapshot.finalizedAt)}
         </p>
         {delivery.supersededBy && (
-          <p role="status" className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p role="status" className="mt-4 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning-strong">
             This report has been revised: version {delivery.supersededBy} replaces this one. Ask your inspector for the updated report.
           </p>
         )}
         {snapshot.customerFacingNotes && <p className="mt-4 text-sm text-neutral-700">{snapshot.customerFacingNotes}</p>}
         <a
           href={`/r/${token}/pdf`}
-          className="mt-6 inline-block rounded-md bg-neutral-solid-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800"
+          className="mt-6 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
         >
           Download report (PDF)
         </a>
-        <p className="mt-6 text-xs text-neutral-400">
+        <p className="mt-6 text-xs text-subtle">
           This link was sent to {delivery.recipientName}. Prepared by Inspection CRM — not an engineering, legal, or
           code-compliance determination.
         </p>

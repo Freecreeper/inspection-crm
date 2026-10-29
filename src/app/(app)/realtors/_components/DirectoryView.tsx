@@ -109,10 +109,10 @@ export function DirectoryView({
       </p>
 
       {/* Desktop / tablet: table */}
-      <div className="mt-4 hidden rounded-lg border border-neutral-200 bg-surface md:block">
+      <div className="mt-4 hidden rounded-lg border border-border bg-surface md:block">
         <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Realtors. Select a realtor to open their preview.</caption>
-          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <SortTh label="Realtor" sort="name" params={params} className="w-[20%]" />
               {show("brokerage") && <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[16%]" />}
@@ -135,7 +135,7 @@ export function DirectoryView({
                     select(r.id);
                   }}
                   className={`cursor-pointer border-t border-neutral-100 first:border-t-0 ${
-                    selected ? "bg-accent-50/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-neutral-50"
+                    selected ? "bg-selected/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-hover"
                   }`}
                 >
                   <td className={cell}>
@@ -150,7 +150,7 @@ export function DirectoryView({
                         select(r.id);
                       }}
                       onKeyDown={(e) => onRowKeyDown(e, index)}
-                      className="block w-full truncate rounded text-left font-medium text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
+                      className="block w-full truncate rounded text-left font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                       {realtorDisplayName(r)}
                     </button>
@@ -158,25 +158,25 @@ export function DirectoryView({
                   {show("brokerage") && (
                     <td className={`truncate text-neutral-600 ${cell}`}>
                       {r.brokerageId ? (
-                        <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-neutral-900 hover:underline">
+                        <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-foreground hover:underline">
                           {r.brokerageName}
                         </Link>
                       ) : (
-                        <span className="text-neutral-400">—</span>
+                        <span className="text-subtle">—</span>
                       )}
                     </td>
                   )}
                   {show("phone") && (
-                    <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>{r.phone ? formatPhone(r.phone) : <span className="text-neutral-400">—</span>}</td>
+                    <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>{r.phone ? formatPhone(r.phone) : <span className="text-subtle">—</span>}</td>
                   )}
                   {show("email") && (
-                    <td className={`hidden truncate text-neutral-600 xl:table-cell ${cell}`}>{r.email ?? <span className="text-neutral-400">—</span>}</td>
+                    <td className={`hidden truncate text-neutral-600 xl:table-cell ${cell}`}>{r.email ?? <span className="text-subtle">—</span>}</td>
                   )}
                   {show("transactions") && <td className={`text-right tabular-nums text-neutral-700 ${cell}`}>{r.transactionCount}</td>}
                   {show("referrals") && <td className={`text-right tabular-nums text-neutral-700 ${cell}`}>{r.referralCount}</td>}
                   {show("lastActivity") && (
                     <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>
-                      {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-neutral-400">None</span>}
+                      {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-subtle">None</span>}
                     </td>
                   )}
                   {show("nextAction") && (
@@ -189,7 +189,7 @@ export function DirectoryView({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={1 + layout.columns.length} className="px-3 py-12 text-center text-neutral-500">
+                <td colSpan={1 + layout.columns.length} className="px-3 py-12 text-center text-muted-foreground">
                   <EmptyState page={params.page} />
                 </td>
               </tr>
@@ -219,13 +219,13 @@ export function DirectoryView({
                 aria-haspopup="dialog"
                 aria-current={selected ? "true" : undefined}
                 onClick={() => select(r.id)}
-                className={`w-full rounded-lg border bg-surface text-left ${compact ? "px-4 py-2.5" : "p-4"} ${selected ? "border-accent-500" : "border-neutral-200"}`}
+                className={`w-full rounded-lg border bg-surface text-left ${compact ? "px-4 py-2.5" : "p-4"} ${selected ? "border-ring" : "border-border"}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-neutral-900">{realtorDisplayName(r)}</p>
-                    {show("brokerage") && <p className="truncate text-sm text-neutral-500">{r.brokerageName ?? "No brokerage"}</p>}
-                    {details.length > 0 && <p className="truncate text-sm text-neutral-500">{details.join(" · ")}</p>}
+                    <p className="truncate font-medium text-foreground">{realtorDisplayName(r)}</p>
+                    {show("brokerage") && <p className="truncate text-sm text-muted-foreground">{r.brokerageName ?? "No brokerage"}</p>}
+                    {details.length > 0 && <p className="truncate text-sm text-muted-foreground">{details.join(" · ")}</p>}
                   </div>
                   {show("nextAction") && (
                     <span className="shrink-0 text-xs">
@@ -234,28 +234,28 @@ export function DirectoryView({
                     </span>
                   )}
                 </div>
-                {stats.length > 0 && <p className={`text-xs text-neutral-500 ${compact ? "mt-1" : "mt-2"}`}>{stats.join(" · ")}</p>}
+                {stats.length > 0 && <p className={`text-xs text-muted-foreground ${compact ? "mt-1" : "mt-2"}`}>{stats.join(" · ")}</p>}
               </button>
             </li>
           );
         })}
         {rows.length === 0 && (
-          <li className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
+          <li className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
             <EmptyState page={params.page} />
           </li>
         )}
       </ul>
 
-      <nav className="mt-3 flex items-center justify-between text-xs text-neutral-500" aria-label="Pagination">
+      <nav className="mt-3 flex items-center justify-between text-xs text-muted-foreground" aria-label="Pagination">
         <p>{total > 0 ? `Showing ${start}–${end} of ${total}` : " "}</p>
         <div className="flex gap-2">
           {hasPrev && (
-            <Link href={directoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50">
+            <Link href={directoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })} className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-hover">
               Previous
             </Link>
           )}
           {hasNext && (
-            <Link href={directoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50">
+            <Link href={directoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })} className="rounded-md border border-input bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-hover">
               Next
             </Link>
           )}
@@ -272,7 +272,7 @@ function EmptyState({ page }: { page: number }) {
     return (
       <>
         No realtors on this page.{" "}
-        <Link href="/realtors" className="text-accent-700 hover:underline">
+        <Link href="/realtors" className="text-link hover:underline">
           Back to the first page
         </Link>
       </>

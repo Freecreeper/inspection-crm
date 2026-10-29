@@ -40,13 +40,13 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas">
-      <div className="w-full max-w-sm rounded-lg border border-neutral-200 bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">Inspection CRM</p>
-        <h1 className="mt-1 text-xl font-semibold text-neutral-900">Staff sign in</h1>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
+        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">Staff sign in</h1>
 
         {message && (
-          <p role={message.tone === "error" ? "alert" : "status"} className={`mt-4 rounded-md px-3 py-2 text-sm ${message.tone === "error" ? "bg-red-50 text-red-700" : "bg-accent-50 text-accent-800"}`}>
+          <p role={message.tone === "error" ? "alert" : "status"} className={`mt-4 rounded-md px-3 py-2 text-sm ${message.tone === "error" ? "bg-danger-soft text-danger-strong" : "bg-success-soft text-success-strong"}`}>
             {message.text}
           </p>
         )}
@@ -63,7 +63,7 @@ export default async function LoginPage({
               type="email"
               autoComplete="username"
               required
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
@@ -76,18 +76,18 @@ export default async function LoginPage({
               type="password"
               autoComplete="current-password"
               required
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800"
+            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
           >
             Sign in
           </button>
         </form>
         <p className="mt-4 text-center text-sm">
-          <Link href="/forgot-password" className="text-accent-700 hover:underline">
+          <Link href="/forgot-password" className="text-link hover:underline">
             Forgot your password?
           </Link>
         </p>

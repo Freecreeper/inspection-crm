@@ -43,14 +43,14 @@ export default async function BrokerageRecordPage({
 
   return (
     <div className="max-w-5xl">
-      <Link href={`/brokerages?selected=${brokerage.id}`} className="text-xs text-neutral-500 hover:underline">
+      <Link href={`/brokerages?selected=${brokerage.id}`} className="text-xs text-muted-foreground hover:underline">
         ← Back to brokerages
       </Link>
 
       <header className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-neutral-900">{brokerage.name}</h1>
-          <p className="mt-1 text-sm text-neutral-600">{address || <span className="text-neutral-400">No address on file</span>}</p>
+          <h1 className="text-2xl font-semibold text-foreground">{brokerage.name}</h1>
+          <p className="mt-1 text-sm text-neutral-600">{address || <span className="text-subtle">No address on file</span>}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-600">
             {/* Missing values are already called out on the action buttons. */}
             {brokerage.phone && <span className="tabular-nums">{formatPhone(brokerage.phone)}</span>}
@@ -62,7 +62,7 @@ export default async function BrokerageRecordPage({
         </div>
       </header>
 
-      <div className="mt-6 border-b border-neutral-200">
+      <div className="mt-6 border-b border-border">
         <nav aria-label="Brokerage record sections" className="-mb-px flex gap-1 overflow-x-auto">
           {TABS.map((t) => (
             <Link
@@ -70,7 +70,7 @@ export default async function BrokerageRecordPage({
               href={t.key === "overview" ? `/brokerages/${brokerage.id}` : `/brokerages/${brokerage.id}?tab=${t.key}`}
               aria-current={tab === t.key ? "page" : undefined}
               className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
-                tab === t.key ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
+                tab === t.key ? "border-neutral-900 text-foreground" : "border-transparent text-muted-foreground hover:text-neutral-800"
               }`}
             >
               {t.label}

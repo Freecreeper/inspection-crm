@@ -90,17 +90,17 @@ export function Drawer({
         role="dialog"
         aria-modal={modal}
         aria-labelledby={titleId}
-        className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l border-neutral-200 bg-surface shadow-xl sm:max-w-md"
+        className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l border-border bg-surface shadow-xl sm:max-w-md"
       >
         <div className="flex items-start justify-between gap-3 border-b border-neutral-100 px-5 py-4">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="min-w-0 text-lg font-semibold text-neutral-900 focus:outline-none">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="min-w-0 text-lg font-semibold text-foreground focus:outline-none">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close panel"
-            className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-2 focus-visible:outline-accent-600"
+            className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-2 focus-visible:outline-ring"
           >
             <X className="h-5 w-5" />
           </button>

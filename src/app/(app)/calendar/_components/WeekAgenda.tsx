@@ -29,11 +29,11 @@ export function WeekAgenda({
         const has = events.some((e) => e.day === day);
         return (
           <section key={day} aria-label={formatDay(day, "long")}>
-            <button type="button" onClick={() => onOpenDay(day)} className={`mb-1.5 text-sm font-semibold hover:underline ${day === today ? "text-accent-700" : "text-neutral-900"}`}>
+            <button type="button" onClick={() => onOpenDay(day)} className={`mb-1.5 text-sm font-semibold hover:underline ${day === today ? "text-link" : "text-foreground"}`}>
               {formatDay(day, "short")}
               {day === today && <span className="ml-1.5 text-xs font-medium">Today</span>}
             </button>
-            {has ? <AgendaList day={day} events={events} timeZone={timeZone} onEventClick={onEventClick} /> : <p className="text-sm text-neutral-400">Nothing scheduled.</p>}
+            {has ? <AgendaList day={day} events={events} timeZone={timeZone} onEventClick={onEventClick} /> : <p className="text-sm text-subtle">Nothing scheduled.</p>}
           </section>
         );
       })}
