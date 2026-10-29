@@ -53,24 +53,24 @@ export default async function RealtorRecordPage({
 
   return (
     <div className="max-w-5xl">
-      <Link href={`/realtors?selected=${realtor.id}`} className="text-xs text-slate-500 hover:underline">
+      <Link href={`/realtors?selected=${realtor.id}`} className="text-xs text-neutral-500 hover:underline">
         ← Back to realtors
       </Link>
 
       <header className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-slate-900">{realtorDisplayName(realtor)}</h1>
-          {legalName && <p className="text-xs text-slate-500">Legal name: {legalName}</p>}
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-semibold text-neutral-900">{realtorDisplayName(realtor)}</h1>
+          {legalName && <p className="text-xs text-neutral-500">Legal name: {legalName}</p>}
+          <p className="mt-1 text-sm text-neutral-600">
             {realtor.brokerage ? (
-              <Link href={`/brokerages/${realtor.brokerage.id}`} className="hover:text-slate-900 hover:underline">
+              <Link href={`/brokerages/${realtor.brokerage.id}`} className="hover:text-neutral-900 hover:underline">
                 {brokerageLabel(realtor.brokerage)}
               </Link>
             ) : (
-              <span className="text-slate-400">No brokerage on file</span>
+              <span className="text-neutral-400">No brokerage on file</span>
             )}
           </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-600">
             {/* Missing values are already called out on the action buttons. */}
             {realtor.phone && <span className="tabular-nums">{formatPhone(realtor.phone)}</span>}
             {realtor.email && <span>{realtor.email}</span>}
@@ -81,7 +81,7 @@ export default async function RealtorRecordPage({
         </div>
       </header>
 
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-3 border-b border-neutral-200">
         <nav aria-label="Realtor record sections" className="-mb-px flex gap-1 overflow-x-auto">
           {TABS.map((t) => (
             <Link
@@ -89,14 +89,14 @@ export default async function RealtorRecordPage({
               href={t.key === "overview" ? `/realtors/${realtor.id}` : `/realtors/${realtor.id}?tab=${t.key}`}
               aria-current={tab === t.key ? "page" : undefined}
               className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
-                tab === t.key ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+                tab === t.key ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
               }`}
             >
               {t.label}
             </Link>
           ))}
         </nav>
-        <Link href={`/realtors/${realtor.id}/analytics`} className="mb-2 text-sm text-emerald-700 hover:underline">
+        <Link href={`/realtors/${realtor.id}/analytics`} className="mb-2 text-sm text-accent-700 hover:underline">
           View relationship analytics →
         </Link>
       </div>

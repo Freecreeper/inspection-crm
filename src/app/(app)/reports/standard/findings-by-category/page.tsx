@@ -28,11 +28,11 @@ export default async function FindingsByCategoryPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <Link href="/reports" className="text-xs text-slate-500 hover:underline">
+      <Link href="/reports" className="text-xs text-neutral-500 hover:underline">
         ← Reports
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Findings by Category</h1>
-      <p className="text-sm text-slate-500">
+      <h1 className="text-xl font-semibold text-neutral-900">Findings by Category</h1>
+      <p className="text-sm text-neutral-500">
         Operational/business analytics only — frequency here is not proof of safety, defect severity, or property
         quality.
       </p>

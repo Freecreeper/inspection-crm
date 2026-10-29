@@ -5,9 +5,9 @@ import { createRealtorTask, logRealtorCommunication } from "../actions";
 import { COMMUNICATION_CHANNELS } from "@/lib/communications";
 import { addDays, toDateInputValue } from "@/lib/dates";
 
-const input = "w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
-const primary = "rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60";
-const secondary = "rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100";
+const input = "w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+const primary = "rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60";
+const secondary = "rounded-md px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100";
 
 function stopEscape(onCancel: () => void) {
   return (e: React.KeyboardEvent) => {
@@ -37,15 +37,15 @@ export function QuickTaskForm({ realtorId, onDone, onCancel }: { realtorId: stri
   }
 
   return (
-    <form onSubmit={submit} onKeyDown={stopEscape(onCancel)} className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3" aria-label="New follow-up task">
+    <form onSubmit={submit} onKeyDown={stopEscape(onCancel)} className="space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-3" aria-label="New follow-up task">
       <div>
-        <label htmlFor={`${id}-title`} className="text-xs text-slate-600">
+        <label htmlFor={`${id}-title`} className="text-xs text-neutral-600">
           Task
         </label>
         <input id={`${id}-title`} value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus className={input} />
       </div>
       <div>
-        <label htmlFor={`${id}-due`} className="text-xs text-slate-600">
+        <label htmlFor={`${id}-due`} className="text-xs text-neutral-600">
           Due date (optional)
         </label>
         <input id={`${id}-due`} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={input} />
@@ -86,10 +86,10 @@ export function LogCommunicationForm({ realtorId, onDone, onCancel }: { realtorI
   }
 
   return (
-    <form onSubmit={submit} onKeyDown={stopEscape(onCancel)} className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3" aria-label="Log a communication">
+    <form onSubmit={submit} onKeyDown={stopEscape(onCancel)} className="space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-3" aria-label="Log a communication">
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label htmlFor={`${id}-channel`} className="text-xs text-slate-600">
+          <label htmlFor={`${id}-channel`} className="text-xs text-neutral-600">
             Channel
           </label>
           <select id={`${id}-channel`} value={channel} onChange={(e) => setChannel(e.target.value)} className={input}>
@@ -101,7 +101,7 @@ export function LogCommunicationForm({ realtorId, onDone, onCancel }: { realtorI
           </select>
         </div>
         <div>
-          <label htmlFor={`${id}-direction`} className="text-xs text-slate-600">
+          <label htmlFor={`${id}-direction`} className="text-xs text-neutral-600">
             Direction
           </label>
           <select id={`${id}-direction`} value={direction} onChange={(e) => setDirection(e.target.value)} className={input}>
@@ -111,7 +111,7 @@ export function LogCommunicationForm({ realtorId, onDone, onCancel }: { realtorI
         </div>
       </div>
       <div>
-        <label htmlFor={`${id}-summary`} className="text-xs text-slate-600">
+        <label htmlFor={`${id}-summary`} className="text-xs text-neutral-600">
           Summary
         </label>
         <textarea id={`${id}-summary`} rows={2} value={summary} onChange={(e) => setSummary(e.target.value)} required autoFocus className={input} />

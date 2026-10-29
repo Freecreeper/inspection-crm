@@ -29,7 +29,7 @@ export function AgendaList({
 
   if (list.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+      <div className="rounded-lg border border-dashed border-neutral-300 bg-surface p-8 text-center text-sm text-neutral-500">
         Nothing scheduled.
         {emptyAction && <div className="mt-3">{emptyAction}</div>}
       </div>
@@ -40,7 +40,7 @@ export function AgendaList({
     <div className="space-y-4">
       {allDay.length > 0 && (
         <section aria-label="All day">
-          <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">All day</h3>
+          <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">All day</h3>
           <ul className="space-y-2">
             {allDay.map((e) => (
               <AgendaCard key={e.id} event={e} timeZone={timeZone} onClick={() => onEventClick(e)} />
@@ -50,7 +50,7 @@ export function AgendaList({
       )}
       {timed.length > 0 && (
         <section aria-label="Scheduled">
-          {allDay.length > 0 && <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">Scheduled</h3>}
+          {allDay.length > 0 && <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">Scheduled</h3>}
           <ul className="space-y-2">
             {timed.map((e) => (
               <AgendaCard key={e.id} event={e} timeZone={timeZone} onClick={() => onEventClick(e)} />
@@ -66,28 +66,28 @@ function AgendaCard({ event: e, timeZone, onClick }: { event: CalendarEvent; tim
   const start = e.start ? new Date(e.start) : null;
   const end = e.end ? new Date(e.end) : null;
   const minutes = start && end ? Math.round((end.getTime() - start.getTime()) / 60_000) : null;
-  const accent = e.type === "inspection" ? "border-l-emerald-600" : e.priority === "high" ? "border-l-amber-500" : "border-l-slate-300";
+  const accent = e.type === "inspection" ? "border-l-accent-600" : e.priority === "high" ? "border-l-amber-500" : "border-l-neutral-300";
   return (
-    <li className={`rounded-lg border border-l-4 border-slate-200 bg-white ${accent}`}>
-      <button type="button" onClick={onClick} className="flex w-full items-start gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-emerald-600">
-        <div className="w-16 shrink-0 pt-0.5 text-xs tabular-nums text-slate-600">
+    <li className={`rounded-lg border border-l-4 border-neutral-200 bg-surface ${accent}`}>
+      <button type="button" onClick={onClick} className="flex w-full items-start gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-accent-600">
+        <div className="w-16 shrink-0 pt-0.5 text-xs tabular-nums text-neutral-600">
           {start && !e.allDay ? (
             <>
-              <span className="block font-semibold text-slate-900">{formatTime(start, timeZone)}</span>
-              {minutes && <span className="block text-slate-500">{formatDuration(minutes)}</span>}
+              <span className="block font-semibold text-neutral-900">{formatTime(start, timeZone)}</span>
+              {minutes && <span className="block text-neutral-500">{formatDuration(minutes)}</span>}
             </>
           ) : (
-            <span className="block text-slate-500">All day</span>
+            <span className="block text-neutral-500">All day</span>
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
             <EventIcon event={e} className="h-3.5 w-3.5" />
             {EVENT_KIND[e.type].label}
           </p>
-          <p className="mt-0.5 font-medium text-slate-900">{e.title}</p>
-          {e.subtitle && <p className="text-sm text-slate-600">{e.subtitle}</p>}
-          {e.inspectorName && (e.type === "inspection" || e.type === "reportDue") && <p className="text-sm text-slate-500">Inspector: {e.inspectorName}</p>}
+          <p className="mt-0.5 font-medium text-neutral-900">{e.title}</p>
+          {e.subtitle && <p className="text-sm text-neutral-600">{e.subtitle}</p>}
+          {e.inspectorName && (e.type === "inspection" || e.type === "reportDue") && <p className="text-sm text-neutral-500">Inspector: {e.inspectorName}</p>}
           {e.warnings.length > 0 && (
             <ul className="mt-1.5 space-y-0.5">
               {e.warnings.map((w) => (
@@ -99,11 +99,11 @@ function AgendaCard({ event: e, timeZone, onClick }: { event: CalendarEvent; tim
             </ul>
           )}
         </div>
-        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
       </button>
       {e.type === "inspection" && (
-        <div className="border-t border-slate-100 px-3 py-2 text-right">
-          <Link href={e.href} className="text-sm font-medium text-emerald-700 hover:underline">
+        <div className="border-t border-neutral-100 px-3 py-2 text-right">
+          <Link href={e.href} className="text-sm font-medium text-accent-700 hover:underline">
             Open inspection
           </Link>
         </div>

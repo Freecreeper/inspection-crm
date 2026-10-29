@@ -12,18 +12,18 @@ export default async function ReportsDashboardPage() {
   await requireReportAccess();
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900">Reports</h1>
-      <p className="text-sm text-slate-500">
+      <h1 className="text-xl font-semibold text-neutral-900">Reports</h1>
+      <p className="text-sm text-neutral-500">
         Business intelligence over CRM and inspection data — separate from the Inspection Report Builder, which
         produces the customer-facing PDF for a single inspection.
       </p>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Standard reports</h2>
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Standard reports</h2>
         <ul className="mt-2 grid grid-cols-2 gap-2">
           {STANDARD_REPORTS.map((r) => (
             <li key={r.href}>
-              <Link href={r.href} className="block rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <Link href={r.href} className="block rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
                 {r.label}
               </Link>
             </li>
@@ -31,19 +31,19 @@ export default async function ReportsDashboardPage() {
         </ul>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Custom report builder</h2>
-        <p className="mt-1 text-sm text-slate-600">
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Custom report builder</h2>
+        <p className="mt-1 text-sm text-neutral-600">
           Pick an entity, choose columns from the field catalog, filter, group, and aggregate. Every field is
           validated against an allow-list — never raw SQL.
         </p>
-        <Link href="/reports/builder" className="mt-3 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <Link href="/reports/builder" className="mt-3 inline-block rounded-md bg-neutral-solid-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
           Open builder
         </Link>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Saved reports</h2>
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Saved reports</h2>
         <Link href="/reports/saved" className="mt-1 inline-block text-sm text-blue-700 hover:underline">
           View saved reports →
         </Link>

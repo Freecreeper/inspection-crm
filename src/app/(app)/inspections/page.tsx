@@ -56,7 +56,7 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-900">Inspections</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">Inspections</h1>
       {!filter && (
         <nav aria-label="Inspection views" className="mt-3 flex gap-1">
           {(["upcoming", "past"] as const).map((v) => (
@@ -64,7 +64,7 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
               key={v}
               href={v === "upcoming" ? "/inspections" : "/inspections?view=past"}
               aria-current={view === v ? "page" : undefined}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === v ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === v ? "bg-neutral-solid-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}
             >
               {v === "upcoming" ? "Upcoming" : "Past"}
             </Link>
@@ -72,16 +72,16 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
         </nav>
       )}
       {filter && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-slate-700">Showing: {FILTERS[filter]}</span>
-          <Link href="/inspections" className="text-emerald-700 hover:underline">
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-600">
+          <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-neutral-700">Showing: {FILTERS[filter]}</span>
+          <Link href="/inspections" className="text-accent-700 hover:underline">
             Clear filter
           </Link>
         </p>
       )}
-      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="mt-6 overflow-hidden rounded-lg border border-neutral-200 bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-2 font-medium">Property</th>
               <th className="px-4 py-2 font-medium">Customer</th>
@@ -96,27 +96,27 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
               const primaryCustomer = getPrimaryCustomer(i.transaction.customers);
               const report = i.reports[0];
               return (
-                <tr key={i.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <tr key={i.id} className="border-t border-neutral-100 hover:bg-neutral-50">
                   <td className="px-4 py-2">
-                    <Link href={`/inspections/${i.id}`} className="font-medium text-slate-900 hover:underline">
+                    <Link href={`/inspections/${i.id}`} className="font-medium text-neutral-900 hover:underline">
                       {i.property.addressLine1}, {i.property.city}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td className="px-4 py-2 text-neutral-600">
                     {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                   </td>
-                  <td className="px-4 py-2 tabular-nums text-slate-600">
+                  <td className="px-4 py-2 tabular-nums text-neutral-600">
                     {i.scheduledAt ? (
                       `${formatDay(toDayKey(i.scheduledAt, timeZone), "short")}${toDayKey(i.scheduledAt, timeZone).slice(0, 4) !== thisYear ? `, ${toDayKey(i.scheduledAt, timeZone).slice(0, 4)}` : ""}, ${formatTime(i.scheduledAt, timeZone)}`
                     ) : (
-                      <span className="text-slate-400">Not set</span>
+                      <span className="text-neutral-400">Not set</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
-                    {i.inspector?.name || <span className="text-slate-400">Unassigned</span>}
+                  <td className="px-4 py-2 text-neutral-600">
+                    {i.inspector?.name || <span className="text-neutral-400">Unassigned</span>}
                   </td>
                   <td className="px-4 py-2">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-600">
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
                       {i.status}
                     </span>
                   </td>
@@ -126,7 +126,7 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
                         {report.status}
                       </span>
                     ) : (
-                      <span className="text-slate-400">Not started</span>
+                      <span className="text-neutral-400">Not started</span>
                     )}
                   </td>
                 </tr>
@@ -134,7 +134,7 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
             })}
             {inspections.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
                   {filter ? "No inspections match this filter." : view === "past" ? "No past inspections." : "Nothing coming up — schedule one from the Calendar or a transaction."}
                 </td>
               </tr>
@@ -143,18 +143,18 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
         </table>
       </div>
       {total > 0 && (
-        <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
+        <div className="mt-3 flex items-center justify-between text-sm text-neutral-600">
           <p>
             Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={href(page - 1)} className="rounded-md border border-slate-300 bg-white px-3 py-1 hover:bg-slate-50">
+              <Link href={href(page - 1)} className="rounded-md border border-neutral-300 bg-surface px-3 py-1 hover:bg-neutral-50">
                 Previous
               </Link>
             )}
             {page * PAGE_SIZE < total && (
-              <Link href={href(page + 1)} className="rounded-md border border-slate-300 bg-white px-3 py-1 hover:bg-slate-50">
+              <Link href={href(page + 1)} className="rounded-md border border-neutral-300 bg-surface px-3 py-1 hover:bg-neutral-50">
                 Next
               </Link>
             )}

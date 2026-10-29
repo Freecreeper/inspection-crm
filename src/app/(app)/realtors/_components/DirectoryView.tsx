@@ -109,10 +109,10 @@ export function DirectoryView({
       </p>
 
       {/* Desktop / tablet: table */}
-      <div className="mt-4 hidden rounded-lg border border-slate-200 bg-white md:block">
+      <div className="mt-4 hidden rounded-lg border border-neutral-200 bg-surface md:block">
         <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Realtors. Select a realtor to open their preview.</caption>
-          <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <SortTh label="Realtor" sort="name" params={params} className="w-[20%]" />
               {show("brokerage") && <SortTh label="Brokerage" sort="brokerage" params={params} className="w-[16%]" />}
@@ -134,8 +134,8 @@ export function DirectoryView({
                     if ((e.target as HTMLElement).closest("a")) return;
                     select(r.id);
                   }}
-                  className={`cursor-pointer border-t border-slate-100 first:border-t-0 ${
-                    selected ? "bg-emerald-50/70 shadow-[inset_3px_0_0_0_var(--color-emerald-600)]" : "hover:bg-slate-50"
+                  className={`cursor-pointer border-t border-neutral-100 first:border-t-0 ${
+                    selected ? "bg-accent-50/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-neutral-50"
                   }`}
                 >
                   <td className={cell}>
@@ -150,33 +150,33 @@ export function DirectoryView({
                         select(r.id);
                       }}
                       onKeyDown={(e) => onRowKeyDown(e, index)}
-                      className="block w-full truncate rounded text-left font-medium text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                      className="block w-full truncate rounded text-left font-medium text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
                     >
                       {realtorDisplayName(r)}
                     </button>
                   </td>
                   {show("brokerage") && (
-                    <td className={`truncate text-slate-600 ${cell}`}>
+                    <td className={`truncate text-neutral-600 ${cell}`}>
                       {r.brokerageId ? (
-                        <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-slate-900 hover:underline">
+                        <Link href={`/brokerages/${r.brokerageId}`} className="hover:text-neutral-900 hover:underline">
                           {r.brokerageName}
                         </Link>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-neutral-400">—</span>
                       )}
                     </td>
                   )}
                   {show("phone") && (
-                    <td className={`truncate tabular-nums text-slate-600 ${cell}`}>{r.phone ? formatPhone(r.phone) : <span className="text-slate-400">—</span>}</td>
+                    <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>{r.phone ? formatPhone(r.phone) : <span className="text-neutral-400">—</span>}</td>
                   )}
                   {show("email") && (
-                    <td className={`hidden truncate text-slate-600 xl:table-cell ${cell}`}>{r.email ?? <span className="text-slate-400">—</span>}</td>
+                    <td className={`hidden truncate text-neutral-600 xl:table-cell ${cell}`}>{r.email ?? <span className="text-neutral-400">—</span>}</td>
                   )}
-                  {show("transactions") && <td className={`text-right tabular-nums text-slate-700 ${cell}`}>{r.transactionCount}</td>}
-                  {show("referrals") && <td className={`text-right tabular-nums text-slate-700 ${cell}`}>{r.referralCount}</td>}
+                  {show("transactions") && <td className={`text-right tabular-nums text-neutral-700 ${cell}`}>{r.transactionCount}</td>}
+                  {show("referrals") && <td className={`text-right tabular-nums text-neutral-700 ${cell}`}>{r.referralCount}</td>}
                   {show("lastActivity") && (
-                    <td className={`truncate tabular-nums text-slate-600 ${cell}`}>
-                      {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-slate-400">None</span>}
+                    <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>
+                      {r.lastActivityAt ? formatShortDate(r.lastActivityAt) : <span className="text-neutral-400">None</span>}
                     </td>
                   )}
                   {show("nextAction") && (
@@ -189,7 +189,7 @@ export function DirectoryView({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={1 + layout.columns.length} className="px-3 py-12 text-center text-slate-500">
+                <td colSpan={1 + layout.columns.length} className="px-3 py-12 text-center text-neutral-500">
                   <EmptyState page={params.page} />
                 </td>
               </tr>
@@ -219,13 +219,13 @@ export function DirectoryView({
                 aria-haspopup="dialog"
                 aria-current={selected ? "true" : undefined}
                 onClick={() => select(r.id)}
-                className={`w-full rounded-lg border bg-white text-left ${compact ? "px-4 py-2.5" : "p-4"} ${selected ? "border-emerald-500" : "border-slate-200"}`}
+                className={`w-full rounded-lg border bg-surface text-left ${compact ? "px-4 py-2.5" : "p-4"} ${selected ? "border-accent-500" : "border-neutral-200"}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900">{realtorDisplayName(r)}</p>
-                    {show("brokerage") && <p className="truncate text-sm text-slate-500">{r.brokerageName ?? "No brokerage"}</p>}
-                    {details.length > 0 && <p className="truncate text-sm text-slate-500">{details.join(" · ")}</p>}
+                    <p className="truncate font-medium text-neutral-900">{realtorDisplayName(r)}</p>
+                    {show("brokerage") && <p className="truncate text-sm text-neutral-500">{r.brokerageName ?? "No brokerage"}</p>}
+                    {details.length > 0 && <p className="truncate text-sm text-neutral-500">{details.join(" · ")}</p>}
                   </div>
                   {show("nextAction") && (
                     <span className="shrink-0 text-xs">
@@ -234,28 +234,28 @@ export function DirectoryView({
                     </span>
                   )}
                 </div>
-                {stats.length > 0 && <p className={`text-xs text-slate-500 ${compact ? "mt-1" : "mt-2"}`}>{stats.join(" · ")}</p>}
+                {stats.length > 0 && <p className={`text-xs text-neutral-500 ${compact ? "mt-1" : "mt-2"}`}>{stats.join(" · ")}</p>}
               </button>
             </li>
           );
         })}
         {rows.length === 0 && (
-          <li className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+          <li className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
             <EmptyState page={params.page} />
           </li>
         )}
       </ul>
 
-      <nav className="mt-3 flex items-center justify-between text-xs text-slate-500" aria-label="Pagination">
+      <nav className="mt-3 flex items-center justify-between text-xs text-neutral-500" aria-label="Pagination">
         <p>{total > 0 ? `Showing ${start}–${end} of ${total}` : " "}</p>
         <div className="flex gap-2">
           {hasPrev && (
-            <Link href={directoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">
+            <Link href={directoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50">
               Previous
             </Link>
           )}
           {hasNext && (
-            <Link href={directoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">
+            <Link href={directoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50">
               Next
             </Link>
           )}
@@ -272,7 +272,7 @@ function EmptyState({ page }: { page: number }) {
     return (
       <>
         No realtors on this page.{" "}
-        <Link href="/realtors" className="text-emerald-700 hover:underline">
+        <Link href="/realtors" className="text-accent-700 hover:underline">
           Back to the first page
         </Link>
       </>
@@ -306,7 +306,7 @@ function SortTh({
       <button
         type="button"
         onClick={() => router.replace(directoryHref(searchParams, nextSortChange(params.sort, params.dir, sort)), { scroll: false })}
-        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-slate-800 ${numeric ? "flex-row-reverse" : ""} ${active ? "text-slate-800" : ""}`}
+        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-neutral-800 ${numeric ? "flex-row-reverse" : ""} ${active ? "text-neutral-800" : ""}`}
       >
         {shortLabel ? (
           <>
@@ -317,7 +317,7 @@ function SortTh({
         ) : (
           label
         )}
-        <Icon className={`h-3.5 w-3.5 ${active ? "text-slate-700" : "text-slate-300"}`} aria-hidden="true" />
+        <Icon className={`h-3.5 w-3.5 ${active ? "text-neutral-700" : "text-neutral-300"}`} aria-hidden="true" />
       </button>
     </th>
   );

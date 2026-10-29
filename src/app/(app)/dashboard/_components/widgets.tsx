@@ -21,10 +21,10 @@ import { discardDraft, retryEmail } from "../../email/actions";
 
 export type OpenPreview = (target: { type: "inspection" | "task" | "event"; id: string; title: string; event?: CalendarEvent }) => void;
 
-const linkClass = "inline-flex min-h-9 items-center gap-1 text-sm font-medium text-emerald-700 hover:underline focus-visible:outline-2 focus-visible:outline-emerald-600";
+const linkClass = "inline-flex min-h-9 items-center gap-1 text-sm font-medium text-accent-700 hover:underline focus-visible:outline-2 focus-visible:outline-accent-600";
 const actionClass =
-  "inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
-const rowButton = "w-full rounded-md text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
+  "inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
+const rowButton = "w-full rounded-md text-left hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
 
 export function WidgetCard({
   id,
@@ -42,15 +42,15 @@ export function WidgetCard({
   children: React.ReactNode;
 }) {
   return (
-    <section aria-labelledby={`widget-${id}`} className="flex h-full flex-col rounded-lg border border-slate-200 bg-white">
+    <section aria-labelledby={`widget-${id}`} className="flex h-full flex-col rounded-lg border border-neutral-200 bg-surface">
       <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 pb-2 pt-3.5">
-        <h2 id={`widget-${id}`} className={`text-xs font-semibold uppercase tracking-wide ${prominent ? "text-slate-900" : "text-slate-500"}`}>
+        <h2 id={`widget-${id}`} className={`text-xs font-semibold uppercase tracking-wide ${prominent ? "text-neutral-900" : "text-neutral-500"}`}>
           {title}
         </h2>
         {meta}
       </header>
       <div className="flex-1 px-4 pb-3">{children}</div>
-      {footer && <div className="border-t border-slate-100 px-4 py-1">{footer}</div>}
+      {footer && <div className="border-t border-neutral-100 px-4 py-1">{footer}</div>}
     </section>
   );
 }
@@ -59,8 +59,8 @@ export function WidgetSkeleton({ title }: { title: string }) {
   return (
     <WidgetCard id={`loading-${title}`} title={title}>
       <div className="space-y-2" aria-busy="true" aria-label={`Loading ${title}`}>
-        <div className="h-4 w-2/3 animate-pulse rounded bg-slate-100" />
-        <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+        <div className="h-4 w-2/3 animate-pulse rounded bg-neutral-100" />
+        <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-100" />
       </div>
     </WidgetCard>
   );
@@ -69,7 +69,7 @@ export function WidgetSkeleton({ title }: { title: string }) {
 export function WidgetError({ title, message }: { title: string; message: string }) {
   return (
     <WidgetCard id={`error-${title}`} title={title}>
-      <p className="flex items-center gap-2 text-sm text-slate-600">
+      <p className="flex items-center gap-2 text-sm text-neutral-600">
         <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
         {message}
       </p>
@@ -78,7 +78,7 @@ export function WidgetError({ title, message }: { title: string; message: string
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="py-3 text-sm text-slate-500">{children}</p>;
+  return <p className="py-3 text-sm text-neutral-500">{children}</p>;
 }
 
 function dayLabel(day: DayKey, today: DayKey): string {
@@ -96,14 +96,14 @@ function dayLabel(day: DayKey, today: DayKey): string {
 function Readiness({ e }: { e: CalendarEvent }) {
   if (e.status === "COMPLETED") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-neutral-500">
         <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" /> Completed
       </span>
     );
   }
   if (e.warnings.length === 0) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-accent-700">
         <Check className="h-3.5 w-3.5" aria-hidden="true" /> Ready
       </span>
     );
@@ -125,7 +125,7 @@ export function TodayWidget({ data, timeZone, showInspector, onOpen }: { data: E
       title="Today"
       prominent
       meta={
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-neutral-500">
           {inspections} inspection{inspections === 1 ? "" : "s"}
           {data.events.length > inspections && ` · ${data.events.length - inspections} other`}
         </span>
@@ -145,17 +145,17 @@ export function TodayWidget({ data, timeZone, showInspector, onOpen }: { data: E
               <button
                 type="button"
                 onClick={() => onOpen({ type: "event", id: e.sourceId, title: e.title, event: e })}
-                className={`flex h-full min-h-11 flex-col gap-0.5 border px-3 py-2.5 ${rowButton} ${e.type === "inspection" ? "border-slate-200 border-l-4 border-l-emerald-600" : "border-slate-200"}`}
+                className={`flex h-full min-h-11 flex-col gap-0.5 border px-3 py-2.5 ${rowButton} ${e.type === "inspection" ? "border-neutral-200 border-l-4 border-l-accent-600" : "border-neutral-200"}`}
               >
-                <span className="flex items-center gap-1.5 text-xs font-semibold tabular-nums text-slate-500">
+                <span className="flex items-center gap-1.5 text-xs font-semibold tabular-nums text-neutral-500">
                   <EventIcon event={e} />
                   {e.allDay || !e.start ? EVENT_KIND[e.type].label : `${formatTime(new Date(e.start), timeZone)}`}
                 </span>
-                <span className="line-clamp-2 text-sm font-medium text-slate-900">{e.title}</span>
-                {e.subtitle && <span className="truncate text-sm text-slate-600">{e.subtitle}</span>}
-                {showInspector && e.type === "inspection" && <span className="text-xs text-slate-500">{e.inspectorName ?? "No inspector"}</span>}
+                <span className="line-clamp-2 text-sm font-medium text-neutral-900">{e.title}</span>
+                {e.subtitle && <span className="truncate text-sm text-neutral-600">{e.subtitle}</span>}
+                {showInspector && e.type === "inspection" && <span className="text-xs text-neutral-500">{e.inspectorName ?? "No inspector"}</span>}
                 {e.type === "inspection" && <Readiness e={e} />}
-                {e.type === "realtorFollowUp" && <span className="text-xs font-medium text-emerald-700">Contact</span>}
+                {e.type === "realtorFollowUp" && <span className="text-xs font-medium text-accent-700">Contact</span>}
               </button>
             </li>
           ))}
@@ -172,8 +172,8 @@ export function TodayWidget({ data, timeZone, showInspector, onOpen }: { data: E
 const SEVERITY: Record<AttentionSeverity, { label: string; icon: typeof Circle; className: string }> = {
   critical: { label: "Critical", icon: OctagonAlert, className: "text-rose-600" },
   warning: { label: "Warning", icon: AlertTriangle, className: "text-amber-600" },
-  action: { label: "Action", icon: CircleDot, className: "text-slate-700" },
-  info: { label: "For information", icon: Circle, className: "text-slate-400" },
+  action: { label: "Action", icon: CircleDot, className: "text-neutral-700" },
+  info: { label: "For information", icon: Circle, className: "text-neutral-400" },
 };
 
 export const ATTENTION_PREVIEW_LIMIT = 6;
@@ -189,7 +189,7 @@ export function AttentionWidget({ data, onOpen }: { data: Extract<WidgetData, { 
       prominent
       meta={
         data.items.length > 0 && (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-neutral-500">
             {data.items.length} item{data.items.length === 1 ? "" : "s"}
             {critical > 0 && <span className="font-medium text-rose-700"> · {critical} critical</span>}
           </span>
@@ -205,11 +205,11 @@ export function AttentionWidget({ data, onOpen }: { data: Extract<WidgetData, { 
       }
     >
       {data.items.length === 0 ? (
-        <p className="flex items-center gap-2 py-3 text-sm text-slate-600">
-          <CircleCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" /> All clear — nothing needs attention.
+        <p className="flex items-center gap-2 py-3 text-sm text-neutral-600">
+          <CircleCheck className="h-4 w-4 text-accent-600" aria-hidden="true" /> All clear — nothing needs attention.
         </p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {items.map((item) => (
             <AttentionRow key={item.id} item={item} onOpen={onOpen} />
           ))}
@@ -229,10 +229,10 @@ function AttentionRow({ item, onOpen }: { item: AttentionItem; onOpen: OpenPrevi
       <div className="min-w-0 flex-1">
         <p className="text-sm">
           <span className="sr-only">{s.label}: </span>
-          <span className="font-medium text-slate-900">{item.title}</span>
-          <span className="text-slate-600"> · {item.subject}</span>
+          <span className="font-medium text-neutral-900">{item.title}</span>
+          <span className="text-neutral-600"> · {item.subject}</span>
         </p>
-        {item.detail && <p className="text-xs text-slate-500 sm:truncate">{item.detail}</p>}
+        {item.detail && <p className="text-xs text-neutral-500 sm:truncate">{item.detail}</p>}
       </div>
       {preview ? (
         <button type="button" onClick={() => onOpen({ type: preview.type, id: preview.id, title: item.subject })} className={actionClass}>
@@ -283,9 +283,9 @@ export function SnapshotWidget({ kpis, values, canViewReports }: { kpis: KpiKey[
             const value = values ? (byKey.has(key) ? byKey.get(key) : undefined) : undefined;
             return (
               <li key={key}>
-                <Link href={def.href} title={def.definition} className="block h-full rounded-md border border-slate-200 px-3 py-2.5 hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600">
-                  <span className="block text-xl font-semibold tabular-nums text-slate-900">{kpiDisplay(key, value)}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500">{def.label}</span>
+                <Link href={def.href} title={def.definition} className="block h-full rounded-md border border-neutral-200 px-3 py-2.5 hover:border-neutral-300 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600">
+                  <span className="block text-xl font-semibold tabular-nums text-neutral-900">{kpiDisplay(key, value)}</span>
+                  <span className="mt-0.5 block text-xs text-neutral-500">{def.label}</span>
                   {value === null && <span className="sr-only">No data yet</span>}
                 </Link>
               </li>
@@ -306,7 +306,7 @@ export function UpcomingWidget({ data, today }: { data: Extract<WidgetData, { ke
     <WidgetCard
       id="upcoming"
       title="Upcoming"
-      meta={<span className="text-xs text-slate-500">{TIMEFRAME_LABELS[data.timeframe]} · {data.total} inspection{data.total === 1 ? "" : "s"}</span>}
+      meta={<span className="text-xs text-neutral-500">{TIMEFRAME_LABELS[data.timeframe]} · {data.total} inspection{data.total === 1 ? "" : "s"}</span>}
       footer={
         <Link href="/calendar?view=week" className={linkClass}>
           Open Calendar <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -316,12 +316,12 @@ export function UpcomingWidget({ data, today }: { data: Extract<WidgetData, { ke
       {data.days.length === 0 ? (
         <Empty>No inspections scheduled in this period.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {data.days.map((d: UpcomingDay) => (
             <li key={d.day}>
               <Link href={`/calendar?view=day&date=${d.day}`} className={`flex items-center justify-between gap-3 px-1 py-2 ${rowButton}`}>
-                <span className="text-sm font-medium text-slate-900">{dayLabel(d.day, today)}</span>
-                <span className="flex items-center gap-2 text-sm text-slate-600">
+                <span className="text-sm font-medium text-neutral-900">{dayLabel(d.day, today)}</span>
+                <span className="flex items-center gap-2 text-sm text-neutral-600">
                   {d.needsAttention > 0 && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800">
                       <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -359,7 +359,7 @@ export function ActivityWidget({ data, today, timeZone }: { data: Extract<Widget
     <WidgetCard
       id="recentActivity"
       title="Recent Activity"
-      meta={<span className="text-xs text-slate-500">Last 7 days</span>}
+      meta={<span className="text-xs text-neutral-500">Last 7 days</span>}
       footer={
         data.entries.length > 8 && (
           <button type="button" onClick={() => setExpanded((v) => !v)} className={linkClass} aria-expanded={expanded}>
@@ -371,15 +371,15 @@ export function ActivityWidget({ data, today, timeZone }: { data: Extract<Widget
       {data.entries.length === 0 ? (
         <Empty>Nothing recorded in the last 7 days.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {entries.map((e: ActivityEntry) => {
             const body = (
               <>
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-slate-900">{e.label}</span>
-                  {(e.detail || e.actor) && <span className="block truncate text-xs text-slate-500">{[e.detail, e.actor && `by ${e.actor}`].filter(Boolean).join(" · ")}</span>}
+                  <span className="block text-sm font-medium text-neutral-900">{e.label}</span>
+                  {(e.detail || e.actor) && <span className="block truncate text-xs text-neutral-500">{[e.detail, e.actor && `by ${e.actor}`].filter(Boolean).join(" · ")}</span>}
                 </span>
-                <time dateTime={e.at} className="shrink-0 text-xs tabular-nums text-slate-500">
+                <time dateTime={e.at} className="shrink-0 text-xs tabular-nums text-neutral-500">
                   {whenLabel(e.at, today, timeZone)}
                 </time>
               </>
@@ -407,9 +407,9 @@ export function ActivityWidget({ data, today, timeZone }: { data: Extract<Widget
 // ---------------------------------------------------------------------------
 
 function DueLabel({ row, today }: { row: TaskRow; today: DayKey }) {
-  if (!row.due) return <span className="text-xs text-slate-500">No due date</span>;
+  if (!row.due) return <span className="text-xs text-neutral-500">No due date</span>;
   if (row.overdue) return <span className="text-xs font-medium text-amber-800">Overdue · {formatDay(row.due, "short")}</span>;
-  return <span className="text-xs text-slate-500">{dayLabel(row.due, today)}</span>;
+  return <span className="text-xs text-neutral-500">{dayLabel(row.due, today)}</span>;
 }
 
 function CompleteButton({ row, onDone }: { row: TaskRow; onDone: () => void }) {
@@ -430,11 +430,11 @@ function CompleteButton({ row, onDone }: { row: TaskRow; onDone: () => void }) {
           }
         })
       }
-      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-emerald-700 hover:border-emerald-600 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-neutral-300 bg-surface text-accent-700 hover:border-accent-600 focus-visible:outline-2 focus-visible:outline-accent-600 disabled:opacity-50"
       aria-label={`Mark "${row.title}" complete`}
       title={error ? "Couldn't complete — you may not have permission." : "Mark complete"}
     >
-      {pending ? <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600" /> : error ? <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> : null}
+      {pending ? <span className="h-2 w-2 animate-pulse rounded-full bg-accent-solid-600" /> : error ? <AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> : null}
     </button>
   );
 }
@@ -458,7 +458,7 @@ export function TasksWidget({
     <WidgetCard
       id="myTasks"
       title={title}
-      meta={<span className="text-xs text-slate-500">{data.total} due this week or overdue</span>}
+      meta={<span className="text-xs text-neutral-500">{data.total} due this week or overdue</span>}
       footer={
         <Link href="/tasks" className={linkClass}>
           All tasks <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -468,13 +468,13 @@ export function TasksWidget({
       {data.rows.length === 0 ? (
         <Empty>No open tasks due this week.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {data.rows.map((row) => (
             <li key={row.id} className="flex items-start gap-3 py-2">
               {canComplete && <CompleteButton row={row} onDone={onChanged} />}
               <button type="button" onClick={() => onOpen({ type: "task", id: row.id, title: row.title })} className={`min-w-0 flex-1 px-1 ${rowButton}`}>
-                <span className="block text-sm font-medium text-slate-900">{row.title}</span>
-                <span className="flex flex-wrap gap-x-2 text-xs text-slate-500">
+                <span className="block text-sm font-medium text-neutral-900">{row.title}</span>
+                <span className="flex flex-wrap gap-x-2 text-xs text-neutral-500">
                   <DueLabel row={row} today={today} />
                   {row.context && <span className="truncate">{row.context}</span>}
                   {row.assigneeName && <span>{row.assigneeName}</span>}
@@ -493,7 +493,7 @@ export function FollowUpsWidget({ data, today, onOpen }: { data: Extract<WidgetD
     <WidgetCard
       id="realtorFollowUps"
       title="Realtor Follow-Ups"
-      meta={<span className="text-xs text-slate-500">{data.total} due this week or overdue</span>}
+      meta={<span className="text-xs text-neutral-500">{data.total} due this week or overdue</span>}
       footer={
         <Link href="/realtors?needsFollowUp=1" className={linkClass}>
           All follow-ups <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -503,12 +503,12 @@ export function FollowUpsWidget({ data, today, onOpen }: { data: Extract<WidgetD
       {data.rows.length === 0 ? (
         <Empty>No follow-ups due this week.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {data.rows.map((row) => (
             <li key={row.id} className="flex items-center gap-2 py-2">
               <button type="button" onClick={() => onOpen({ type: "task", id: row.id, title: row.title })} className={`min-w-0 flex-1 px-1 ${rowButton}`}>
-                <span className="block text-sm font-medium text-slate-900">{row.realtor?.name ?? row.title}</span>
-                <span className="flex flex-wrap gap-x-2 text-xs text-slate-500">
+                <span className="block text-sm font-medium text-neutral-900">{row.realtor?.name ?? row.title}</span>
+                <span className="flex flex-wrap gap-x-2 text-xs text-neutral-500">
                   <DueLabel row={row} today={today} />
                   <span className="truncate">{row.title}</span>
                 </span>
@@ -538,7 +538,7 @@ export function ReportsWidget({ data }: { data: Extract<WidgetData, { key: "repo
     <WidgetCard
       id="reportsPending"
       title="Reports Needing Completion"
-      meta={<span className="text-xs text-slate-500">{data.total} open</span>}
+      meta={<span className="text-xs text-neutral-500">{data.total} open</span>}
       footer={
         <Link href="/inspections?filter=report-pending" className={linkClass}>
           All unfinished reports <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -548,17 +548,17 @@ export function ReportsWidget({ data }: { data: Extract<WidgetData, { key: "repo
       {data.rows.length === 0 ? (
         <Empty>Every completed inspection has a finalized report.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {data.rows.map((r: ReportRow) => (
             <li key={r.inspectionId}>
               <Link href={r.href} className={`flex items-start justify-between gap-3 px-1 py-2 ${rowButton}`}>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-slate-900">{r.address}</span>
-                  <span className="block text-xs text-slate-500">
+                  <span className="block truncate text-sm font-medium text-neutral-900">{r.address}</span>
+                  <span className="block text-xs text-neutral-500">
                     {[r.inspectedOn && `Inspected ${formatDay(r.inspectedOn, "short")}`, r.inspectorName].filter(Boolean).join(" · ")}
                   </span>
                 </span>
-                <span className={`shrink-0 text-xs font-medium ${r.overdue ? "text-amber-800" : "text-slate-600"}`}>
+                <span className={`shrink-0 text-xs font-medium ${r.overdue ? "text-amber-800" : "text-neutral-600"}`}>
                   {r.overdue && <AlertTriangle className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />}
                   {r.statusLabel}
                   {r.overdue && <span className="sr-only"> (overdue)</span>}
@@ -582,8 +582,8 @@ export function InvoicesWidget({ data, today }: { data: Extract<WidgetData, { ke
       id="outstandingInvoices"
       title="Outstanding Invoices"
       meta={
-        <span className="text-xs text-slate-500">
-          {data.total} · <span className="font-medium text-slate-700">{formatUsd(data.balance, true)}</span> due
+        <span className="text-xs text-neutral-500">
+          {data.total} · <span className="font-medium text-neutral-700">{formatUsd(data.balance, true)}</span> due
         </span>
       }
       footer={
@@ -595,18 +595,18 @@ export function InvoicesWidget({ data, today }: { data: Extract<WidgetData, { ke
       {data.rows.length === 0 ? (
         <Empty>No balances due.</Empty>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-neutral-100">
           {data.rows.map((inv: InvoiceRow) => (
             <li key={inv.id}>
               <Link href={inv.href} className={`flex items-start justify-between gap-3 px-1 py-2 ${rowButton}`}>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-slate-900">{inv.customer ?? `Invoice ${inv.invoiceNumber}`}</span>
-                  <span className={`block text-xs ${inv.overdue ? "font-medium text-amber-800" : "text-slate-500"}`}>
+                  <span className="block truncate text-sm font-medium text-neutral-900">{inv.customer ?? `Invoice ${inv.invoiceNumber}`}</span>
+                  <span className={`block text-xs ${inv.overdue ? "font-medium text-amber-800" : "text-neutral-500"}`}>
                     {inv.invoiceNumber}
                     {inv.due ? ` · ${inv.overdue ? "overdue since" : "due"} ${dayLabel(inv.due, today)}` : " · no due date"}
                   </span>
                 </span>
-                <span className="shrink-0 text-sm font-medium tabular-nums text-slate-900">{formatUsd(inv.balance, true)}</span>
+                <span className="shrink-0 text-sm font-medium tabular-nums text-neutral-900">{formatUsd(inv.balance, true)}</span>
               </Link>
             </li>
           ))}
@@ -625,7 +625,7 @@ export function LeadsWidget({ data, today }: { data: Extract<WidgetData, { key: 
     <WidgetCard
       id="leadActivity"
       title="Lead Activity"
-      meta={<span className="text-xs text-slate-500">{TIMEFRAME_LABELS[data.timeframe]}</span>}
+      meta={<span className="text-xs text-neutral-500">{TIMEFRAME_LABELS[data.timeframe]}</span>}
       footer={
         <Link href="/leads" className={linkClass}>
           All leads <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -633,27 +633,27 @@ export function LeadsWidget({ data, today }: { data: Extract<WidgetData, { key: 
       }
     >
       <dl className="grid grid-cols-2 gap-2">
-        <div className="rounded-md bg-slate-50 px-3 py-2">
-          <dt className="text-xs text-slate-500">New leads</dt>
-          <dd className="text-lg font-semibold tabular-nums text-slate-900">{data.created}</dd>
+        <div className="rounded-md bg-neutral-50 px-3 py-2">
+          <dt className="text-xs text-neutral-500">New leads</dt>
+          <dd className="text-lg font-semibold tabular-nums text-neutral-900">{data.created}</dd>
         </div>
-        <div className="rounded-md bg-slate-50 px-3 py-2">
-          <dt className="text-xs text-slate-500">Converted</dt>
-          <dd className="text-lg font-semibold tabular-nums text-slate-900">{data.converted}</dd>
+        <div className="rounded-md bg-neutral-50 px-3 py-2">
+          <dt className="text-xs text-neutral-500">Converted</dt>
+          <dd className="text-lg font-semibold tabular-nums text-neutral-900">{data.converted}</dd>
         </div>
       </dl>
       {data.recent.length > 0 && (
         <>
-          <h3 className="mt-3 text-xs font-medium text-slate-500">Most recent</h3>
-          <ul className="divide-y divide-slate-100">
+          <h3 className="mt-3 text-xs font-medium text-neutral-500">Most recent</h3>
+          <ul className="divide-y divide-neutral-100">
             {data.recent.map((l: LeadRow) => (
               <li key={l.id}>
                 <Link href={`/leads/${l.id}`} className={`flex items-center justify-between gap-3 px-1 py-1.5 ${rowButton}`}>
-                  <span className="min-w-0 truncate text-sm text-slate-900">
+                  <span className="min-w-0 truncate text-sm text-neutral-900">
                     {l.name}
-                    {l.source && <span className="text-slate-500"> · {l.source}</span>}
+                    {l.source && <span className="text-neutral-500"> · {l.source}</span>}
                   </span>
-                  <span className="shrink-0 text-xs text-slate-500">
+                  <span className="shrink-0 text-xs text-neutral-500">
                     {l.status.toLowerCase()} · {dayLabel(l.createdDay, today)}
                   </span>
                 </Link>
@@ -671,12 +671,12 @@ export function LeadsWidget({ data, today }: { data: Extract<WidgetData, { key: 
 // ---------------------------------------------------------------------------
 
 const smallAction =
-  "inline-flex min-h-8 items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50";
+  "inline-flex min-h-8 items-center justify-center gap-1 rounded-md border border-neutral-300 bg-surface px-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600 disabled:opacity-50";
 
 const EMAIL_KIND: Record<EmailActionRow["kind"], { label: string; className: string }> = {
   failed: { label: "Failed", className: "text-amber-800" },
   bounced: { label: "Bounced", className: "text-amber-800" },
-  review: { label: "To review", className: "text-slate-600" },
+  review: { label: "To review", className: "text-neutral-600" },
 };
 
 function useRun(onChanged: () => void) {
@@ -705,10 +705,10 @@ function EmailActionItem({ row, today, timeZone, canSend, onChanged }: { row: Em
     <li className="py-2">
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="min-w-0 flex-1">
-          <Link href={row.href} className="block truncate text-sm font-medium text-slate-900 hover:underline">
+          <Link href={row.href} className="block truncate text-sm font-medium text-neutral-900 hover:underline">
             {row.subject}
           </Link>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-neutral-500">
             <span className={`font-medium ${kind.className}`}>
               {row.kind !== "review" && <AlertTriangle className="mr-0.5 inline h-3 w-3 align-[-1px]" aria-hidden="true" />}
               {kind.label}
@@ -729,7 +729,7 @@ function EmailActionItem({ row, today, timeZone, canSend, onChanged }: { row: Em
                     <button type="button" disabled={pending} onClick={() => run(() => discardDraft(row.id), "Draft discarded.")} className={smallAction}>
                       Discard draft
                     </button>
-                    <button type="button" onClick={() => setConfirmDiscard(false)} className="px-1 text-xs text-slate-500 hover:underline">
+                    <button type="button" onClick={() => setConfirmDiscard(false)} className="px-1 text-xs text-neutral-500 hover:underline">
                       Keep
                     </button>
                   </span>
@@ -762,7 +762,7 @@ function EmailActionItem({ row, today, timeZone, canSend, onChanged }: { row: Em
         </div>
       </div>
       {message && (
-        <p role="status" className="mt-1 text-xs text-slate-600">
+        <p role="status" className="mt-1 text-xs text-neutral-600">
           {message}
         </p>
       )}
@@ -796,8 +796,8 @@ function TaskActionItem({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
             <button type="button" onClick={() => onOpen({ type: "task", id: row.id, title: row.title })} className={`min-w-0 flex-1 px-1 ${rowButton}`}>
-              <span className="block text-sm font-medium text-slate-900">{row.title}</span>
-              <span className="flex flex-wrap gap-x-2 text-xs text-slate-500">
+              <span className="block text-sm font-medium text-neutral-900">{row.title}</span>
+              <span className="flex flex-wrap gap-x-2 text-xs text-neutral-500">
                 <DueLabel row={row} today={today} />
                 {row.context && <span className="truncate">{row.context}</span>}
                 {row.assigneeName && <span>{row.assigneeName}</span>}
@@ -829,20 +829,20 @@ function TaskActionItem({
                 setRescheduling(false);
               }}
             >
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-neutral-600">
                 <span className="sr-only">New due date for {row.title}</span>
-                <input type="date" required min={today} value={day} onChange={(e) => setDay(e.target.value)} className="rounded-md border border-slate-300 px-2 py-1 text-sm" />
+                <input type="date" required min={today} value={day} onChange={(e) => setDay(e.target.value)} className="rounded-md border border-neutral-300 px-2 py-1 text-sm" />
               </label>
               <button type="submit" disabled={pending || !day} className={smallAction}>
                 Save
               </button>
-              <button type="button" onClick={() => setRescheduling(false)} className="px-1 text-xs text-slate-500 hover:underline">
+              <button type="button" onClick={() => setRescheduling(false)} className="px-1 text-xs text-neutral-500 hover:underline">
                 Cancel
               </button>
             </form>
           )}
           {message && (
-            <p role="status" className="mt-1 px-1 text-xs text-slate-600">
+            <p role="status" className="mt-1 px-1 text-xs text-neutral-600">
               {message}
             </p>
           )}
@@ -879,7 +879,7 @@ export function ActionQueueWidget({
       id="actionQueue"
       title="Email & Task Actions"
       meta={
-        <span className="flex items-center gap-3 text-xs text-slate-500">
+        <span className="flex items-center gap-3 text-xs text-neutral-500">
           {emails && (
             <span>
               {data.emailTotal} email{data.emailTotal === 1 ? "" : "s"}
@@ -911,35 +911,35 @@ export function ActionQueueWidget({
       <div className={`grid gap-x-6 gap-y-4 ${emails ? "lg:grid-cols-2" : ""}`}>
         {emails && (
           <section aria-labelledby="action-queue-emails">
-            <h3 id="action-queue-emails" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <h3 id="action-queue-emails" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
               <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Emails
             </h3>
             {emails.length === 0 ? (
               <Empty>No emails waiting for review, and nothing failed.</Empty>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-neutral-100">
                 {emails.map((row) => (
                   <EmailActionItem key={row.id} row={row} today={today} timeZone={timeZone} canSend={canSendEmail} onChanged={onChanged} />
                 ))}
               </ul>
             )}
-            {data.emailTotal > emails.length && <p className="pt-1 text-xs text-slate-500">+{data.emailTotal - emails.length} more in Email</p>}
+            {data.emailTotal > emails.length && <p className="pt-1 text-xs text-neutral-500">+{data.emailTotal - emails.length} more in Email</p>}
           </section>
         )}
         <section aria-labelledby="action-queue-tasks">
-          <h3 id="action-queue-tasks" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+          <h3 id="action-queue-tasks" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
             <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" /> Tasks due this week or overdue
           </h3>
           {data.tasks.length === 0 ? (
             <Empty>No open tasks due this week.</Empty>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-neutral-100">
               {data.tasks.map((row) => (
                 <TaskActionItem key={row.id} row={row} today={today} canUpdate={canUpdateTasks} canEmail={canSendEmail} onOpen={onOpen} onChanged={onChanged} />
               ))}
             </ul>
           )}
-          {data.taskTotal > data.tasks.length && <p className="pt-1 text-xs text-slate-500">+{data.taskTotal - data.tasks.length} more in Tasks</p>}
+          {data.taskTotal > data.tasks.length && <p className="pt-1 text-xs text-neutral-500">+{data.taskTotal - data.tasks.length} more in Tasks</p>}
         </section>
       </div>
     </WidgetCard>

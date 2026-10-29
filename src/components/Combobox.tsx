@@ -131,7 +131,7 @@ export function Combobox({
     <div ref={containerRef} className="relative">
       <input type="hidden" name={name} value={selectedId} required={required} />
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           ref={inputRef}
           type="text"
@@ -152,14 +152,14 @@ export function Combobox({
             setHighlighted(0);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full rounded-md border border-slate-300 py-1.5 pl-8 pr-7 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="w-full rounded-md border border-neutral-300 py-1.5 pl-8 pr-7 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
         />
         {selectedId && (
           <button
             type="button"
             onClick={clearSelection}
             aria-label="Clear selection"
-            className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -167,8 +167,8 @@ export function Combobox({
       </div>
 
       {open && (
-        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
-          {filtered.length === 0 && !renderCreateNew && <p className="px-3 py-2 text-sm text-slate-400">{emptyMessage}</p>}
+        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-neutral-200 bg-surface py-1 shadow-lg">
+          {filtered.length === 0 && !renderCreateNew && <p className="px-3 py-2 text-sm text-neutral-400">{emptyMessage}</p>}
           {filtered.map((option, index) => (
             <button
               key={option.id}
@@ -178,11 +178,11 @@ export function Combobox({
               onMouseEnter={() => setHighlighted(index)}
               onClick={() => selectOption(option)}
               className={`block w-full px-3 py-1.5 text-left text-sm ${
-                index === highlighted ? "bg-emerald-50 text-emerald-800" : "text-slate-700"
+                index === highlighted ? "bg-accent-50 text-accent-800" : "text-neutral-700"
               }`}
             >
               {option.label}
-              {option.sublabel && <span className="ml-1.5 text-xs text-slate-400">{option.sublabel}</span>}
+              {option.sublabel && <span className="ml-1.5 text-xs text-neutral-400">{option.sublabel}</span>}
             </button>
           ))}
           {renderCreateNew && (
@@ -193,8 +193,8 @@ export function Combobox({
                 setCreating(true);
                 setOpen(false);
               }}
-              className={`block w-full border-t border-slate-100 px-3 py-1.5 text-left text-sm font-medium text-emerald-700 ${
-                highlighted === filtered.length ? "bg-emerald-50" : ""
+              className={`block w-full border-t border-neutral-100 px-3 py-1.5 text-left text-sm font-medium text-accent-700 ${
+                highlighted === filtered.length ? "bg-accent-50" : ""
               }`}
             >
               {createNewLabel}
@@ -205,7 +205,7 @@ export function Combobox({
 
       {creating && renderCreateNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl">
+          <div className="w-full max-w-sm rounded-lg bg-surface p-5 shadow-xl">
             {renderCreateNew({
               onCreated: (option) => {
                 setAllOptions((prev) => sortAlphabetically([...prev, option], (o) => o.label));

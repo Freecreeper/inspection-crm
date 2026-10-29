@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   const role = session?.user?.role as Role | undefined;
   const userId = session?.user?.id;
   if (!role || !userId || !can(role, "dashboard:view")) {
-    return <p className="text-sm text-slate-600">You don&apos;t have access to the Dashboard.</p>;
+    return <p className="text-sm text-neutral-600">You don&apos;t have access to the Dashboard.</p>;
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, dashboardPreferences: true } });

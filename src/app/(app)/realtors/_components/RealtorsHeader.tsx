@@ -21,7 +21,7 @@ export function RealtorsHeader({
       href={href}
       aria-current={view === target ? "page" : undefined}
       className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-        view === target ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+        view === target ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900"
       }`}
     >
       {label}
@@ -31,8 +31,8 @@ export function RealtorsHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Realtors</h1>
-        <nav aria-label="Realtor views" className="flex rounded-lg bg-slate-100 p-0.5">
+        <h1 className="text-2xl font-semibold text-neutral-900">Realtors</h1>
+        <nav aria-label="Realtor views" className="flex rounded-lg bg-neutral-100 p-0.5">
           {tab("directory", "Directory", "/realtors")}
           {tab("followup", "Follow-up", "/realtors?view=followup")}
         </nav>

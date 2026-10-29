@@ -37,35 +37,35 @@ export default async function EmailSettingsPage() {
       />
 
       <div className="space-y-6">
-        <section aria-labelledby="provider" className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <h2 id="provider" className="text-sm font-semibold text-slate-900">
+        <section aria-labelledby="provider" className="rounded-lg border border-neutral-200 bg-surface p-4 text-sm">
+          <h2 id="provider" className="text-sm font-semibold text-neutral-900">
             Provider
           </h2>
           <dl className="mt-2 space-y-1.5">
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">Provider</dt>
+              <dt className="text-neutral-500">Provider</dt>
               <dd>{delivery.providerName}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">Delivery mode</dt>
+              <dt className="text-neutral-500">Delivery mode</dt>
               <dd className="font-mono text-xs">{delivery.mode}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">API token</dt>
+              <dt className="text-neutral-500">API token</dt>
               <dd>{delivery.providerConfigured ? "Configured" : "Not configured"}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">Webhook</dt>
+              <dt className="text-neutral-500">Webhook</dt>
               <dd>{delivery.webhookConfigured ? "Configured" : "Not configured"}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">Streams</dt>
+              <dt className="text-neutral-500">Streams</dt>
               <dd className="font-mono text-xs">
                 {config.transactionalStream} / {config.broadcastStream}
               </dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-neutral-500">
             {delivery.summary} Credentials are set in the server environment only and never shown here. See docs/email.md.
           </p>
         </section>

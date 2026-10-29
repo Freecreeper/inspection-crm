@@ -38,16 +38,16 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Link href={`/inspections/${id}/report`} className="text-xs text-slate-500 hover:underline">
+      <Link href={`/inspections/${id}/report`} className="text-xs text-neutral-500 hover:underline">
         ← Back to report
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Version history &amp; delivery</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">Version history &amp; delivery</h1>
 
       {flashToken && (
-        <section className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <section className="rounded-lg border border-accent-300 bg-accent-50 p-4 text-sm text-accent-900">
           <p className="font-medium">Delivery link created — copy it now, it won&apos;t be shown again here.</p>
           <p className="mt-1 text-xs">Share this link with the recipient yourself.</p>
-          <code className="mt-2 block break-all rounded bg-white px-2 py-1.5 text-xs">{`/r/${flashToken}`}</code>
+          <code className="mt-2 block break-all rounded bg-surface px-2 py-1.5 text-xs">{`/r/${flashToken}`}</code>
         </section>
       )}
 
@@ -59,30 +59,30 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
         </form>
       )}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Versions</h2>
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Versions</h2>
         <ul className="mt-2 space-y-2 text-sm">
           {report.versions.map((v) => (
-            <li key={v.id} className="rounded-md bg-slate-50 p-3">
+            <li key={v.id} className="rounded-md bg-neutral-50 p-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-800">Version {v.versionNumber}</span>
+                <span className="font-medium text-neutral-800">Version {v.versionNumber}</span>
                 {v.pdfStorageKey && (
                   <a href={`/api/reports/versions/${v.id}/pdf`} className="text-xs text-blue-700 hover:underline">
                     Download PDF
                   </a>
                 )}
               </div>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-neutral-500">
                 Finalized {formatBusinessDateTime(v.finalizedAt)} by {v.createdBy?.name ?? "Unknown"}
               </p>
-              {v.reasonForRevision && <p className="mt-1 text-xs text-slate-600">Reason: {v.reasonForRevision}</p>}
+              {v.reasonForRevision && <p className="mt-1 text-xs text-neutral-600">Reason: {v.reasonForRevision}</p>}
               {v.deliveries.length > 0 && (
-                <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                <ul className="mt-2 space-y-1 text-xs text-neutral-600">
                   {v.deliveries.map((d) => (
                     <li key={d.id} className="flex flex-wrap items-center gap-x-2">
                       <span>
                         → {d.recipientName} ({d.recipientType}) — <span className="font-mono">{d.revokedAt ? "REVOKED" : d.status}</span>
-                        <span className="text-slate-400"> · {d.deliveryMethod === "email" ? "by email" : "link"}</span>
+                        <span className="text-neutral-400"> · {d.deliveryMethod === "email" ? "by email" : "link"}</span>
                       </span>
                       {!d.revokedAt && (
                         <form action={revokeDelivery.bind(null, d.id)}>
@@ -97,25 +97,25 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
               )}
             </li>
           ))}
-          {report.versions.length === 0 && <p className="text-slate-400">No finalized versions yet.</p>}
+          {report.versions.length === 0 && <p className="text-neutral-400">No finalized versions yet.</p>}
         </ul>
       </section>
 
       {canDeliver && (
-        <section className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Deliver latest version</h2>
-          <p className="mt-1 text-xs text-slate-500">
+        <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+          <h2 className="text-sm font-semibold text-neutral-900">Deliver latest version</h2>
+          <p className="mt-1 text-xs text-neutral-500">
             Recipients are always explicit — never auto-selected from transaction participants.
           </p>
           <form action={deliverAction} className="mt-3 space-y-2">
-            <select name="recipientType" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+            <select name="recipientType" required className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
               <option value="CUSTOMER">Customer</option>
               <option value="SECONDARY_CUSTOMER">Secondary customer</option>
               <option value="REALTOR">Realtor</option>
               <option value="OTHER_AUTHORIZED">Other authorized recipient</option>
             </select>
-            <input name="recipientName" required placeholder="Recipient name" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <input name="recipientEmail" type="email" required placeholder="Recipient email" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            <input name="recipientName" required placeholder="Recipient name" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input name="recipientEmail" type="email" required placeholder="Recipient email" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
             {reportEmailsOn ? (
               <fieldset className="space-y-1 text-sm">
                 <legend className="sr-only">How to deliver</legend>
@@ -130,9 +130,9 @@ export default async function ReportVersionsPage({ params }: { params: Promise<{
                 {!delivery.delivers && <p className="text-xs text-amber-700">{delivery.summary}</p>}
               </fieldset>
             ) : (
-              <p className="text-xs text-slate-500">Report emails are turned off in Email → Automations; this creates a link to share yourself.</p>
+              <p className="text-xs text-neutral-500">Report emails are turned off in Email → Automations; this creates a link to share yourself.</p>
             )}
-            <SubmitButton className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <SubmitButton className="w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
               Deliver report
             </SubmitButton>
           </form>

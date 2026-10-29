@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { EmailStatus } from "@prisma/client";
 import { cancelEmail, processEmailQueueNow, retryEmail } from "../actions";
 
-const btn = "rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60";
+const btn = "rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60";
 
 // A campaign recipient skipped by the audience rules (duplicate address, not
 // opted in, …) can't be retried one by one; only a provider failure can.
@@ -70,12 +70,12 @@ export function ProcessQueueButton() {
             }
           })
         }
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
       >
         {pending ? "Processing…" : "Process queue now"}
       </button>
       {message && (
-        <span role="status" className="text-xs text-slate-600">
+        <span role="status" className="text-xs text-neutral-600">
           {message}
         </span>
       )}

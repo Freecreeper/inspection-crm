@@ -20,29 +20,29 @@ export default async function CampaignsPage() {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">One email to many realtors — a service announcement, seasonal note, or update. Every campaign needs an owner&apos;s approval before it sends.</p>
+        <p className="text-sm text-neutral-600">One email to many realtors — a service announcement, seasonal note, or update. Every campaign needs an owner&apos;s approval before it sends.</p>
         {canCreate && (
-          <Link href="/email/campaigns/new" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <Link href="/email/campaigns/new" className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
             New campaign
           </Link>
         )}
       </div>
-      <ul className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+      <ul className="mt-4 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface">
         {campaigns.map((c) => (
           <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div>
-              <Link href={`/email/campaigns/${c.id}`} className="font-medium text-slate-900 hover:underline">
+              <Link href={`/email/campaigns/${c.id}`} className="font-medium text-neutral-900 hover:underline">
                 {c.name}
               </Link>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-neutral-500">
                 {CATEGORY_LABELS[c.category]} · created by {c.createdBy?.name ?? "—"} {c.createdAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}
                 {c._count.messages > 0 && ` · ${c._count.messages} recipients recorded`}
               </p>
             </div>
-            <span className="text-sm text-slate-700">{CAMPAIGN_STATUS_LABELS[c.status]}</span>
+            <span className="text-sm text-neutral-700">{CAMPAIGN_STATUS_LABELS[c.status]}</span>
           </li>
         ))}
-        {campaigns.length === 0 && <li className="px-4 py-10 text-center text-sm text-slate-500">No campaigns yet.</li>}
+        {campaigns.length === 0 && <li className="px-4 py-10 text-center text-sm text-neutral-500">No campaigns yet.</li>}
       </ul>
     </div>
   );

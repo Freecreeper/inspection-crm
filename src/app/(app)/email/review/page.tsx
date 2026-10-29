@@ -23,26 +23,26 @@ export default async function NeedsReviewPage() {
 
   return (
     <div>
-      <p className="text-sm text-slate-600">Prepared by an automation and waiting for someone to review, personalize, and send. Nothing here goes out on its own.</p>
-      <ul className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+      <p className="text-sm text-neutral-600">Prepared by an automation and waiting for someone to review, personalize, and send. Nothing here goes out on its own.</p>
+      <ul className="mt-4 divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-surface">
         {drafts.map((d) => {
           const context = composeContextForMessage(d);
           return (
             <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div className="min-w-0">
-                <Link href={`/email/messages/${d.id}`} className="font-medium text-slate-900 hover:underline">
+                <Link href={`/email/messages/${d.id}`} className="font-medium text-neutral-900 hover:underline">
                   {d.subject || "(no subject)"}
                 </Link>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-neutral-600">
                   To {d.recipientName} · {CATEGORY_LABELS[d.category]} · {d.automation?.name ?? "Draft"}
                 </p>
-                <p className="text-xs text-slate-500">Prepared {d.createdAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}</p>
+                <p className="text-xs text-neutral-500">Prepared {d.createdAt.toLocaleDateString("en-US", { timeZone: businessTimeZone(), month: "short", day: "numeric" })}</p>
               </div>
               {canSend && context && <EmailButton context={context} draftId={d.id} label="Review & send" />}
             </li>
           );
         })}
-        {drafts.length === 0 && <li className="px-4 py-10 text-center text-sm text-slate-500">Nothing waiting for review.</li>}
+        {drafts.length === 0 && <li className="px-4 py-10 text-center text-sm text-neutral-500">Nothing waiting for review.</li>}
       </ul>
     </div>
   );

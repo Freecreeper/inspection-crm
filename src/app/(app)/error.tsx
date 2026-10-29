@@ -16,10 +16,10 @@ export default function AppError({ error, retry }: { error: unknown; retry: () =
       </p>
       {digest && <p className="mt-2 font-mono text-xs text-amber-800">Reference: {digest}</p>}
       <div className="mt-4 flex gap-3">
-        <button type="button" onClick={() => retry()} className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+        <button type="button" onClick={() => retry()} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
           Try again
         </button>
-        <Link href="/dashboard" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <Link href="/dashboard" className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
           Go to the Dashboard
         </Link>
       </div>

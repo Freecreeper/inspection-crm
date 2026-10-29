@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { updateRealtorEmailPreferences, updateRealtorRelationshipDates } from "../../actions";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const input = "mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
+const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
 
 export interface RelationshipEmailData {
   realtorId: string;
@@ -70,10 +70,10 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
         }}
       >
         <fieldset disabled={!canEditDates || pending} className="space-y-3">
-          <legend className="text-xs font-medium uppercase tracking-wide text-slate-500">Relationship dates (optional)</legend>
+          <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Relationship dates (optional)</legend>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor={`${id}-bm`} className="text-xs text-slate-600">
+              <label htmlFor={`${id}-bm`} className="text-xs text-neutral-600">
                 Birthday month
               </label>
               <select
@@ -91,7 +91,7 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
               </select>
             </div>
             <div>
-              <label htmlFor={`${id}-bd`} className="text-xs text-slate-600">
+              <label htmlFor={`${id}-bd`} className="text-xs text-neutral-600">
                 Day
               </label>
               <select id={`${id}-bd`} value={dates.birthdayDay ?? ""} disabled={!dates.birthdayMonth} onChange={(e) => setDates({ ...dates, birthdayDay: e.target.value ? Number(e.target.value) : null })} className={input}>
@@ -104,23 +104,23 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
               </select>
             </div>
           </div>
-          <p className="text-xs text-slate-500">No birth year is ever stored.</p>
+          <p className="text-xs text-neutral-500">No birth year is ever stored.</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <label htmlFor={`${id}-career`} className="text-xs text-slate-600">
+              <label htmlFor={`${id}-career`} className="text-xs text-neutral-600">
                 Real estate career start
               </label>
               <input id={`${id}-career`} type="date" value={dates.careerStartDate} onChange={(e) => setDates({ ...dates, careerStartDate: e.target.value })} className={input} />
             </div>
             <div>
-              <label htmlFor={`${id}-rel`} className="text-xs text-slate-600">
+              <label htmlFor={`${id}-rel`} className="text-xs text-neutral-600">
                 Started working with us
               </label>
               <input id={`${id}-rel`} type="date" value={dates.relationshipStartDate} onChange={(e) => setDates({ ...dates, relationshipStartDate: e.target.value })} className={input} />
             </div>
           </div>
           {canEditDates && (
-            <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            <button type="submit" className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
               Save dates
             </button>
           )}
@@ -134,8 +134,8 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
         }}
       >
         <fieldset disabled={!canEditPreferences || pending} className="space-y-2">
-          <legend className="text-xs font-medium uppercase tracking-wide text-slate-500">Email preferences</legend>
-          <p className="text-xs text-slate-500">Operational email about their transactions is never affected by these.</p>
+          <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Email preferences</legend>
+          <p className="text-xs text-neutral-500">Operational email about their transactions is never affected by these.</p>
           {!data.hasEmail && <p className="text-sm text-amber-700">No email on file — no email can be sent until one is added.</p>}
           {data.suppression && <p className="text-sm text-amber-700">Address suppressed: {data.suppression}</p>}
           <label className="flex items-center gap-2 text-sm">
@@ -148,13 +148,13 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
           </label>
           {prefs.marketingOptIn && !data.marketingOptIn && (
             <div>
-              <label htmlFor={`${id}-src`} className="text-xs text-slate-600">
+              <label htmlFor={`${id}-src`} className="text-xs text-neutral-600">
                 How they agreed (required)
               </label>
               <input id={`${id}-src`} value={prefs.marketingOptInSource} onChange={(e) => setPrefs({ ...prefs, marketingOptInSource: e.target.value })} placeholder="e.g. Signed up at open house" className={input} />
             </div>
           )}
-          <dl className="space-y-0.5 text-xs text-slate-500">
+          <dl className="space-y-0.5 text-xs text-neutral-500">
             {data.marketingOptIn && data.marketingOptInAt && (
               <div>
                 Opted in {short(data.marketingOptInAt)}
@@ -166,14 +166,14 @@ export function RelationshipEmailCard({ data, canEditDates, canEditPreferences }
             <div>Last marketing email: {short(data.lastMarketingEmailAt) ?? "never"}</div>
           </dl>
           {canEditPreferences && (
-            <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            <button type="submit" className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
               Save preferences
             </button>
           )}
         </fieldset>
       </form>
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`text-xs ${message.ok ? "text-emerald-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`text-xs ${message.ok ? "text-accent-700" : "text-red-600"}`}>
           {message.text}
         </p>
       )}

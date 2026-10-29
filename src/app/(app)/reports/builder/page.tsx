@@ -32,16 +32,16 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
   return (
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Custom report builder</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">Custom report builder</h1>
         <Link href="/reports/saved" className="text-sm text-blue-700 hover:underline">
           Saved reports
         </Link>
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">1. Entity</h2>
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">1. Entity</h2>
         <form method="get" className="mt-2 flex gap-2">
-          <select name="entity" defaultValue={entity ?? ""} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+          <select name="entity" defaultValue={entity ?? ""} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
             <option value="" disabled>
               Select an entity
             </option>
@@ -51,7 +51,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
               </option>
             ))}
           </select>
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+          <button type="submit" className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
             Choose
           </button>
         </form>
@@ -61,9 +61,9 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
         <form method="get" className="space-y-6">
           <input type="hidden" name="entity" value={entity} />
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-slate-900">2. Columns</h2>
-            <p className="mt-1 text-xs text-slate-500">Own fields and related-entity fields from the catalog.</p>
+          <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+            <h2 className="text-sm font-semibold text-neutral-900">2. Columns</h2>
+            <p className="mt-1 text-xs text-neutral-500">Own fields and related-entity fields from the catalog.</p>
             <div className="mt-2 grid grid-cols-2 gap-1 text-sm sm:grid-cols-3">
               {[...ownFields, ...joinedFields].map((f) => {
                 const key = f.joinPath ? `${f.joinPath}.${f.fieldKey}` : f.fieldKey;
@@ -82,13 +82,13 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
             </div>
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-slate-900">3. Filters</h2>
+          <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+            <h2 className="text-sm font-semibold text-neutral-900">3. Filters</h2>
             {[0, 1, 2].map((i) => {
               const existing = config?.filters[i];
               return (
                 <div key={i} className="mt-2 grid grid-cols-4 gap-2">
-                  <select name={`f${i}_field`} defaultValue={existing?.fieldKey ?? ""} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                  <select name={`f${i}_field`} defaultValue={existing?.fieldKey ?? ""} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
                     <option value="">—</option>
                     {[...ownFields, ...joinedFields].map((f) => {
                       const key = f.joinPath ? `${f.joinPath}.${f.fieldKey}` : f.fieldKey;
@@ -99,7 +99,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
                       );
                     })}
                   </select>
-                  <select name={`f${i}_op`} defaultValue={existing?.operator ?? "equals"} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                  <select name={`f${i}_op`} defaultValue={existing?.operator ?? "equals"} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
                     <option value="equals">equals</option>
                     <option value="not">not</option>
                     <option value="contains">contains</option>
@@ -110,15 +110,15 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
                     <option value="isNull">is unknown</option>
                     <option value="isNotNull">is known</option>
                   </select>
-                  <input name={`f${i}_value`} defaultValue={existing?.value ?? ""} placeholder="Value (dates: YYYY-MM-DD)" className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+                  <input name={`f${i}_value`} defaultValue={existing?.value ?? ""} placeholder="Value (dates: YYYY-MM-DD)" className="col-span-2 rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
                 </div>
               );
             })}
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-slate-900">4. Group by &amp; aggregate (optional)</h2>
-            <p className="mt-1 text-xs text-slate-500">
+          <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+            <h2 className="text-sm font-semibold text-neutral-900">4. Group by &amp; aggregate (optional)</h2>
+            <p className="mt-1 text-xs text-neutral-500">
               Grouping only works on the entity&apos;s own fields — never silently drops NULL/unknown values from the
               total.
             </p>
@@ -134,7 +134,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
               const existing = config?.aggregations[i];
               return (
                 <div key={i} className="mt-2 grid grid-cols-2 gap-2">
-                  <select name={`a${i}_field`} defaultValue={existing?.fieldKey ?? ""} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                  <select name={`a${i}_field`} defaultValue={existing?.fieldKey ?? ""} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
                     <option value="">—</option>
                     {aggregableFields.map((f) => (
                       <option key={f.fieldKey} value={f.fieldKey}>
@@ -142,7 +142,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
                       </option>
                     ))}
                   </select>
-                  <select name={`a${i}_fn`} defaultValue={existing?.fn ?? "count"} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                  <select name={`a${i}_fn`} defaultValue={existing?.fn ?? "count"} className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
                     <option value="count">Count</option>
                     <option value="sum">Sum</option>
                     <option value="avg">Average</option>
@@ -152,24 +152,24 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
             })}
           </section>
 
-          <button type="submit" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+          <button type="submit" className="rounded-md bg-neutral-solid-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
             Run report
           </button>
         </form>
       )}
 
       {result && config && (
-        <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <section className="rounded-lg border border-neutral-200 bg-surface p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Results</h2>
+            <h2 className="text-sm font-semibold text-neutral-900">Results</h2>
             <div className="flex gap-2 text-xs">
-              <a href={`/api/reports/export?${currentQuery}`} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50">
+              <a href={`/api/reports/export?${currentQuery}`} className="rounded-md border border-neutral-300 px-2 py-1 hover:bg-neutral-50">
                 Export CSV
               </a>
               <form action={saveReport}>
                 <input type="hidden" name="configJson" value={JSON.stringify(config)} />
-                <input name="name" placeholder="Report name" required className="rounded-md border border-slate-300 px-2 py-1" />
-                <button type="submit" className="ml-1 rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50">
+                <input name="name" placeholder="Report name" required className="rounded-md border border-neutral-300 px-2 py-1" />
+                <button type="submit" className="ml-1 rounded-md border border-neutral-300 px-2 py-1 hover:bg-neutral-50">
                   Save
                 </button>
               </form>

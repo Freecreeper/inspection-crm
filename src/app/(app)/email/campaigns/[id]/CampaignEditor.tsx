@@ -15,7 +15,7 @@ function sendAtLabel(value: string): string {
   return day && time ? formatBusinessDateTimeWithZone(zonedDateTimeToUtc(day, time.slice(0, 5), businessTimeZone())) : value;
 }
 
-const input = "mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
+const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
 
 interface Fields {
   name: string;
@@ -81,21 +81,21 @@ export function CampaignEditor({
       <fieldset disabled={!editable || pending} className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="space-y-3">
           <div>
-            <label htmlFor={`${uid}-name`} className="block text-sm font-medium text-slate-700">Campaign name</label>
+            <label htmlFor={`${uid}-name`} className="block text-sm font-medium text-neutral-700">Campaign name</label>
             <input id={`${uid}-name`} value={fields.name} onChange={(e) => set("name", e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor={`${uid}-cat`} className="block text-sm font-medium text-slate-700">Type</label>
+            <label htmlFor={`${uid}-cat`} className="block text-sm font-medium text-neutral-700">Type</label>
             <select id={`${uid}-cat`} value={fields.category} onChange={(e) => set("category", e.target.value as Fields["category"])} className={input}>
               <option value="MARKETING">Marketing (announcements, promotions, educational content)</option>
               <option value="RELATIONSHIP">Relationship (non-promotional personal note)</option>
             </select>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-neutral-500">
               Marketing only goes to realtors who are eligible for marketing email, and always includes an unsubscribe link.
             </p>
           </div>
           <div>
-            <label htmlFor={`${uid}-tpl`} className="block text-sm font-medium text-slate-700">Start from template</label>
+            <label htmlFor={`${uid}-tpl`} className="block text-sm font-medium text-neutral-700">Start from template</label>
             <select
               id={`${uid}-tpl`}
               value={fields.templateId}
@@ -120,20 +120,20 @@ export function CampaignEditor({
             </select>
           </div>
           <div>
-            <label htmlFor={`${uid}-subject`} className="block text-sm font-medium text-slate-700">Subject</label>
+            <label htmlFor={`${uid}-subject`} className="block text-sm font-medium text-neutral-700">Subject</label>
             <input id={`${uid}-subject`} value={fields.subject} onChange={(e) => set("subject", e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor={`${uid}-body`} className="block text-sm font-medium text-slate-700">Message</label>
+            <label htmlFor={`${uid}-body`} className="block text-sm font-medium text-neutral-700">Message</label>
             <textarea id={`${uid}-body`} rows={10} value={fields.body} onChange={(e) => set("body", e.target.value)} className={`${input} font-mono text-[13px]`} />
           </div>
         </div>
 
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Audience</h3>
-          <p className="text-xs text-slate-500">All rules combine. Leave everything empty for all realtors.</p>
+        <div className="space-y-3 rounded-lg border border-neutral-200 bg-surface p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Audience</h3>
+          <p className="text-xs text-neutral-500">All rules combine. Leave everything empty for all realtors.</p>
           <fieldset>
-            <legend className="text-xs font-medium uppercase tracking-wide text-slate-500">Brokerages</legend>
+            <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Brokerages</legend>
             <div className="mt-1 max-h-32 space-y-1 overflow-y-auto text-sm">
               {brokerages.map((b) => (
                 <label key={b.id} className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function CampaignEditor({
           </fieldset>
           {cities.length > 0 && (
             <fieldset>
-              <legend className="text-xs font-medium uppercase tracking-wide text-slate-500">Brokerage city</legend>
+              <legend className="text-xs font-medium uppercase tracking-wide text-neutral-500">Brokerage city</legend>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm">
                 {cities.map((c) => (
                   <label key={c} className="flex items-center gap-1.5">
@@ -157,7 +157,7 @@ export function CampaignEditor({
             </fieldset>
           )}
           <div>
-            <label htmlFor={`${uid}-active`} className="text-xs font-medium uppercase tracking-wide text-slate-500">Activity</label>
+            <label htmlFor={`${uid}-active`} className="text-xs font-medium uppercase tracking-wide text-neutral-500">Activity</label>
             <select
               id={`${uid}-active`}
               value={fields.audience.activeWithinMonths ?? ""}
@@ -171,7 +171,7 @@ export function CampaignEditor({
             </select>
           </div>
           {fields.audience.realtorIds.length > 0 && (
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-neutral-600">
               Limited to {fields.audience.realtorIds.length} hand-picked realtors.{" "}
               <button type="button" className="underline" onClick={() => setAudience({ realtorIds: [] })}>
                 Clear
@@ -192,7 +192,7 @@ export function CampaignEditor({
                 }
               })
             }
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
           >
             Preview audience
           </button>
@@ -200,13 +200,13 @@ export function CampaignEditor({
       </fieldset>
 
       {preview && (
-        <section aria-label="Audience preview" className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="text-slate-900">
+        <section aria-label="Audience preview" className="rounded-lg border border-neutral-200 bg-surface p-4 text-sm">
+          <p className="text-neutral-900">
             <span className="text-2xl font-semibold tabular-nums">{preview.eligible.length}</span> eligible
-            <span className="ml-3 text-slate-600">{preview.excluded.length} excluded</span>
+            <span className="ml-3 text-neutral-600">{preview.excluded.length} excluded</span>
           </p>
           {preview.reasons.length > 0 && (
-            <ul className="mt-2 space-y-0.5 text-slate-600">
+            <ul className="mt-2 space-y-0.5 text-neutral-600">
               {preview.reasons.map((r) => (
                 <li key={r.reason}>
                   {r.count} · {r.reason}
@@ -214,21 +214,21 @@ export function CampaignEditor({
               ))}
             </ul>
           )}
-          <button type="button" onClick={() => setShowList((v) => !v)} className="mt-2 text-sm text-emerald-700 hover:underline">
+          <button type="button" onClick={() => setShowList((v) => !v)} className="mt-2 text-sm text-accent-700 hover:underline">
             {showList ? "Hide recipient list" : "Review recipient list"}
           </button>
           {showList && (
             <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
               <ul className="max-h-72 overflow-y-auto text-xs">
                 {preview.eligible.map((m) => (
-                  <li key={m.realtorId} className="py-0.5 text-slate-800">
+                  <li key={m.realtorId} className="py-0.5 text-neutral-800">
                     {m.name} · {m.email}
                   </li>
                 ))}
               </ul>
               <ul className="max-h-72 overflow-y-auto text-xs">
                 {preview.excluded.map((m) => (
-                  <li key={m.realtorId} className="py-0.5 text-slate-500">
+                  <li key={m.realtorId} className="py-0.5 text-neutral-500">
                     {m.name} — {m.reason}
                   </li>
                 ))}
@@ -239,7 +239,7 @@ export function CampaignEditor({
       )}
 
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-emerald-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-accent-700" : "text-red-600"}`}>
           {message.text}
         </p>
       )}
@@ -249,13 +249,13 @@ export function CampaignEditor({
       )}
 
       {id && confirming && (
-        <section aria-label="Confirm approval" className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm">
-          <p className="font-medium text-slate-900">
+        <section aria-label="Confirm approval" className="rounded-lg border border-accent-300 bg-accent-50 p-4 text-sm">
+          <p className="font-medium text-neutral-900">
             {confirming.eligible.length === 0
               ? "No one in this audience can receive it right now."
               : `Send “${initial.subject}” to ${confirming.eligible.length} ${confirming.eligible.length === 1 ? "realtor" : "realtors"} ${sendAt ? `at ${sendAtLabel(sendAt)}` : "now"}?`}
           </p>
-          <p className="mt-1 text-slate-600">
+          <p className="mt-1 text-neutral-600">
             {confirming.excluded.length} excluded. Eligibility is checked again for each recipient at send time. This can&apos;t be undone once emails go out.
           </p>
           <div className="mt-3 flex gap-2">
@@ -263,11 +263,11 @@ export function CampaignEditor({
               type="button"
               disabled={pending || confirming.eligible.length === 0}
               onClick={() => run(() => approveCampaign(id, { sendAt: sendAt || null }), sendAt ? "Approved and scheduled." : "Approved — sending shortly.", () => setConfirming(null))}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
             >
               Confirm approval
             </button>
-            <button type="button" disabled={pending} onClick={() => setConfirming(null)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <button type="button" disabled={pending} onClick={() => setConfirming(null)} className="rounded-md border border-neutral-300 bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
               Back
             </button>
           </div>
@@ -290,21 +290,21 @@ export function CampaignEditor({
                 status === "READY_FOR_REVIEW" ? "Saved — back to draft; submit again for review." : "Saved."
               )
             }
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+            className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60"
           >
             Save draft
           </button>
         )}
         {id && status === "DRAFT" && permissions.create && (
-          <button type="button" disabled={pending} onClick={() => run(() => submitCampaignForReview(id), "Submitted for review.")} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" disabled={pending} onClick={() => run(() => submitCampaignForReview(id), "Submitted for review.")} className="rounded-md border border-neutral-300 bg-surface px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
             Submit for review
           </button>
         )}
         {id && status === "READY_FOR_REVIEW" && permissions.approve && !confirming && (
           <>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-neutral-600">
               Send at (optional)
-              <input type="datetime-local" value={sendAt} onChange={(e) => setSendAt(e.target.value)} className="mt-1 block rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+              <input type="datetime-local" value={sendAt} onChange={(e) => setSendAt(e.target.value)} className="mt-1 block rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
             </label>
             <button
               type="button"
@@ -322,13 +322,13 @@ export function CampaignEditor({
                   }
                 })
               }
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
             >
               Approve &amp; {sendAt ? "schedule" : "send"}…
             </button>
           </>
         )}
-        {id && status === "READY_FOR_REVIEW" && !permissions.approve && <p className="text-sm text-slate-600">Waiting for an owner to approve.</p>}
+        {id && status === "READY_FOR_REVIEW" && !permissions.approve && <p className="text-sm text-neutral-600">Waiting for an owner to approve.</p>}
         {id && ["DRAFT", "READY_FOR_REVIEW", "SCHEDULED", "RUNNING"].includes(status) && permissions.create && (
           <button type="button" disabled={pending} onClick={() => run(() => cancelCampaign(id), "Campaign cancelled.")} className="rounded-md px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
             Cancel campaign

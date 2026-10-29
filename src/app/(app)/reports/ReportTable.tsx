@@ -19,20 +19,20 @@ function formatCell(value: unknown): string {
 export function ReportTable({ rows, reconciledTotal }: { rows: Record<string, unknown>[]; reconciledTotal: number }) {
   return (
     <>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-neutral-500">
         {reconciledTotal} total record{reconciledTotal === 1 ? "" : "s"} — every matching row is counted, including
         ones with an unknown value for the fields shown.
       </p>
-      <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <div className="mt-2 overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>{rows[0] && Object.keys(rows[0]).map((key) => <th key={key} className="px-3 py-2 font-medium">{key}</th>)}</tr>
           </thead>
           <tbody>
             {rows.map((row, idx) => (
-              <tr key={idx} className="border-t border-slate-100">
+              <tr key={idx} className="border-t border-neutral-100">
                 {Object.values(row).map((value, vIdx) => (
-                  <td key={vIdx} className="px-3 py-2 text-slate-700">
+                  <td key={vIdx} className="px-3 py-2 text-neutral-700">
                     {formatCell(value)}
                   </td>
                 ))}
@@ -40,7 +40,7 @@ export function ReportTable({ rows, reconciledTotal }: { rows: Record<string, un
             ))}
             {rows.length === 0 && (
               <tr>
-                <td className="px-3 py-6 text-center text-slate-400">No matching records.</td>
+                <td className="px-3 py-6 text-center text-neutral-400">No matching records.</td>
               </tr>
             )}
           </tbody>

@@ -265,8 +265,8 @@ export function DashboardApp({
       <h1 className="sr-only">Dashboard</h1>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">{greeting}</p>
-          <p className="text-lg font-semibold text-slate-900">{dateLabel}</p>
+          <p className="text-sm text-neutral-500">{greeting}</p>
+          <p className="text-lg font-semibold text-neutral-900">{dateLabel}</p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {canSearch && <GlobalSearch />}
@@ -274,7 +274,7 @@ export function DashboardApp({
             type="button"
             onClick={() => setCustomizing(true)}
             aria-expanded={customizing}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Customize
             <span className="sr-only"> Dashboard</span>
@@ -284,9 +284,9 @@ export function DashboardApp({
       </header>
 
       {notice && (
-        <p role="status" className="mt-3 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p role="status" className="mt-3 flex items-center justify-between rounded-md bg-accent-50 px-3 py-2 text-sm text-accent-800">
           {notice}
-          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded p-0.5 hover:bg-emerald-100">
+          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded p-0.5 hover:bg-accent-100">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </p>
@@ -297,9 +297,9 @@ export function DashboardApp({
 
       <div className={`mt-4 space-y-4 transition-opacity ${refreshing ? "opacity-80" : ""}`}>
         {visible.length === 0 && (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-dashed border-neutral-300 bg-surface p-8 text-center text-sm text-neutral-500">
             Every widget is hidden.{" "}
-            <button type="button" onClick={() => setCustomizing(true)} className="font-medium text-emerald-700 hover:underline">
+            <button type="button" onClick={() => setCustomizing(true)} className="font-medium text-accent-700 hover:underline">
               Customize the Dashboard
             </button>{" "}
             to show some.

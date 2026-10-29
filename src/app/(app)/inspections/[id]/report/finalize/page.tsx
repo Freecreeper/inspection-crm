@@ -55,42 +55,42 @@ export default async function FinalizeReportPage({ params }: { params: Promise<{
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Link href={`/inspections/${id}/report`} className="text-xs text-slate-500 hover:underline">
+      <Link href={`/inspections/${id}/report`} className="text-xs text-neutral-500 hover:underline">
         ← Back to report
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Validate &amp; finalize</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">Validate &amp; finalize</h1>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">
+      <section className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">
           {readiness.ok ? "Ready to finalize" : "Cannot finalize yet"}
         </h2>
         <ul className="mt-3 space-y-2 text-sm">
           {readiness.issues.map((issue, idx) => (
             <li key={idx} className={`flex items-start gap-2 ${issue.severity === "blocker" ? "text-red-700" : "text-amber-700"}`}>
-              <span className="mt-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase" style={{ backgroundColor: issue.severity === "blocker" ? "#fee2e2" : "#fef3c7" }}>
+              <span className={`mt-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase ${issue.severity === "blocker" ? "bg-red-100" : "bg-amber-100"}`}>
                 {issue.severity}
               </span>
               {issue.message}
             </li>
           ))}
-          {readiness.issues.length === 0 && <li className="text-emerald-700">No warnings — everything looks complete.</li>}
+          {readiness.issues.length === 0 && <li className="text-accent-700">No warnings — everything looks complete.</li>}
         </ul>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-neutral-500">
           Only blockers prevent finalization. Warnings are the authorized inspector&apos;s call — accept them and finalize
           anyway if the report is otherwise ready.
         </p>
       </section>
 
       {editable && readiness.ok && (
-        <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <section className="rounded-lg border border-neutral-200 bg-surface p-4">
           <form action={finalizeAction} className="space-y-2">
             {report.versions.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-slate-600">Reason for revision</label>
-                <input name="reasonForRevision" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" placeholder="What changed since the last version?" />
+                <label className="block text-xs font-medium text-neutral-600">Reason for revision</label>
+                <input name="reasonForRevision" className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" placeholder="What changed since the last version?" />
               </div>
             )}
-            <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
               {report.versions.length > 0 ? `Finalize version ${report.versions.length + 1}` : "Finalize report"}
             </button>
           </form>
@@ -98,7 +98,7 @@ export default async function FinalizeReportPage({ params }: { params: Promise<{
       )}
 
       {!editable && (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-neutral-500">
           This report is {report.status.toLowerCase()}. See <Link href={`/inspections/${id}/report/versions`} className="text-blue-700 hover:underline">versions</Link> to amend it.
         </p>
       )}

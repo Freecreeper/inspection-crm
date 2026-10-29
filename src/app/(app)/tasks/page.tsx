@@ -29,14 +29,14 @@ export default async function TasksPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-900">Tasks</h1>
-      <p className="mt-1 text-sm text-slate-500">Open follow-ups across every transaction, plus general office tasks.</p>
+      <h1 className="text-xl font-semibold text-neutral-900">Tasks</h1>
+      <p className="mt-1 text-sm text-neutral-500">Open follow-ups across every transaction, plus general office tasks.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="overflow-hidden rounded-lg border border-neutral-200 bg-surface">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
                 <tr>
                   <th className="px-4 py-2 font-medium">Task</th>
                   <th className="px-4 py-2 font-medium">Transaction</th>
@@ -51,25 +51,25 @@ export default async function TasksPage() {
                   const completeAction = completeTask.bind(null, task.id);
                   const primaryCustomer = task.transaction ? getPrimaryCustomer(task.transaction.customers) : null;
                   return (
-                    <tr key={task.id} className="border-t border-slate-100">
+                    <tr key={task.id} className="border-t border-neutral-100">
                       <td className="px-4 py-2">
-                        <p className="font-medium text-slate-900">{task.title}</p>
-                        {task.description && <p className="text-xs text-slate-500">{task.description}</p>}
+                        <p className="font-medium text-neutral-900">{task.title}</p>
+                        {task.description && <p className="text-xs text-neutral-500">{task.description}</p>}
                       </td>
-                      <td className="px-4 py-2 text-slate-600">
+                      <td className="px-4 py-2 text-neutral-600">
                         {task.transaction ? (
                           <Link href={`/transactions/${task.transaction.id}`} className="hover:underline">
                             {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
                           </Link>
                         ) : (
-                          <span className="text-slate-400">General</span>
+                          <span className="text-neutral-400">General</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-slate-600">
-                        {task.assignee?.name || <span className="text-slate-400">Unassigned</span>}
+                      <td className="px-4 py-2 text-neutral-600">
+                        {task.assignee?.name || <span className="text-neutral-400">Unassigned</span>}
                       </td>
-                      <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-red-600" : "text-slate-600"}`}>
-                        {task.dueAt ? formatBusinessDate(task.dueAt) : <span className="text-slate-400">No due date</span>}
+                      <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-red-600" : "text-neutral-600"}`}>
+                        {task.dueAt ? formatBusinessDate(task.dueAt) : <span className="text-neutral-400">No due date</span>}
                       </td>
                       <td className="px-4 py-2 text-right">
                         <form action={completeAction}>
@@ -83,7 +83,7 @@ export default async function TasksPage() {
                 })}
                 {openTasks.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                    <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
                       No open tasks.
                     </td>
                   </tr>
@@ -93,12 +93,12 @@ export default async function TasksPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">New task</h2>
+        <div className="rounded-lg border border-neutral-200 bg-surface p-4">
+          <h2 className="text-sm font-semibold text-neutral-900">New task</h2>
           <form action={createTask} className="mt-3 space-y-3">
-            <input name="title" placeholder="Title" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <textarea name="description" placeholder="Description (optional)" rows={2} className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <input name="dueAt" type="date" className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700" />
+            <input name="title" placeholder="Title" required className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <textarea name="description" placeholder="Description (optional)" rows={2} className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input name="dueAt" type="date" className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm text-neutral-700" />
             <Combobox name="assigneeId" placeholder="Unassigned" options={users.map((u) => ({ id: u.id, label: u.name }))} />
             <Combobox
               name="transactionId"
@@ -111,7 +111,7 @@ export default async function TasksPage() {
                 };
               })}
             />
-            <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
               Add task
             </button>
           </form>

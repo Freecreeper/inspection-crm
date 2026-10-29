@@ -35,6 +35,7 @@ import {
   Menu,
   X,
   ArrowLeft,
+  Palette,
 } from "lucide-react";
 
 // `requires` hides a link from roles that can't use the page (the page
@@ -227,8 +228,8 @@ function setBarDragImage(e: React.DragEvent, bar: Element | null) {
     left: "0",
     width: `${rect.width}px`,
     pointerEvents: "none",
-    background: "white",
-    boxShadow: "0 8px 20px rgb(15 23 42 / 0.15)",
+    background: "var(--color-surface)",
+    boxShadow: "0 8px 20px color-mix(in oklab, var(--color-scrim) 15%, transparent)",
   });
   document.body.appendChild(ghost);
   e.dataTransfer.setDragImage(ghost, e.clientX - rect.left, e.clientY - rect.top);
@@ -242,8 +243,8 @@ function flashGroup(nav: HTMLElement | null, label: string) {
   if (!(bar instanceof HTMLElement) || typeof bar.animate !== "function" || prefersReducedMotion()) return;
   bar.animate(
     [
-      { boxShadow: "0 0 0 3px rgb(16 185 129 / 0.45)", backgroundColor: "rgb(236 253 245)" },
-      { boxShadow: "0 0 0 3px rgb(16 185 129 / 0)" },
+      { boxShadow: "0 0 0 3px color-mix(in oklab, var(--color-accent-500) 45%, transparent)", backgroundColor: "var(--color-accent-50)" },
+      { boxShadow: "0 0 0 3px color-mix(in oklab, var(--color-accent-500) 0%, transparent)" },
     ],
     { duration: 700, easing: "ease-out" }
   );
@@ -384,9 +385,9 @@ export function AppSidebar({
           width eases shut while the contents slide out and fade; collapsed,
           they're inert so Tab can't reach links that aren't on screen. */}
       <aside
-        className={`hidden shrink-0 overflow-hidden border-r bg-white bg-clip-padding lg:block ${
+        className={`hidden shrink-0 overflow-hidden border-r bg-surface bg-clip-padding lg:block ${
           animateCollapse ? "transition-[width,border-color] duration-300 ease-in-out motion-reduce:transition-none" : ""
-        } ${collapsed ? "w-0 border-transparent" : "w-64 border-slate-200"}`}
+        } ${collapsed ? "w-0 border-transparent" : "w-64 border-neutral-200"}`}
       >
         <div
           inert={collapsed}
@@ -411,7 +412,7 @@ export function AppSidebar({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b border-neutral-200 bg-surface px-4 py-2.5">
           <button
             ref={mobileButtonRef}
             type="button"
@@ -419,7 +420,7 @@ export function AppSidebar({
             aria-label="Open menu"
             aria-expanded={mobileOpen}
             aria-controls="mobile-sidebar"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -428,7 +429,7 @@ export function AppSidebar({
             onClick={toggleCollapsed}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="relative hidden h-9 w-9 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:flex"
+            className="relative hidden h-9 w-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 lg:flex"
           >
             {/* Both icons stay mounted and swap with a turn and a fade. */}
             <Menu
@@ -443,11 +444,11 @@ export function AppSidebar({
           {/* Every page but the dashboard gets a way home without opening the
               menu; on phones it takes the place of the app name. */}
           {isActivePath(pathname, "/dashboard") ? (
-            <p className="text-sm font-bold uppercase tracking-wide text-slate-900 lg:hidden">Inspection CRM</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-neutral-900 lg:hidden">Inspection CRM</p>
           ) : (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Dashboard
@@ -495,21 +496,21 @@ function MobileSidebar({ onClose, pathname, children }: { onClose: () => void; p
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="absolute inset-0 bg-slate-900/40" aria-hidden="true" onClick={onClose} />
+      <div className="absolute inset-0 bg-scrim/40" aria-hidden="true" onClick={onClose} />
       <div
         ref={panelRef}
         id="mobile-sidebar"
         role="dialog"
         aria-modal="true"
         aria-label="Main menu"
-        className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl"
+        className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-surface shadow-xl"
       >
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="absolute right-2 top-4 flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className="absolute right-2 top-4 flex h-9 w-9 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
         >
           <X className="h-5 w-5" />
         </button>
@@ -589,13 +590,13 @@ function SidebarContent({
 
   return (
     <>
-      <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600">
+      <div className="flex items-center gap-2.5 border-b border-neutral-200 px-5 py-5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-solid-600">
           <Home className="h-5 w-5 text-white" strokeWidth={2.25} />
         </div>
         <div className="min-w-0 pr-8 lg:pr-0">
-          <p className="truncate text-sm font-bold uppercase tracking-wide text-slate-900">Inspection CRM</p>
-          <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400">
+          <p className="truncate text-sm font-bold uppercase tracking-wide text-neutral-900">Inspection CRM</p>
+          <p className="truncate text-[10px] font-medium uppercase tracking-wider text-neutral-400">
             People &bull; Properties &bull; Progress
           </p>
         </div>
@@ -645,11 +646,11 @@ function SidebarContent({
               <div
                 className={`flex cursor-grab items-center gap-1.5 rounded-md border py-1 pl-2 pr-1 text-[11px] font-semibold uppercase tracking-wider transition-[color,background-color,border-color,box-shadow] duration-150 ${
                   dragging === group.label
-                    ? "border-dashed border-emerald-400 bg-emerald-50 text-emerald-700 opacity-70"
-                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:shadow-sm"
+                    ? "border-dashed border-accent-400 bg-accent-50 text-accent-700 opacity-70"
+                    : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300 hover:shadow-sm"
                 }`}
               >
-                <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <GripVertical className="h-3.5 w-3.5 shrink-0 text-neutral-400" aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate">{group.label}</span>
                 <button
                   type="button"
@@ -657,7 +658,7 @@ function SidebarContent({
                   onClick={() => moveGroup(group.label, -1)}
                   disabled={index === 0}
                   aria-label={`Move ${group.label} up`}
-                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-500 hover:bg-white hover:text-slate-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-neutral-500 hover:bg-surface hover:text-neutral-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   <ChevronUp className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -667,7 +668,7 @@ function SidebarContent({
                   onClick={() => moveGroup(group.label, 1)}
                   disabled={index === groups.length - 1}
                   aria-label={`Move ${group.label} down`}
-                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-500 hover:bg-white hover:text-slate-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-neutral-500 hover:bg-surface hover:text-neutral-800 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -678,7 +679,7 @@ function SidebarContent({
                 onClick={() => toggle(group.label)}
                 aria-expanded={isOpen(group.label)}
                 aria-controls={groupListId(group.label)}
-                className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+                className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600"
               >
                 {group.label}
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
@@ -707,10 +708,10 @@ function SidebarContent({
                         onClick={onNavigate}
                         aria-current={active ? "page" : undefined}
                         className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium ${
-                          active ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          active ? "bg-accent-50 text-accent-800" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                         }`}
                       >
-                        <Icon className={`h-4 w-4 shrink-0 ${active ? "text-emerald-600" : "text-slate-400"}`} />
+                        <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent-600" : "text-neutral-400"}`} />
                         {item.label}
                       </Link>
                     );
@@ -727,7 +728,7 @@ function SidebarContent({
               <button
                 type="button"
                 onClick={() => setArranging(false)}
-                className="cursor-pointer rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                className="cursor-pointer rounded-md bg-accent-solid-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-accent-solid-700"
               >
                 Done
               </button>
@@ -738,35 +739,38 @@ function SidebarContent({
                   saveOrder([]);
                 }}
                 disabled={order.length === 0}
-                className="cursor-pointer text-xs text-slate-500 hover:text-slate-800 hover:underline disabled:cursor-default disabled:opacity-40 disabled:hover:no-underline"
+                className="cursor-pointer text-xs text-neutral-500 hover:text-neutral-800 hover:underline disabled:cursor-default disabled:opacity-40 disabled:hover:no-underline"
               >
                 Reset order
               </button>
             </>
           ) : (
-            <button type="button" onClick={() => setArranging(true)} className="inline-flex cursor-pointer items-center gap-1 text-xs text-slate-400 hover:text-slate-700 hover:underline">
+            <button type="button" onClick={() => setArranging(true)} className="inline-flex cursor-pointer items-center gap-1 text-xs text-neutral-400 hover:text-neutral-700 hover:underline">
               <ArrowUpDown className="h-3 w-3" aria-hidden="true" /> Reorder sections
             </button>
           )}
         </div>
       </nav>
 
-      <div className="border-t border-slate-200 px-4 py-3">
+      <div className="border-t border-neutral-200 px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xs font-semibold text-accent-800">
             {initialsOf(displayName)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-800">{displayName}</p>
-            <p className="truncate text-xs text-slate-500">{roleLabel}</p>
+            <p className="truncate text-sm font-medium text-neutral-800">{displayName}</p>
+            <p className="truncate text-xs text-neutral-500">{roleLabel}</p>
           </div>
         </div>
-        <div className="mt-2.5 flex items-center gap-4">
-          <Link href="/account/password" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 hover:underline">
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link href="/account/password" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 hover:underline">
             <KeyRound className="h-3 w-3" aria-hidden="true" /> Change password
           </Link>
+          <Link href="/account/appearance" onClick={onNavigate} className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 hover:underline">
+            <Palette className="h-3 w-3" aria-hidden="true" /> Appearance
+          </Link>
           <form action={signOutAction}>
-            <button type="submit" className="text-xs text-slate-500 hover:text-slate-800 hover:underline">
+            <button type="submit" className="text-xs text-neutral-500 hover:text-neutral-800 hover:underline">
               Sign out
             </button>
           </form>

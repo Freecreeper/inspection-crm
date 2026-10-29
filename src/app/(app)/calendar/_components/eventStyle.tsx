@@ -21,12 +21,12 @@ export const EVENT_KIND: Record<CalendarEventType, { label: string; icon: Lucide
 
 export function eventTone(e: CalendarEvent): string {
   if (e.type === "inspection") {
-    if (e.status === "COMPLETED") return "border-slate-300 bg-slate-50 text-slate-600";
-    return "border-emerald-600 bg-emerald-50 text-slate-900";
+    if (e.status === "COMPLETED") return "border-neutral-300 bg-neutral-50 text-neutral-600";
+    return "border-accent-600 bg-accent-50 text-neutral-900";
   }
-  if (e.type === "block") return "border-slate-400 bg-[repeating-linear-gradient(135deg,var(--color-slate-100)_0_6px,var(--color-white)_6px_12px)] text-slate-700";
-  if (e.priority === "high") return "border-amber-500 bg-amber-50 text-slate-900";
-  return "border-slate-300 bg-white text-slate-800";
+  if (e.type === "block") return "border-neutral-400 bg-[repeating-linear-gradient(135deg,var(--color-neutral-100)_0_6px,var(--color-surface)_6px_12px)] text-neutral-700";
+  if (e.priority === "high") return "border-amber-500 bg-amber-50 text-neutral-900";
+  return "border-neutral-300 bg-surface text-neutral-800";
 }
 
 export function EventIcon({ event, className = "h-3.5 w-3.5" }: { event: CalendarEvent; className?: string }) {

@@ -9,8 +9,8 @@ import { MoreMenu } from "../../realtors/_components/MoreMenu";
 import { updateBrokerageField, type BrokerageField } from "../actions";
 
 const actionClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
-const unavailableClass = "inline-flex items-center gap-1.5 rounded-md border border-dashed border-slate-200 px-3 py-1.5 text-sm text-slate-400";
+  "inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
+const unavailableClass = "inline-flex items-center gap-1.5 rounded-md border border-dashed border-neutral-200 px-3 py-1.5 text-sm text-neutral-400";
 
 // Shared by the preview drawer and the full record. Missing contact info
 // removes only the action that needs it.

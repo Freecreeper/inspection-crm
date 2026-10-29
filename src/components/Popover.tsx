@@ -54,7 +54,7 @@ export function Popover({
         {label}
       </button>
       {open && (
-        <div id={panelId} className={`absolute z-30 mt-1 min-w-52 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg ${align === "right" ? "right-0" : "left-0"}`}>
+        <div id={panelId} className={`absolute z-30 mt-1 min-w-52 rounded-lg border border-neutral-200 bg-surface p-1.5 shadow-lg ${align === "right" ? "right-0" : "left-0"}`}>
           {children(close)}
         </div>
       )}
