@@ -34,8 +34,8 @@ import { Popover } from "@/components/Popover";
 import { MiniMonths } from "./MiniMonths";
 import { WeekAgenda } from "./WeekAgenda";
 
-const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
-const iconBtn = "inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600";
+const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
+const iconBtn = "inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-300 bg-surface text-neutral-700 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-accent-600";
 
 function useIsPhone() {
   const [phone, setPhone] = useState(false);
@@ -225,10 +225,10 @@ export function CalendarApp({
     <div>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-baseline gap-3">
-          <h1 className="text-2xl font-semibold text-slate-900">Calendar</h1>
-          <p className="truncate text-sm font-medium text-slate-600" aria-live="polite">
+          <h1 className="text-2xl font-semibold text-neutral-900">Calendar</h1>
+          <p className="truncate text-sm font-medium text-neutral-600" aria-live="polite">
             {title}
-            {loading && <span className="ml-2 text-xs font-normal text-slate-400">Loading…</span>}
+            {loading && <span className="ml-2 text-xs font-normal text-neutral-400">Loading…</span>}
           </p>
         </div>
         {(canSchedule || viewer.canUpdateTasks || viewer.canBlockTime) && (
@@ -239,7 +239,7 @@ export function CalendarApp({
                 Schedule
               </>
             }
-            buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3.5 text-sm font-medium text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+            buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-solid-600 px-3.5 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
           >
             {(close) => (
               <div role="menu" aria-label="Schedule" className="flex flex-col">
@@ -260,7 +260,7 @@ export function CalendarApp({
                           close();
                           i.run();
                         }}
-                        className="rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                        className="rounded-md px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 focus:bg-neutral-100 focus:outline-none"
                       >
                         {i.label}
                       </button>
@@ -290,17 +290,17 @@ export function CalendarApp({
             aria-label="Go to date"
             value={anchor}
             onChange={(e) => e.target.value && setAnchor(e.target.value)}
-            className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
+            className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm"
           />
         )}
-        <nav aria-label="Calendar view" className="flex w-full rounded-lg bg-slate-100 p-0.5 sm:w-auto">
+        <nav aria-label="Calendar view" className="flex w-full rounded-lg bg-neutral-100 p-0.5 sm:w-auto">
           {CALENDAR_VIEWS.map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium sm:flex-none ${view === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium sm:flex-none ${view === v ? "bg-surface text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900"}`}
             >
               {VIEW_LABELS[v]}
             </button>
@@ -312,17 +312,17 @@ export function CalendarApp({
             <label htmlFor="calendar-search" className="sr-only">
               Search the calendar
             </label>
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
             <input
               id="calendar-search"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search this view"
-              className="h-9 w-44 rounded-md border border-slate-300 bg-white pl-8 pr-7 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 w-44 rounded-md border border-neutral-300 bg-surface pl-8 pr-7 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 [&::-webkit-search-cancel-button]:hidden"
             />
             {query && (
-              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700">
+              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:text-neutral-700">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -330,7 +330,7 @@ export function CalendarApp({
           {people.length > 0 && (
             <label className="flex items-center">
               <span className="sr-only">Inspector</span>
-              <select value={inspectorId ?? ""} onChange={(e) => setInspectorId(e.target.value || null)} className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700">
+              <select value={inspectorId ?? ""} onChange={(e) => setInspectorId(e.target.value || null)} className="h-9 rounded-md border border-neutral-300 bg-surface px-2 text-sm text-neutral-700">
                 <option value="">All inspectors</option>
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -345,17 +345,17 @@ export function CalendarApp({
               <>
                 <Layers className="h-4 w-4" aria-hidden="true" />
                 Layers
-                <span className="rounded-full bg-slate-100 px-1.5 text-xs tabular-nums text-slate-600">{layers.length}</span>
+                <span className="rounded-full bg-neutral-100 px-1.5 text-xs tabular-nums text-neutral-600">{layers.length}</span>
               </>
             }
             buttonClassName={btn}
           >
             {() => (
               <fieldset className="px-2 py-1.5">
-                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-slate-500">Show</legend>
+                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-500">Show</legend>
                 <div className="mt-1.5 space-y-1.5">
                   {CALENDAR_LAYERS.filter((l) => l.key !== "billing" || viewer.role !== "REPORTING_ANALYST" || true).map((l) => (
-                    <label key={l.key} className="flex items-center gap-2 px-1 text-sm text-slate-700">
+                    <label key={l.key} className="flex items-center gap-2 px-1 text-sm text-neutral-700">
                       <input
                         type="checkbox"
                         checked={layers.includes(l.key)}
@@ -372,7 +372,7 @@ export function CalendarApp({
       </div>
 
       {q && (
-        <p className="mt-2 text-xs text-slate-500" aria-live="polite">
+        <p className="mt-2 text-xs text-neutral-500" aria-live="polite">
           {visible.length} match{visible.length === 1 ? "" : "es"} in this view.{" "}
           <button type="button" onClick={() => setQuery("")} className="underline">
             Clear
@@ -380,9 +380,9 @@ export function CalendarApp({
         </p>
       )}
       {notice && (
-        <p role="status" className="mt-2 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p role="status" className="mt-2 flex items-center justify-between rounded-md bg-accent-50 px-3 py-2 text-sm text-accent-800">
           {notice}
-          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded p-0.5 hover:bg-emerald-100">
+          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded p-0.5 hover:bg-accent-100">
             <X className="h-4 w-4" />
           </button>
         </p>
@@ -417,7 +417,7 @@ export function CalendarApp({
                 onEventClick={setSelected}
                 emptyAction={
                   canSchedule ? (
-                    <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white">
+                    <button type="button" onClick={() => setDialog({ kind: "schedule", ...defaultSlot() })} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white">
                       Schedule inspection
                     </button>
                   ) : undefined
@@ -463,7 +463,7 @@ export function CalendarApp({
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
             <TimeGrid days={[anchor]} events={visible} config={config} variant="day" today={today} now={now} onEventClick={setSelected} onSlotClick={onSlotClick} onDrop={onDrop} />
             <section aria-label="Day agenda">
-              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Agenda</h2>
+              <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">Agenda</h2>
               <AgendaList day={anchor} events={visible} timeZone={tz} onEventClick={setSelected} />
             </section>
           </div>
@@ -472,7 +472,7 @@ export function CalendarApp({
         )}
       </div>
       {!isPhone && (effectiveView === "day" || effectiveView === "week") && (canSchedule || onDrop) && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-neutral-500">
           {canSchedule && "Click an empty time to schedule an inspection. "}
           {onDrop && "Drag an inspection to reschedule it — you'll confirm before anything changes. "}
           {onDrop && "Or open it and choose Reschedule."}

@@ -13,14 +13,14 @@ export default async function TransactionsPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Transactions</h1>
-        <Link href="/transactions/new" className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+        <h1 className="text-xl font-semibold text-neutral-900">Transactions</h1>
+        <Link href="/transactions/new" className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
           + New transaction
         </Link>
       </div>
-      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="mt-6 overflow-hidden rounded-lg border border-neutral-200 bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-2 font-medium">Customer</th>
               <th className="px-4 py-2 font-medium">Property</th>
@@ -31,21 +31,21 @@ export default async function TransactionsPage() {
             {transactions.map((t) => {
               const primaryCustomer = getPrimaryCustomer(t.customers);
               return (
-                <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <tr key={t.id} className="border-t border-neutral-100 hover:bg-neutral-50">
                   <td className="px-4 py-2">
-                    <Link href={`/transactions/${t.id}`} className="font-medium text-slate-900 hover:underline">
+                    <Link href={`/transactions/${t.id}`} className="font-medium text-neutral-900 hover:underline">
                       {primaryCustomer ? (
                         `${primaryCustomer.firstName} ${primaryCustomer.lastName}`
                       ) : (
-                        <span className="text-slate-400">No customer yet</span>
+                        <span className="text-neutral-400">No customer yet</span>
                       )}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
-                    {t.property ? `${t.property.addressLine1}, ${t.property.city}` : <span className="text-slate-400">Not set</span>}
+                  <td className="px-4 py-2 text-neutral-600">
+                    {t.property ? `${t.property.addressLine1}, ${t.property.city}` : <span className="text-neutral-400">Not set</span>}
                   </td>
                   <td className="px-4 py-2">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-600">
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
                       {t.status}
                     </span>
                   </td>
@@ -54,7 +54,7 @@ export default async function TransactionsPage() {
             })}
             {transactions.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-6 text-center text-neutral-400">
                   No transactions yet.
                 </td>
               </tr>

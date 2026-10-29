@@ -6,11 +6,11 @@ export default async function ChangePasswordPage() {
   const mustChange = Boolean(session?.user?.mustChangePassword);
   return (
     <div className="max-w-md">
-      <h1 className="text-xl font-semibold text-slate-900">Change password</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">Change password</h1>
       {mustChange ? (
         <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">You signed in with a temporary password. Choose your own to continue.</p>
       ) : (
-        <p className="mt-1 text-sm text-slate-500">You&apos;ll be signed out everywhere and sign in again with the new password.</p>
+        <p className="mt-1 text-sm text-neutral-500">You&apos;ll be signed out everywhere and sign in again with the new password.</p>
       )}
       <PasswordForm />
     </div>

@@ -68,16 +68,16 @@ export function AutomationCard({
   const editable = Object.entries(config).filter(([k, v]) => k in FIELD_LABELS && (typeof v === "number" || typeof v === "boolean" || k === "customers"));
 
   return (
-    <li className="rounded-lg border border-slate-200 bg-white p-4">
+    <li className="rounded-lg border border-neutral-200 bg-surface p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-medium text-slate-900">{name}</h3>
-          <p className="text-sm text-slate-600">{description}</p>
-          <p className="mt-0.5 text-xs text-slate-500">{category}</p>
+          <h3 className="font-medium text-neutral-900">{name}</h3>
+          <p className="text-sm text-neutral-600">{description}</p>
+          <p className="mt-0.5 text-xs text-neutral-500">{category}</p>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-slate-600">Mode</span>
+            <span className="text-neutral-600">Mode</span>
             <select
               value={sendMode}
               disabled={!canManage || pending || modeLocked}
@@ -86,7 +86,7 @@ export function AutomationCard({
                 setSendMode(next);
                 save({ active, sendMode: next, config });
               }}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
             >
               <option value="AUTOMATIC">Automatic</option>
               <option value="REVIEW">Review before send</option>
@@ -111,14 +111,14 @@ export function AutomationCard({
 
       {editable.length > 0 && (
         <form
-          className="mt-3 flex flex-wrap items-end gap-4 border-t border-slate-100 pt-3"
+          className="mt-3 flex flex-wrap items-end gap-4 border-t border-neutral-100 pt-3"
           onSubmit={(e) => {
             e.preventDefault();
             save({ active, sendMode, config });
           }}
         >
           {editable.map(([key, value]) => (
-            <label key={key} htmlFor={`${id}-${key}`} className="text-xs text-slate-600">
+            <label key={key} htmlFor={`${id}-${key}`} className="text-xs text-neutral-600">
               {FIELD_LABELS[key]}
               {typeof value === "boolean" ? (
                 <input
@@ -135,7 +135,7 @@ export function AutomationCard({
                   value={String(value)}
                   disabled={!canManage}
                   onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                  className="mt-1 block rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  className="mt-1 block rounded-md border border-neutral-300 px-2 py-1 text-sm"
                 >
                   <option value="all">Every customer on the transaction</option>
                   <option value="primary">Primary contact only</option>
@@ -147,20 +147,20 @@ export function AutomationCard({
                   value={Number(value)}
                   disabled={!canManage}
                   onChange={(e) => setConfig({ ...config, [key]: Number(e.target.value) })}
-                  className="mt-1 block w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  className="mt-1 block w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
                 />
               )}
             </label>
           ))}
           {canManage && (
-            <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
               Save settings
             </button>
           )}
         </form>
       )}
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`mt-2 text-xs ${message.ok ? "text-emerald-700" : "text-red-600"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`mt-2 text-xs ${message.ok ? "text-accent-700" : "text-red-600"}`}>
           {message.text}
         </p>
       )}

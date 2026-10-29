@@ -15,7 +15,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const session = await auth();
   const role = session?.user?.role as Role | undefined;
   if (!can(role, "calendar:view")) {
-    return <p className="text-sm text-slate-600">You don&apos;t have access to the Calendar.</p>;
+    return <p className="text-sm text-neutral-600">You don&apos;t have access to the Calendar.</p>;
   }
   const userId = session?.user?.id ?? null;
   const config = getCalendarConfig();

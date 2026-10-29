@@ -16,19 +16,19 @@ interface UserRow {
   createdAt: string;
 }
 
-const input = "mt-1 block w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm";
-const button = "rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50";
+const input = "mt-1 block w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm";
+const button = "rounded-md border border-neutral-300 bg-surface px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50";
 
 // A temporary password is shown exactly once, here, and never stored in
 // readable form. The person must choose their own at first sign-in.
 function OneTimePassword({ email, password, onDone }: { email: string; password: string; onDone: () => void }) {
   return (
-    <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+    <div role="status" className="rounded-md border border-accent-200 bg-accent-50 p-3 text-sm text-accent-900">
       <p>
         Temporary password for <strong>{email}</strong> — share it privately. It&apos;s shown only once; they&apos;ll choose their own when they sign in.
       </p>
       <p className="mt-2 flex flex-wrap items-center gap-2">
-        <code className="rounded bg-white px-2 py-1 font-mono text-base tracking-wide text-slate-900">{password}</code>
+        <code className="rounded bg-surface px-2 py-1 font-mono text-base tracking-wide text-neutral-900">{password}</code>
         <button type="button" className={button} onClick={() => navigator.clipboard?.writeText(password)}>
           Copy
         </button>
@@ -69,8 +69,8 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
         </p>
       )}
 
-      <section aria-labelledby="add-user" className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 id="add-user" className="text-sm font-semibold text-slate-900">
+      <section aria-labelledby="add-user" className="rounded-lg border border-neutral-200 bg-surface p-4">
+        <h2 id="add-user" className="text-sm font-semibold text-neutral-900">
           Add a user
         </h2>
         <form
@@ -86,15 +86,15 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
             );
           }}
         >
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-neutral-700">
             Name
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={input} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-neutral-700">
             Email
             <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={input} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-neutral-700">
             Role
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={input}>
               {ROLES.map((r) => (
@@ -104,15 +104,15 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
               ))}
             </select>
           </label>
-          <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+          <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
             Add user
           </button>
         </form>
       </section>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-2 font-medium">Person</th>
               <th className="px-4 py-2 font-medium">Role</th>
@@ -126,13 +126,13 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
             {users.map((u) => {
               const self = u.id === currentUserId;
               return (
-                <tr key={u.id} className={`border-t border-slate-100 ${u.active ? "" : "text-slate-400"}`}>
+                <tr key={u.id} className={`border-t border-neutral-100 ${u.active ? "" : "text-neutral-400"}`}>
                   <td className="px-4 py-2">
-                    <p className={`font-medium ${u.active ? "text-slate-900" : ""}`}>
+                    <p className={`font-medium ${u.active ? "text-neutral-900" : ""}`}>
                       {u.name}
-                      {self && <span className="ml-1.5 text-xs font-normal text-slate-500">(you)</span>}
+                      {self && <span className="ml-1.5 text-xs font-normal text-neutral-500">(you)</span>}
                     </p>
-                    <p className="text-xs text-slate-500">{u.email}</p>
+                    <p className="text-xs text-neutral-500">{u.email}</p>
                   </td>
                   <td className="px-4 py-2">
                     <label className="sr-only" htmlFor={`role-${u.id}`}>
@@ -143,7 +143,7 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
                       value={u.role}
                       disabled={pending || self}
                       onChange={(e) => run(() => changeRoleAction(u.id, e.target.value))}
-                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm disabled:opacity-60"
+                      className="rounded-md border border-neutral-300 bg-surface px-2 py-1 text-sm disabled:opacity-60"
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>

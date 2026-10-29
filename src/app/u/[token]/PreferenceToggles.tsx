@@ -29,15 +29,15 @@ export function PreferenceToggles({
     });
 
   const row = (scope: "marketing" | "relationship", label: string, detail: string, value: boolean) => (
-    <li className={`rounded-lg border p-4 ${highlight === scope ? "border-slate-400" : "border-slate-200"}`}>
-      <p className="font-medium text-slate-900">{label}</p>
-      <p className="text-sm text-slate-600">{detail}</p>
-      <p className="mt-2 text-sm text-slate-700">Currently: {value ? "subscribed" : "unsubscribed"}</p>
+    <li className={`rounded-lg border p-4 ${highlight === scope ? "border-neutral-400" : "border-neutral-200"}`}>
+      <p className="font-medium text-neutral-900">{label}</p>
+      <p className="text-sm text-neutral-600">{detail}</p>
+      <p className="mt-2 text-sm text-neutral-700">Currently: {value ? "subscribed" : "unsubscribed"}</p>
       <button
         type="button"
         disabled={pending}
         onClick={() => change(scope, !value)}
-        className="mt-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        className="mt-2 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
       >
         {value ? "Unsubscribe" : "Subscribe"}
       </button>
@@ -51,7 +51,7 @@ export function PreferenceToggles({
         {row("relationship", "Personal notes", "Thank-yous, birthday and anniversary notes, and check-ins.", relationship)}
       </ul>
       {status && (
-        <p role="status" className="mt-4 text-sm text-emerald-700">
+        <p role="status" className="mt-4 text-sm text-accent-700">
           {status}
         </p>
       )}

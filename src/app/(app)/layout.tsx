@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const granted = (Object.keys(PERMISSIONS) as Permission[]).filter((p) => can(role, p));
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-canvas">
       <AppSidebar displayName={displayName} roleLabel={humanizeRole(session.user.role ?? "")} granted={granted} signOutAction={signOutAction}>
         {children}
       </AppSidebar>

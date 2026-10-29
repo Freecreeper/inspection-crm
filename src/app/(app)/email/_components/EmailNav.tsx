@@ -15,7 +15,7 @@ const LINKS = [
 export function EmailNav() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Email sections" className="mt-5 flex gap-1 overflow-x-auto border-b border-slate-200">
+    <nav aria-label="Email sections" className="mt-5 flex gap-1 overflow-x-auto border-b border-neutral-200">
       {LINKS.map((l) => {
         const active = l.exact ? pathname === l.href || pathname.startsWith("/email/messages") : pathname.startsWith(l.href);
         return (
@@ -24,7 +24,7 @@ export function EmailNav() {
             href={l.href}
             aria-current={active ? "page" : undefined}
             className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${
-              active ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+              active ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
             }`}
           >
             {l.label}

@@ -15,24 +15,24 @@ const LABELS: Record<EmailStatus, string> = {
 };
 
 const TONE: Record<EmailStatus, string> = {
-  DRAFT: "bg-sky-500",
-  SCHEDULED: "bg-slate-400",
-  QUEUED: "bg-slate-400",
-  SENDING: "bg-slate-400",
-  SENT: "bg-emerald-500",
-  DELIVERED: "bg-emerald-600",
-  FAILED: "bg-red-500",
-  BOUNCED: "bg-red-500",
-  CANCELLED: "bg-slate-300",
-  SUPPRESSED: "bg-amber-500",
-  SKIPPED: "bg-amber-500",
+  DRAFT: "bg-sky-solid-500",
+  SCHEDULED: "bg-neutral-400",
+  QUEUED: "bg-neutral-400",
+  SENDING: "bg-neutral-400",
+  SENT: "bg-accent-solid-500",
+  DELIVERED: "bg-accent-solid-600",
+  FAILED: "bg-red-solid-500",
+  BOUNCED: "bg-red-solid-500",
+  CANCELLED: "bg-neutral-300",
+  SUPPRESSED: "bg-amber-solid-500",
+  SKIPPED: "bg-amber-solid-500",
 };
 
 // Status in words (the dot is decoration). A simulated send is always
 // labeled as such, so nobody mistakes a dev "Sent" for a real delivery.
 export function EmailStatusBadge({ status, simulated = false }: { status: EmailStatus; simulated?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-slate-700">
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-neutral-700">
       <span className={`h-1.5 w-1.5 rounded-full ${TONE[status]}`} aria-hidden="true" />
       {LABELS[status]}
       {simulated && (status === "SENT" || status === "DELIVERED") && (

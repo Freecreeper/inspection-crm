@@ -26,7 +26,7 @@ export interface BrokerageRowView {
   zip: string | null;
 }
 
-const none = <span className="text-slate-400">—</span>;
+const none = <span className="text-neutral-400">—</span>;
 
 // Keeps ?selected= in sync without a server round trip, as the realtor
 // directory does — the list doesn't change when the selection does.
@@ -100,10 +100,10 @@ export function BrokerageDirectory({
       </p>
 
       {/* Desktop / tablet: table */}
-      <div className="mt-4 hidden rounded-lg border border-slate-200 bg-white md:block">
+      <div className="mt-4 hidden rounded-lg border border-neutral-200 bg-surface md:block">
         <table className="w-full table-fixed text-sm">
           <caption className="sr-only">Brokerages. Select a brokerage to open its preview.</caption>
-          <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <SortTh label="Name" sort="name" params={params} className="w-[28%]" />
               <th scope="col" className="w-[16%] px-3 py-2.5 font-medium">
@@ -122,8 +122,8 @@ export function BrokerageDirectory({
                 <tr
                   key={b.id}
                   onClick={() => select(b.id)}
-                  className={`cursor-pointer border-t border-slate-100 first:border-t-0 ${
-                    selected ? "bg-emerald-50/70 shadow-[inset_3px_0_0_0_var(--color-emerald-600)]" : "hover:bg-slate-50"
+                  className={`cursor-pointer border-t border-neutral-100 first:border-t-0 ${
+                    selected ? "bg-accent-50/70 shadow-[inset_3px_0_0_0_var(--color-accent-600)]" : "hover:bg-neutral-50"
                   }`}
                 >
                   <td className={cell}>
@@ -138,16 +138,16 @@ export function BrokerageDirectory({
                         select(b.id);
                       }}
                       onKeyDown={(e) => onRowKeyDown(e, index)}
-                      className="block w-full truncate rounded text-left font-medium text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                      className="block w-full truncate rounded text-left font-medium text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
                     >
                       {b.name}
                     </button>
                   </td>
-                  <td className={`truncate tabular-nums text-slate-600 ${cell}`}>{b.phone ? formatPhone(b.phone) : none}</td>
-                  <td className={`truncate text-slate-600 ${cell}`} title={b.email ?? undefined}>
+                  <td className={`truncate tabular-nums text-neutral-600 ${cell}`}>{b.phone ? formatPhone(b.phone) : none}</td>
+                  <td className={`truncate text-neutral-600 ${cell}`} title={b.email ?? undefined}>
                     {b.email ?? none}
                   </td>
-                  <td className={`truncate text-slate-600 ${cell}`} title={formatBrokerageAddress(b) || undefined}>
+                  <td className={`truncate text-neutral-600 ${cell}`} title={formatBrokerageAddress(b) || undefined}>
                     {formatBrokerageAddress(b) || none}
                   </td>
                 </tr>
@@ -155,7 +155,7 @@ export function BrokerageDirectory({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-12 text-center text-slate-500">
+                <td colSpan={4} className="px-3 py-12 text-center text-neutral-500">
                   <EmptyState page={params.page} />
                 </td>
               </tr>
@@ -177,29 +177,29 @@ export function BrokerageDirectory({
                 aria-haspopup="dialog"
                 aria-current={b.id === selectedId ? "true" : undefined}
                 onClick={() => select(b.id)}
-                className={`block w-full rounded-lg border bg-white p-4 text-left ${b.id === selectedId ? "border-emerald-500" : "border-slate-200"}`}
+                className={`block w-full rounded-lg border bg-surface p-4 text-left ${b.id === selectedId ? "border-accent-500" : "border-neutral-200"}`}
               >
-                <p className="truncate font-medium text-slate-900">{b.name}</p>
-                {contact && <p className="truncate text-sm text-slate-500">{contact}</p>}
-                {address && <p className="truncate text-sm text-slate-500">{address}</p>}
+                <p className="truncate font-medium text-neutral-900">{b.name}</p>
+                {contact && <p className="truncate text-sm text-neutral-500">{contact}</p>}
+                {address && <p className="truncate text-sm text-neutral-500">{address}</p>}
               </button>
             </li>
           );
         })}
         {rows.length === 0 && (
-          <li className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+          <li className="rounded-lg border border-neutral-200 bg-surface p-8 text-center text-sm text-neutral-500">
             <EmptyState page={params.page} />
           </li>
         )}
       </ul>
 
-      <nav className="mt-3 flex items-center justify-between text-xs text-slate-500" aria-label="Pagination">
+      <nav className="mt-3 flex items-center justify-between text-xs text-neutral-500" aria-label="Pagination">
         <p>{total > 0 ? `Showing ${start}–${end} of ${total}` : " "}</p>
         <div className="flex gap-2">
           {hasPrev && (
             <Link
               href={brokerageDirectoryHref(searchParams, { page: String(params.page - 1) }, { resetPage: false })}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50"
             >
               Previous
             </Link>
@@ -207,7 +207,7 @@ export function BrokerageDirectory({
           {hasNext && (
             <Link
               href={brokerageDirectoryHref(searchParams, { page: String(params.page + 1) }, { resetPage: false })}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50"
             >
               Next
             </Link>
@@ -225,7 +225,7 @@ function EmptyState({ page }: { page: number }) {
     return (
       <>
         No brokerages on this page.{" "}
-        <Link href="/brokerages" className="text-emerald-700 hover:underline">
+        <Link href="/brokerages" className="text-accent-700 hover:underline">
           Back to the first page
         </Link>
       </>
@@ -249,10 +249,10 @@ function SortTh({ label, sort, params, className }: { label: string; sort: Broke
         type="button"
         onClick={() => router.replace(brokerageDirectoryHref(searchParams, nextBrokerageSort(params, sort)), { scroll: false })}
         title={sort === "city" ? "Sort by city" : undefined}
-        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-slate-800 ${active ? "text-slate-800" : ""}`}
+        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-neutral-800 ${active ? "text-neutral-800" : ""}`}
       >
         {label}
-        <Icon className={`h-3.5 w-3.5 ${active ? "text-slate-700" : "text-slate-300"}`} aria-hidden="true" />
+        <Icon className={`h-3.5 w-3.5 ${active ? "text-neutral-700" : "text-neutral-300"}`} aria-hidden="true" />
       </button>
     </th>
   );

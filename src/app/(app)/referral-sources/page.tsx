@@ -21,17 +21,17 @@ export default async function ReferralSourcesPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-900">Referral sources</h1>
-      <p className="mt-1 text-sm text-slate-500">
+      <h1 className="text-xl font-semibold text-neutral-900">Referral sources</h1>
+      <p className="mt-1 text-sm text-neutral-500">
         The relationship network behind lead and transaction attribution. Deactivating a source keeps
         its history intact — every past lead and transaction still reports against it.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="overflow-hidden rounded-lg border border-neutral-200 bg-surface">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Type</th>
@@ -46,24 +46,24 @@ export default async function ReferralSourcesPage() {
                 {sources.map((s) => {
                   const toggleAction = toggleReferralSourceActive.bind(null, s.id);
                   return (
-                    <tr key={s.id} className="border-t border-slate-100">
-                      <td className="px-4 py-2 font-medium text-slate-900">{s.name}</td>
-                      <td className="px-4 py-2 text-slate-600">{s.type}</td>
-                      <td className="px-4 py-2 text-slate-600">
+                    <tr key={s.id} className="border-t border-neutral-100">
+                      <td className="px-4 py-2 font-medium text-neutral-900">{s.name}</td>
+                      <td className="px-4 py-2 text-neutral-600">{s.type}</td>
+                      <td className="px-4 py-2 text-neutral-600">
                         {s.realtor ? (
                           <Link href={`/realtors/${s.realtor.id}`} className="hover:underline">
                             {s.realtor.firstName} {s.realtor.lastName}
                           </Link>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-neutral-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 tabular-nums text-slate-600">{s._count.leads}</td>
-                      <td className="px-4 py-2 tabular-nums text-slate-600">{s._count.transactions}</td>
+                      <td className="px-4 py-2 tabular-nums text-neutral-600">{s._count.leads}</td>
+                      <td className="px-4 py-2 tabular-nums text-neutral-600">{s._count.transactions}</td>
                       <td className="px-4 py-2">
                         <span
                           className={`rounded-full px-2 py-0.5 font-mono text-[11px] ${
-                            s.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                            s.active ? "bg-accent-100 text-accent-700" : "bg-neutral-100 text-neutral-500"
                           }`}
                         >
                           {s.active ? "ACTIVE" : "INACTIVE"}
@@ -82,7 +82,7 @@ export default async function ReferralSourcesPage() {
                 })}
                 {sources.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                    <td colSpan={7} className="px-4 py-6 text-center text-neutral-400">
                       No referral sources yet.
                     </td>
                   </tr>
@@ -92,19 +92,19 @@ export default async function ReferralSourcesPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">New referral source</h2>
+        <div className="rounded-lg border border-neutral-200 bg-surface p-4">
+          <h2 className="text-sm font-semibold text-neutral-900">New referral source</h2>
           <form action={createReferralSource} className="mt-3 space-y-3">
-            <input name="name" placeholder="Name" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            <input name="type" placeholder="Type (e.g. Realtor, Past Customer, Online)" required className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+            <input name="name" placeholder="Name" required className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
+            <input name="type" placeholder="Type (e.g. Realtor, Past Customer, Online)" required className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm" />
             <div>
-              <label className="block text-xs font-medium text-slate-600">Linked realtor (optional)</label>
-              <p className="text-xs text-slate-400">Only a linked source counts as that realtor&apos;s referrals.</p>
+              <label className="block text-xs font-medium text-neutral-600">Linked realtor (optional)</label>
+              <p className="text-xs text-neutral-400">Only a linked source counts as that realtor&apos;s referrals.</p>
               <div className="mt-1">
                 <RealtorCombobox name="realtorId" options={realtors.map((r) => ({ id: r.id, label: `${r.firstName} ${r.lastName}` }))} />
               </div>
             </div>
-            <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+            <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800">
               Add referral source
             </button>
           </form>

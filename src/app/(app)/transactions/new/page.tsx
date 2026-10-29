@@ -21,31 +21,31 @@ export default async function NewTransactionPage({
 
   return (
     <div className="max-w-md">
-      <h1 className="text-xl font-semibold text-slate-900">New transaction</h1>
-      <form action={createTransaction} className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+      <h1 className="text-xl font-semibold text-neutral-900">New transaction</h1>
+      <form action={createTransaction} className="mt-6 space-y-4 rounded-lg border border-neutral-200 bg-surface p-5">
         {realtor && (
-          <div className="rounded-md bg-slate-50 p-3">
+          <div className="rounded-md bg-neutral-50 p-3">
             <input type="hidden" name="realtorId" value={realtor.id} />
-            <p className="text-sm text-slate-700">
-              Realtor: <span className="font-medium text-slate-900">{realtor.firstName} {realtor.lastName}</span>
-              {realtor.brokerage && <span className="text-slate-500"> · {realtor.brokerage.name}</span>}
+            <p className="text-sm text-neutral-700">
+              Realtor: <span className="font-medium text-neutral-900">{realtor.firstName} {realtor.lastName}</span>
+              {realtor.brokerage && <span className="text-neutral-500"> · {realtor.brokerage.name}</span>}
             </p>
-            <label htmlFor="realtorRole" className="mt-2 block text-sm font-medium text-slate-700">
+            <label htmlFor="realtorRole" className="mt-2 block text-sm font-medium text-neutral-700">
               Their role on this transaction
             </label>
-            <select id="realtorRole" name="realtorRole" required defaultValue="BUYER_AGENT" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+            <select id="realtorRole" name="realtorRole" required defaultValue="BUYER_AGENT" className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
               <option value="BUYER_AGENT">Buyer agent</option>
               <option value="LISTING_AGENT">Listing agent</option>
               <option value="TRANSACTION_COORDINATOR">Transaction coordinator</option>
               <option value="OTHER">Other</option>
             </select>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-neutral-500">
               This associates them with the deal. It doesn&apos;t record them as the referral source — pick that below if they referred it.
             </p>
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium text-slate-700">Primary customer (optional)</label>
+          <label className="block text-sm font-medium text-neutral-700">Primary customer (optional)</label>
           <div className="mt-1">
             <CustomerCombobox
               name="customerId"
@@ -55,7 +55,7 @@ export default async function NewTransactionPage({
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Property (optional)</label>
+          <label className="block text-sm font-medium text-neutral-700">Property (optional)</label>
           <div className="mt-1">
             <PropertyCombobox
               name="propertyId"
@@ -64,7 +64,7 @@ export default async function NewTransactionPage({
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Referral source (optional)</label>
+          <label className="block text-sm font-medium text-neutral-700">Referral source (optional)</label>
           <div className="mt-1">
             <ReferralSourceCombobox
               name="referralSourceId"
@@ -72,7 +72,7 @@ export default async function NewTransactionPage({
             />
           </div>
         </div>
-        <button type="submit" className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <button type="submit" className="w-full rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800">
           Create transaction
         </button>
       </form>

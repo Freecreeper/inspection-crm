@@ -12,7 +12,7 @@ import { createCustomerQuick } from "../../calendar/actions";
 
 export type NewAction = "schedule" | "customer" | "task";
 
-const itemClass = "block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none";
+const itemClass = "block w-full rounded-md px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 focus-visible:bg-neutral-100 focus-visible:outline-none";
 
 // "+ New": the common starting points, each shown only to roles that may
 // do it (the server actions enforce the same permissions). Dialogs reuse
@@ -46,7 +46,7 @@ export function NewMenu({
           <Plus className="h-4 w-4" aria-hidden="true" /> New
         </>
       }
-      buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3.5 text-sm font-medium text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+      buttonClassName="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-solid-600 px-3.5 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600"
     >
       {(close) => (
         <div
@@ -87,7 +87,7 @@ export function NewMenu({
   );
 }
 
-const input = "mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm";
+const input = "mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm";
 
 // A customer needs only a name. Likely duplicates are shown first — the
 // same check scheduling uses — and nothing is merged automatically.
@@ -120,28 +120,28 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
     <Modal open onClose={onClose} title="New customer" titleId="new-customer-title">
       {duplicates ? (
         <div className="space-y-3">
-          <p className="text-sm text-slate-700">These customers look similar. Open one, or create a new customer anyway.</p>
-          <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+          <p className="text-sm text-neutral-700">These customers look similar. Open one, or create a new customer anyway.</p>
+          <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
             {duplicates.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2">
                 <span className="min-w-0 text-sm">
-                  <span className="block font-medium text-slate-900">{d.name}</span>
-                  <span className="block text-xs text-slate-500">
+                  <span className="block font-medium text-neutral-900">{d.name}</span>
+                  <span className="block text-xs text-neutral-500">
                     Same {d.reasons.join(", ")}
                     {d.email ? ` · ${d.email}` : ""}
                   </span>
                 </span>
-                <Link href={`/customers/${d.id}`} onClick={onClose} className="rounded-md border border-slate-300 px-2.5 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link href={`/customers/${d.id}`} onClick={onClose} className="rounded-md border border-neutral-300 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                   Open
                 </Link>
               </li>
             ))}
           </ul>
           <div className="flex justify-between gap-2">
-            <button type="button" onClick={() => setDuplicates(null)} className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            <button type="button" onClick={() => setDuplicates(null)} className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">
               Back
             </button>
-            <button type="button" disabled={pending} onClick={() => submit(true)} className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+            <button type="button" disabled={pending} onClick={() => submit(true)} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
               Create anyway
             </button>
           </div>
@@ -155,16 +155,16 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
           }}
         >
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-neutral-700">
               First name
               <input required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className={input} />
             </label>
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-neutral-700">
               Last name
               <input required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className={input} />
             </label>
           </div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-neutral-700">
             Email (optional)
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={input} />
           </label>
@@ -175,10 +175,10 @@ export function NewCustomerDialog({ onClose }: { onClose: () => void }) {
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">
               Cancel
             </button>
-            <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
               {pending ? "Saving…" : "Create customer"}
             </button>
           </div>

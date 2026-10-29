@@ -21,8 +21,8 @@ import {
 } from "../actions";
 
 export const input =
-  "mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
-export const labelClass = "block text-sm font-medium text-slate-700";
+  "mt-1 w-full rounded-md border border-neutral-300 bg-surface px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500";
+export const labelClass = "block text-sm font-medium text-neutral-700";
 
 export const DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180, 210, 240, 300, 360, 480];
 
@@ -273,7 +273,7 @@ export function ScheduleDialog({
               {options.services
                 .filter((s) => s.id !== primaryService)
                 .map((s) => (
-                  <label key={s.id} className="flex items-center gap-2 text-sm text-slate-700">
+                  <label key={s.id} className="flex items-center gap-2 text-sm text-neutral-700">
                     <input type="checkbox" checked={addOns.includes(s.id)} onChange={(e) => setAddOns((a) => (e.target.checked ? [...a, s.id] : a.filter((x) => x !== s.id)))} />
                     {s.name}
                   </label>
@@ -312,7 +312,7 @@ export function ScheduleDialog({
         </div>
         <div>
           <label htmlFor={`${id}-access`} className={labelClass}>
-            Access notes <span className="font-normal text-slate-400">(optional)</span>
+            Access notes <span className="font-normal text-neutral-400">(optional)</span>
           </label>
           <textarea id={`${id}-access`} rows={2} value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} placeholder="Lockbox, occupant, gate code…" className={input} />
         </div>
@@ -324,10 +324,10 @@ export function ScheduleDialog({
           </p>
         )}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             Cancel
           </button>
-          <button type="submit" disabled={pending || conflicts.length > 0} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
+          <button type="submit" disabled={pending || conflicts.length > 0} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
             {pending ? "Scheduling…" : "Schedule"}
           </button>
         </div>
@@ -357,22 +357,22 @@ function DuplicateChoice<D extends { id: string }>({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-600">These existing records look like a match. Use one, or create a new record anyway.</p>
-      <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+      <p className="text-sm text-neutral-600">These existing records look like a match. Use one, or create a new record anyway.</p>
+      <ul className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
         {items.map((d) => (
           <li key={d.id} className="flex items-start justify-between gap-3 p-3 text-sm">
             <div className="min-w-0">{render(d)}</div>
-            <button type="button" onClick={() => onUse(d)} className="shrink-0 font-medium text-emerald-700 hover:underline">
+            <button type="button" onClick={() => onUse(d)} className="shrink-0 font-medium text-accent-700 hover:underline">
               Use this
             </button>
           </li>
         ))}
       </ul>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onBack} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <button type="button" onClick={onBack} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back
         </button>
-        <button type="button" disabled={pending} onClick={onCreateAnyway} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+        <button type="button" disabled={pending} onClick={onCreateAnyway} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
           Create anyway
         </button>
       </div>
@@ -411,8 +411,8 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         pending={pending}
         render={(d) => (
           <>
-            <p className="font-medium text-slate-900">{d.name}</p>
-            <p className="truncate text-xs text-slate-500">{[d.phone ? formatPhone(d.phone) : null, d.email].filter(Boolean).join(" · ") || "No contact info"}</p>
+            <p className="font-medium text-neutral-900">{d.name}</p>
+            <p className="truncate text-xs text-neutral-500">{[d.phone ? formatPhone(d.phone) : null, d.email].filter(Boolean).join(" · ") || "No contact info"}</p>
             <p className="text-xs font-medium text-amber-700">{d.exact ? "Likely match" : "Possible match"}: {d.reasons.map((r) => (r === "name" ? "same name" : `same ${r}`)).join(", ")}</p>
           </>
         )}
@@ -431,7 +431,7 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         create(false);
       }}
     >
-      <p className="text-xs text-slate-500">Only a name is required — a missing email or phone never blocks scheduling.</p>
+      <p className="text-xs text-neutral-500">Only a name is required — a missing email or phone never blocks scheduling.</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor={`${id}-first`} className={labelClass}>
@@ -449,7 +449,7 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
       <PhoneField value={phone} onChange={setPhone} />
       <div>
         <label htmlFor={`${id}-email`} className={labelClass}>
-          Email <span className="font-normal text-slate-400">(optional)</span>
+          Email <span className="font-normal text-neutral-400">(optional)</span>
         </label>
         <input id={`${id}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
       </div>
@@ -459,10 +459,10 @@ function CreateCustomerForm({ query, onCreated, onCancel }: { query: string; onC
         </p>
       )}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back to scheduling
         </button>
-        <button type="submit" disabled={pending} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
           {pending ? "Checking…" : "Create customer"}
         </button>
       </div>
@@ -500,8 +500,8 @@ function CreatePropertyForm({ query, onCreated, onCancel }: { query: string; onC
         pending={pending}
         render={(d) => (
           <>
-            <p className="font-medium text-slate-900">{d.label}</p>
-            <p className="text-xs text-slate-500">{d.sublabel}</p>
+            <p className="font-medium text-neutral-900">{d.label}</p>
+            <p className="text-xs text-neutral-500">{d.sublabel}</p>
             <p className="text-xs font-medium text-amber-700">Same address</p>
           </>
         )}
@@ -552,10 +552,10 @@ function CreatePropertyForm({ query, onCreated, onCancel }: { query: string; onC
         </p>
       )}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <button type="button" onClick={onCancel} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Back to scheduling
         </button>
-        <button type="submit" disabled={pending} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60">
           {pending ? "Checking…" : "Create property"}
         </button>
       </div>

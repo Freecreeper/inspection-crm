@@ -41,10 +41,10 @@ export function MonthGrid({
   const rank = (e: CalendarEvent) => (e.type === "inspection" ? 0 : e.priority === "high" ? 1 : e.allDay ? 2 : 3);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+    <div className="overflow-hidden rounded-lg border border-neutral-200 bg-surface">
+      <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-50">
         {days.slice(0, 7).map((d) => (
-          <div key={d} className="px-2 py-1.5 text-center text-xs font-medium uppercase tracking-wide text-slate-500">
+          <div key={d} className="px-2 py-1.5 text-center text-xs font-medium uppercase tracking-wide text-neutral-500">
             {formatDay(d, "weekday")}
           </div>
         ))}
@@ -60,14 +60,14 @@ export function MonthGrid({
               onClick={(e) => {
                 if (onSlotClick && e.target === e.currentTarget) onSlotClick(day, "09:00");
               }}
-              className={`min-h-28 border-b border-r border-slate-100 p-1.5 [&:nth-child(7n)]:border-r-0 ${inMonth ? "" : "bg-slate-50/70"} ${onSlotClick ? "cursor-cell" : ""}`}
+              className={`min-h-28 border-b border-r border-neutral-100 p-1.5 [&:nth-child(7n)]:border-r-0 ${inMonth ? "" : "bg-neutral-50/70"} ${onSlotClick ? "cursor-cell" : ""}`}
             >
               <button
                 type="button"
                 onClick={() => onOpenDay(day)}
                 aria-label={`Open ${formatDay(day, "long")}`}
                 className={`mb-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-medium ${
-                  day === today ? "bg-emerald-600 text-white" : inMonth ? "text-slate-800 hover:bg-slate-100" : "text-slate-400 hover:bg-slate-100"
+                  day === today ? "bg-accent-solid-600 text-white" : inMonth ? "text-neutral-800 hover:bg-neutral-100" : "text-neutral-400 hover:bg-neutral-100"
                 }`}
               >
                 {formatDay(day, "dayNumber")}
@@ -78,11 +78,11 @@ export function MonthGrid({
                     <button
                       type="button"
                       onClick={() => onEventClick(e)}
-                      className={`flex w-full items-center gap-1 truncate rounded border-l-[3px] px-1 py-0.5 text-left text-[11px] leading-4 ${eventTone(e)} hover:brightness-95 focus-visible:outline-2 focus-visible:outline-emerald-600`}
+                      className={`flex w-full items-center gap-1 truncate rounded border-l-[3px] px-1 py-0.5 text-left text-[11px] leading-4 ${eventTone(e)} hover:brightness-95 focus-visible:outline-2 focus-visible:outline-accent-600`}
                     >
                       <EventIcon event={e} className="h-3 w-3" />
                       <span className="sr-only">{EVENT_KIND[e.type].label}: </span>
-                      {e.start && !e.allDay && <span className="shrink-0 tabular-nums text-slate-500">{formatTime(new Date(e.start), timeZone).replace(":00", "").replace(" ", "").toLowerCase()}</span>}
+                      {e.start && !e.allDay && <span className="shrink-0 tabular-nums text-neutral-500">{formatTime(new Date(e.start), timeZone).replace(":00", "").replace(" ", "").toLowerCase()}</span>}
                       <span className="truncate">{e.title}</span>
                       {e.warnings.length > 0 && (
                         <>
@@ -95,7 +95,7 @@ export function MonthGrid({
                 ))}
               </ul>
               {list.length > MAX_PER_CELL && (
-                <button type="button" onClick={() => onOpenDay(day)} className="mt-0.5 text-[11px] font-medium text-slate-600 hover:text-slate-900 hover:underline">
+                <button type="button" onClick={() => onOpenDay(day)} className="mt-0.5 text-[11px] font-medium text-neutral-600 hover:text-neutral-900 hover:underline">
                   +{list.length - MAX_PER_CELL} more
                 </button>
               )}

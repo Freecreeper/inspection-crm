@@ -9,11 +9,11 @@ import { effectiveOptions, samePreferences, type DashboardPreferences } from "@/
 
 export type SaveStatus = { kind: "idle" } | { kind: "saving" } | { kind: "saved"; message?: string } | { kind: "error"; message: string };
 
-const heading = "text-sm font-semibold text-slate-900";
-const hint = "mt-0.5 text-xs text-slate-500";
+const heading = "text-sm font-semibold text-neutral-900";
+const hint = "mt-0.5 text-xs text-neutral-500";
 const iconButton =
-  "flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-30 disabled:hover:bg-transparent";
-const selectClass = "rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700";
+  "flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-2 focus-visible:outline-accent-600 disabled:opacity-30 disabled:hover:bg-transparent";
+const selectClass = "rounded-md border border-neutral-300 bg-surface px-2 py-1 text-sm text-neutral-700";
 
 // Controlled customization: only the approved widgets, KPIs, and options
 // the server says this user may use. Every change applies to the Dashboard
@@ -124,7 +124,7 @@ export function CustomizePanel({
             Widgets
           </h3>
           <p className={hint}>Untick to hide a section. Drag a row, or use the arrows, to set the order. Phones use the same order.</p>
-          <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">Shown, in order</h4>
+          <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-neutral-500">Shown, in order</h4>
           <ol className="mt-1.5 space-y-1.5" aria-label="Shown widgets, in order">
             {shown.map((row, index) => {
               const def = defs.get(row.key)!;
@@ -155,14 +155,14 @@ export function CustomizePanel({
                     setDragKey(null);
                     setOverKey(null);
                   }}
-                  className={`rounded-md border bg-white px-2 py-1.5 ${overKey === row.key && dragKey !== row.key ? "border-emerald-500 ring-1 ring-emerald-500" : "border-slate-200"} ${dragKey === row.key ? "opacity-50" : ""}`}
+                  className={`rounded-md border bg-surface px-2 py-1.5 ${overKey === row.key && dragKey !== row.key ? "border-accent-500 ring-1 ring-accent-500" : "border-neutral-200"} ${dragKey === row.key ? "opacity-50" : ""}`}
                 >
                   <div className="flex items-center gap-2">
-                    <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-slate-400" aria-hidden="true" />
-                    <input id={checkboxId} type="checkbox" checked onChange={() => setVisible(row.key, false)} className="h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600" />
+                    <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-neutral-400" aria-hidden="true" />
+                    <input id={checkboxId} type="checkbox" checked onChange={() => setVisible(row.key, false)} className="h-4 w-4 shrink-0 rounded border-neutral-300 accent-accent-solid-600" />
                     <label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer py-1">
-                      <span className="block text-sm font-medium text-slate-900">{def.label}</span>
-                      <span className="block text-xs text-slate-500">{def.description}</span>
+                      <span className="block text-sm font-medium text-neutral-900">{def.label}</span>
+                      <span className="block text-xs text-neutral-500">{def.description}</span>
                     </label>
                     <button id={`move-up-${row.key}`} type="button" className={iconButton} disabled={index === 0} onClick={() => move(row.key, index - 1, "up")} aria-label={`Move ${def.label} up`}>
                       <ChevronUp className="h-4 w-4" aria-hidden="true" />
@@ -193,22 +193,22 @@ export function CustomizePanel({
                 </li>
               );
             })}
-            {shown.length === 0 && <li className="rounded-md border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500">Nothing shown — tick a widget below.</li>}
+            {shown.length === 0 && <li className="rounded-md border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-500">Nothing shown — tick a widget below.</li>}
           </ol>
           {hidden.length > 0 && (
             <>
-              <h4 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Hidden — tick to add</h4>
+              <h4 className="mt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">Hidden — tick to add</h4>
               <ul className="mt-1.5 space-y-1" aria-label="Hidden widgets">
                 {hidden.map((row) => {
                   const def = defs.get(row.key)!;
                   const checkboxId = `widget-visible-${row.key}`;
                   return (
-                    <li key={row.key} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-slate-50">
+                    <li key={row.key} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-neutral-50">
                       <span className="w-4 shrink-0" aria-hidden="true" />
-                      <input id={checkboxId} type="checkbox" checked={false} onChange={() => setVisible(row.key, true)} className="h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600" />
+                      <input id={checkboxId} type="checkbox" checked={false} onChange={() => setVisible(row.key, true)} className="h-4 w-4 shrink-0 rounded border-neutral-300 accent-accent-solid-600" />
                       <label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer py-1">
-                        <span className="block text-sm font-medium text-slate-700">{def.label}</span>
-                        <span className="block text-xs text-slate-500">{def.description}</span>
+                        <span className="block text-sm font-medium text-neutral-700">{def.label}</span>
+                        <span className="block text-xs text-neutral-500">{def.description}</span>
                       </label>
                     </li>
                   );
@@ -233,8 +233,8 @@ export function CustomizePanel({
                 const id = `kpi-${k.key}`;
                 return (
                   <li key={k.key}>
-                    <label htmlFor={id} className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-sm ${disabled ? "text-slate-400" : "cursor-pointer text-slate-800 hover:bg-slate-50"}`} title={k.definition}>
-                      <input id={id} type="checkbox" checked={checked} disabled={disabled} aria-describedby="kpi-limit-hint" onChange={(e) => toggleKpi(k.key, e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-emerald-600" />
+                    <label htmlFor={id} className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-sm ${disabled ? "text-neutral-400" : "cursor-pointer text-neutral-800 hover:bg-neutral-50"}`} title={k.definition}>
+                      <input id={id} type="checkbox" checked={checked} disabled={disabled} aria-describedby="kpi-limit-hint" onChange={(e) => toggleKpi(k.key, e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-neutral-300 accent-accent-solid-600" />
                       {k.label}
                     </label>
                   </li>
@@ -250,11 +250,11 @@ export function CustomizePanel({
               Needs Attention
             </h3>
             <p className={hint}>Required items always show — hiding them could mean a missed inspection, an undelivered report, or unpaid work.</p>
-            <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">Required attention</h4>
+            <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-neutral-500">Required attention</h4>
             <ul className="mt-1 space-y-0.5">
               {attention.required.map((c) => (
-                <li key={c.key} className="flex items-center gap-2 px-2 py-1 text-sm text-slate-600">
-                  <Lock className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                <li key={c.key} className="flex items-center gap-2 px-2 py-1 text-sm text-neutral-600">
+                  <Lock className="h-3.5 w-3.5 text-neutral-400" aria-hidden="true" />
                   {c.label}
                   <span className="sr-only">(always shown)</span>
                 </li>
@@ -262,14 +262,14 @@ export function CustomizePanel({
             </ul>
             {attention.optional.length > 0 && (
               <>
-                <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">Optional categories</h4>
+                <h4 className="mt-3 text-xs font-medium uppercase tracking-wide text-neutral-500">Optional categories</h4>
                 <ul className="mt-1 space-y-0.5">
                   {attention.optional.map((c) => {
                     const id = `attention-${c.key}`;
                     return (
                       <li key={c.key}>
-                        <label htmlFor={id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-slate-800 hover:bg-slate-50">
-                          <input id={id} type="checkbox" checked={!prefs.hiddenAttention.includes(c.key)} onChange={(e) => toggleAttention(c.key, e.target.checked)} className="h-4 w-4 rounded border-slate-300 accent-emerald-600" />
+                        <label htmlFor={id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-neutral-800 hover:bg-neutral-50">
+                          <input id={id} type="checkbox" checked={!prefs.hiddenAttention.includes(c.key)} onChange={(e) => toggleAttention(c.key, e.target.checked)} className="h-4 w-4 rounded border-neutral-300 accent-accent-solid-600" />
                           {c.label}
                         </label>
                       </li>
@@ -281,7 +281,7 @@ export function CustomizePanel({
           </section>
         )}
 
-        <section aria-labelledby="customize-restore" className="rounded-md border border-slate-200 p-3">
+        <section aria-labelledby="customize-restore" className="rounded-md border border-neutral-200 p-3">
           <h3 id="customize-restore" className={heading}>
             Restore default dashboard
           </h3>
@@ -289,12 +289,12 @@ export function CustomizePanel({
             <p className={hint}>You&apos;re using the default layout for your role.</p>
           ) : confirmRestore ? (
             <div className="mt-1" role="group" aria-label="Confirm restore">
-              <p className="text-sm text-slate-700">Replace your layout, KPIs, and filters with the default for your role?</p>
+              <p className="text-sm text-neutral-700">Replace your layout, KPIs, and filters with the default for your role?</p>
               <div className="mt-2 flex gap-2">
-                <button type="button" onClick={restore} disabled={restoring} className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+                <button type="button" onClick={restore} disabled={restoring} className="rounded-md bg-neutral-solid-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
                   {restoring ? "Restoring…" : "Restore default"}
                 </button>
-                <button type="button" onClick={() => setConfirmRestore(false)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <button type="button" onClick={() => setConfirmRestore(false)} className="rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                   Keep mine
                 </button>
               </div>
@@ -302,7 +302,7 @@ export function CustomizePanel({
           ) : (
             <>
               <p className={hint}>Go back to the recommended layout for your role.</p>
-              <button type="button" onClick={() => setConfirmRestore(true)} className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={() => setConfirmRestore(true)} className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Restore Default Dashboard
               </button>
             </>
@@ -310,7 +310,7 @@ export function CustomizePanel({
         </section>
 
         <div className="flex justify-end">
-          <button type="button" onClick={onClose} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+          <button type="button" onClick={onClose} className="rounded-md bg-accent-solid-600 px-4 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-600">
             Done
           </button>
         </div>
@@ -322,10 +322,10 @@ export function CustomizePanel({
 function StatusLine({ status, onRetry, onUndo }: { status: SaveStatus; onRetry: () => void; onUndo: () => void }) {
   return (
     <div role="status" aria-live="polite" className="min-h-9 text-sm">
-      {status.kind === "idle" && <p className="text-slate-500">Changes save automatically.</p>}
-      {status.kind === "saving" && <p className="text-slate-500">Saving…</p>}
+      {status.kind === "idle" && <p className="text-neutral-500">Changes save automatically.</p>}
+      {status.kind === "saving" && <p className="text-neutral-500">Saving…</p>}
       {status.kind === "saved" && (
-        <p className="flex items-center gap-1.5 text-emerald-700">
+        <p className="flex items-center gap-1.5 text-accent-700">
           <Check className="h-4 w-4" aria-hidden="true" /> {status.message ?? "All changes saved"}
         </p>
       )}

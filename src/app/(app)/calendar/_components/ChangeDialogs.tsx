@@ -71,18 +71,18 @@ export function RescheduleDialog({
   return (
     <Modal open onClose={onClose} title="Reschedule inspection?" titleId={`${id}-title`}>
       <div className="space-y-4">
-        <p className="font-medium text-slate-900">{target.address}</p>
-        <dl className="grid grid-cols-2 gap-3 rounded-md bg-slate-50 p-3 text-sm">
+        <p className="font-medium text-neutral-900">{target.address}</p>
+        <dl className="grid grid-cols-2 gap-3 rounded-md bg-neutral-50 p-3 text-sm">
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Old</dt>
-            <dd className="mt-0.5 text-slate-700">
+            <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">Old</dt>
+            <dd className="mt-0.5 text-neutral-700">
               {formatDay(target.day, "short")}
               <span className="block">{formatTimeRange(oldStart, oldEnd, timeZone)}</span>
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">New</dt>
-            <dd className="mt-0.5 font-medium text-slate-900">
+            <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">New</dt>
+            <dd className="mt-0.5 font-medium text-neutral-900">
               {validNew ? formatDay(day, "short") : "—"}
               <span className="block">{newStart && newEnd ? formatTimeRange(newStart, newEnd, timeZone) : "—"}</span>
             </dd>
@@ -124,11 +124,11 @@ export function RescheduleDialog({
         </div>
 
         {timeChanged && (
-          <label className="flex items-start gap-2 text-sm text-slate-700">
+          <label className="flex items-start gap-2 text-sm text-neutral-700">
             <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
             <span>
               Notify the customer and realtor
-              <span className="block text-xs text-slate-500">
+              <span className="block text-xs text-neutral-500">
                 Prepared or sent according to the appointment-change automation (it may be set to review first, or off). The reminder is re-created for the new time either way, and the old one can never send.
               </span>
             </span>
@@ -147,14 +147,14 @@ export function RescheduleDialog({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             {conflicts.length ? "Choose another time" : "Cancel"}
           </button>
           <button
             type="button"
             onClick={confirm}
             disabled={pending || conflicts.length > 0 || !validNew}
-            className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            className="rounded-md bg-accent-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-accent-solid-700 disabled:opacity-60"
           >
             {pending ? "Saving…" : "Confirm reschedule"}
           </button>
@@ -185,22 +185,22 @@ export function CancelDialog({
   return (
     <Modal open onClose={onClose} title="Cancel inspection?" titleId={`${id}-title`}>
       <div className="space-y-4">
-        <p className="text-sm text-slate-700">
-          <span className="font-medium text-slate-900">{address}</span>
+        <p className="text-sm text-neutral-700">
+          <span className="font-medium text-neutral-900">{address}</span>
           <span className="block">{when}</span>
         </p>
-        <p className="text-xs text-slate-500">The inspection stays in the record as cancelled. Pending reminders are withdrawn.</p>
+        <p className="text-xs text-neutral-500">The inspection stays in the record as cancelled. Pending reminders are withdrawn.</p>
         <div>
           <label htmlFor={`${id}-reason`} className={labelClass}>
-            Reason <span className="font-normal text-slate-400">(optional, internal)</span>
+            Reason <span className="font-normal text-neutral-400">(optional, internal)</span>
           </label>
           <textarea id={`${id}-reason`} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className={input} />
         </div>
-        <label className="flex items-start gap-2 text-sm text-slate-700">
+        <label className="flex items-start gap-2 text-sm text-neutral-700">
           <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
           <span>
             Notify the customer and realtor
-            <span className="block text-xs text-slate-500">According to the appointment-change automation settings.</span>
+            <span className="block text-xs text-neutral-500">According to the appointment-change automation settings.</span>
           </span>
         </label>
         {error && (
@@ -209,7 +209,7 @@ export function CancelDialog({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             Keep inspection
           </button>
           <button
@@ -226,7 +226,7 @@ export function CancelDialog({
                 }
               })
             }
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+            className="rounded-md bg-red-solid-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-solid-700 disabled:opacity-60"
           >
             {pending ? "Cancelling…" : "Cancel inspection"}
           </button>
@@ -281,7 +281,7 @@ export function BlockTimeDialog({
           });
         }}
       >
-        <p className="text-xs text-slate-500">Vacation, office meeting, personal time. An inspector&apos;s blocked time counts as a scheduling conflict.</p>
+        <p className="text-xs text-neutral-500">Vacation, office meeting, personal time. An inspector&apos;s blocked time counts as a scheduling conflict.</p>
         <div>
           <label htmlFor={`${id}-who`} className={labelClass}>
             Whose time
@@ -326,10 +326,10 @@ export function BlockTimeDialog({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             Cancel
           </button>
-          <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+          <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
             {pending ? "Saving…" : "Block time"}
           </button>
         </div>
@@ -396,10 +396,10 @@ export function AddTaskDialog({ initialDay, people, onClose, onDone }: { initial
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
             Cancel
           </button>
-          <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">
+          <button type="submit" disabled={pending} className="rounded-md bg-neutral-solid-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800 disabled:opacity-60">
             {pending ? "Saving…" : "Add task"}
           </button>
         </div>

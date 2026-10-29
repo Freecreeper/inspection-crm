@@ -16,7 +16,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const session = await auth();
   const role = session?.user?.role as Role | undefined;
   if (!can(role, "financial:read")) {
-    return <p className="text-sm text-slate-600">You don&apos;t have access to invoices.</p>;
+    return <p className="text-sm text-neutral-600">You don&apos;t have access to invoices.</p>;
   }
   const { view: rawView } = await searchParams;
   const view = rawView === "billed" ? "billed" : "outstanding";
@@ -54,7 +54,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     <Link
       href={key === "outstanding" ? "/invoices" : `/invoices?view=${key}`}
       aria-current={view === key ? "page" : undefined}
-      className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+      className={`rounded-md px-3 py-1.5 text-sm font-medium ${view === key ? "bg-neutral-solid-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}
     >
       {label}
     </Link>
@@ -62,25 +62,25 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-xl font-semibold text-slate-900">Invoices</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">Invoices</h1>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <nav aria-label="Invoice views" className="flex gap-1">
           {tab("outstanding", "Outstanding")}
           {tab("billed", `Billed in ${formatMonth(startOfMonth(today))}`)}
         </nav>
-        <p className="text-sm text-slate-600">
-          {invoices.length} invoice{invoices.length === 1 ? "" : "s"} · <span className="font-semibold text-slate-900">{formatMoney(sum)}</span> {view === "billed" ? "billed" : "due"}
+        <p className="text-sm text-neutral-600">
+          {invoices.length} invoice{invoices.length === 1 ? "" : "s"} · <span className="font-semibold text-neutral-900">{formatMoney(sum)}</span> {view === "billed" ? "billed" : "due"}
           {view === "billed" && invoices.length > 0 && <> · average {formatMoney(sum / invoices.length)}</>}
         </p>
       </div>
       {view === "billed" && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-neutral-500">
           Billed revenue: invoice line items on invoices sent, partly paid, paid, or overdue, dated this month (issue date, or created date if never issued). Drafts and voids excluded.
         </p>
       )}
-      <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-surface">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-2 font-medium">Invoice</th>
               <th className="px-4 py-2 font-medium">Customer</th>
@@ -92,26 +92,26 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           </thead>
           <tbody>
             {invoices.map(({ inv, totals, customer, due, overdue }) => (
-              <tr key={inv.id} className="border-t border-slate-100 hover:bg-slate-50">
+              <tr key={inv.id} className="border-t border-neutral-100 hover:bg-neutral-50">
                 <td className="px-4 py-2">
-                  <Link href={`/transactions/${inv.transaction.id}`} className="font-medium text-slate-900 hover:underline">
+                  <Link href={`/transactions/${inv.transaction.id}`} className="font-medium text-neutral-900 hover:underline">
                     {inv.invoiceNumber}
                   </Link>
-                  {inv.transaction.property && <span className="block text-xs text-slate-500">{inv.transaction.property.addressLine1}, {inv.transaction.property.city}</span>}
+                  {inv.transaction.property && <span className="block text-xs text-neutral-500">{inv.transaction.property.addressLine1}, {inv.transaction.property.city}</span>}
                 </td>
-                <td className="px-4 py-2 text-slate-600">{customer ?? <span className="text-slate-400">No customer</span>}</td>
-                <td className="px-4 py-2 text-slate-600">{inv.status.toLowerCase().replace(/_/g, " ")}</td>
-                <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-amber-800" : "text-slate-600"}`}>
-                  {due ? formatDay(due, "short") : <span className="text-slate-400">—</span>}
+                <td className="px-4 py-2 text-neutral-600">{customer ?? <span className="text-neutral-400">No customer</span>}</td>
+                <td className="px-4 py-2 text-neutral-600">{inv.status.toLowerCase().replace(/_/g, " ")}</td>
+                <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-amber-800" : "text-neutral-600"}`}>
+                  {due ? formatDay(due, "short") : <span className="text-neutral-400">—</span>}
                   {overdue && <span className="ml-1 text-xs">(overdue)</span>}
                 </td>
-                <td className="px-4 py-2 text-right tabular-nums text-slate-700">{formatMoney(totals.total)}</td>
-                <td className="px-4 py-2 text-right tabular-nums font-medium text-slate-900">{formatMoney(totals.balance)}</td>
+                <td className="px-4 py-2 text-right tabular-nums text-neutral-700">{formatMoney(totals.total)}</td>
+                <td className="px-4 py-2 text-right tabular-nums font-medium text-neutral-900">{formatMoney(totals.balance)}</td>
               </tr>
             ))}
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
                   {view === "billed" ? "Nothing billed this month yet." : "No balances due."}
                 </td>
               </tr>

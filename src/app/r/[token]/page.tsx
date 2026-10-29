@@ -24,14 +24,14 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-slate-500">{snapshot.reportNumber}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900">{snapshot.title || "Property Inspection Report"}</h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="rounded-lg border border-neutral-200 bg-surface p-8 shadow-sm">
+        <p className="font-mono text-xs uppercase tracking-wide text-neutral-500">{snapshot.reportNumber}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-neutral-900">{snapshot.title || "Property Inspection Report"}</h1>
+        <p className="mt-2 text-sm text-neutral-600">
           {snapshot.property.addressLine1}, {snapshot.property.city}, {snapshot.property.state}{" "}
           {snapshot.property.zip}
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-neutral-500">
           Version {snapshot.versionNumber} — finalized {formatBusinessDate(snapshot.finalizedAt)}
         </p>
         {delivery.supersededBy && (
@@ -39,14 +39,14 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
             This report has been revised: version {delivery.supersededBy} replaces this one. Ask your inspector for the updated report.
           </p>
         )}
-        {snapshot.customerFacingNotes && <p className="mt-4 text-sm text-slate-700">{snapshot.customerFacingNotes}</p>}
+        {snapshot.customerFacingNotes && <p className="mt-4 text-sm text-neutral-700">{snapshot.customerFacingNotes}</p>}
         <a
           href={`/r/${token}/pdf`}
-          className="mt-6 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="mt-6 inline-block rounded-md bg-neutral-solid-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-solid-800"
         >
           Download report (PDF)
         </a>
-        <p className="mt-6 text-xs text-slate-400">
+        <p className="mt-6 text-xs text-neutral-400">
           This link was sent to {delivery.recipientName}. Prepared by Inspection CRM — not an engineering, legal, or
           code-compliance determination.
         </p>

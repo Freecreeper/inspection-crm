@@ -91,13 +91,13 @@ export function AsyncCombobox({
   if (value) {
     return (
       <div>
-        <span className="block text-sm font-medium text-slate-700">{label}</span>
-        <div className="mt-1 flex items-center justify-between gap-2 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-sm">
+        <span className="block text-sm font-medium text-neutral-700">{label}</span>
+        <div className="mt-1 flex items-center justify-between gap-2 rounded-md border border-neutral-300 bg-neutral-50 px-2.5 py-1.5 text-sm">
           <span className="min-w-0">
-            <span className="block truncate font-medium text-slate-900">{value.label}</span>
-            {value.sublabel && <span className="block truncate text-xs text-slate-500">{value.sublabel}</span>}
+            <span className="block truncate font-medium text-neutral-900">{value.label}</span>
+            {value.sublabel && <span className="block truncate text-xs text-neutral-500">{value.sublabel}</span>}
           </span>
-          <button type="button" onClick={() => onChange(null)} aria-label={`Clear ${label}`} className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700">
+          <button type="button" onClick={() => onChange(null)} aria-label={`Clear ${label}`} className="shrink-0 rounded p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -107,12 +107,12 @@ export function AsyncCombobox({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700">
         {label}
-        {!required && <span className="font-normal text-slate-400"> (optional)</span>}
+        {!required && <span className="font-normal text-neutral-400"> (optional)</span>}
       </label>
       <div className="relative mt-1">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
         <input
           id={id}
           role="combobox"
@@ -145,13 +145,13 @@ export function AsyncCombobox({
               setOpen(false);
             }
           }}
-          className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="w-full rounded-md border border-neutral-300 bg-surface py-1.5 pl-8 pr-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
         />
       </div>
       {open && q.length > 0 && (
-        <ul id={`${id}-list`} role="listbox" className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg">
-          {loading && options.length === 0 && <li className="px-3 py-2 text-slate-500">Searching…</li>}
-          {!loading && options.length === 0 && !onCreate && <li className="px-3 py-2 text-slate-500">No matches.</li>}
+        <ul id={`${id}-list`} role="listbox" className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-neutral-200 bg-surface py-1 text-sm shadow-lg">
+          {loading && options.length === 0 && <li className="px-3 py-2 text-neutral-500">Searching…</li>}
+          {!loading && options.length === 0 && !onCreate && <li className="px-3 py-2 text-neutral-500">No matches.</li>}
           {rows.map((row, index) => (
             <li
               key={row.kind === "create" ? "__create" : row.option.id}
@@ -163,14 +163,14 @@ export function AsyncCombobox({
                 choose(index);
               }}
               onMouseEnter={() => setHighlighted(index)}
-              className={`cursor-pointer px-3 py-1.5 ${index === highlighted ? "bg-emerald-50" : ""} ${row.kind === "create" ? "border-t border-slate-100 font-medium text-emerald-700" : ""}`}
+              className={`cursor-pointer px-3 py-1.5 ${index === highlighted ? "bg-accent-50" : ""} ${row.kind === "create" ? "border-t border-neutral-100 font-medium text-accent-700" : ""}`}
             >
               {row.kind === "create" ? (
                 createLabel(q)
               ) : (
                 <>
-                  <span className="block truncate text-slate-900">{row.option.label}</span>
-                  {row.option.sublabel && <span className="block truncate text-xs text-slate-500">{row.option.sublabel}</span>}
+                  <span className="block truncate text-neutral-900">{row.option.label}</span>
+                  {row.option.sublabel && <span className="block truncate text-xs text-neutral-500">{row.option.sublabel}</span>}
                 </>
               )}
             </li>
