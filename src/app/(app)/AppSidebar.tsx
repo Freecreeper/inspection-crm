@@ -6,28 +6,8 @@ import { usePathname } from "next/navigation";
 import { trapTabKey } from "@/components/focusTrap";
 import type { Permission } from "@/lib/rbac";
 import {
-  type LucideIcon,
-  LayoutDashboard,
-  CalendarDays,
-  UserPlus,
-  ArrowRightLeft,
-  MapPin,
-  Users,
-  Contact,
-  Building2,
   Home,
-  Star,
-  CheckSquare,
-  Mail,
-  Send,
-  FileText,
-  BookOpen,
-  BarChart3,
-  Receipt,
   KeyRound,
-  UserCog,
-  Package,
-  LayoutTemplate,
   ChevronDown,
   ChevronUp,
   GripVertical,
@@ -39,73 +19,9 @@ import {
   LogOut,
 } from "lucide-react";
 
-// `requires` hides a link from roles that can't use the page (the page
-// itself still enforces the permission).
-type NavItem = { href: string; label: string; icon: LucideIcon; requires?: Permission };
-
-// Grouped by kind of work: the inspection side (jobs, what's offered, what
-// goes into reports) is kept apart from the relationship side (Realtors,
-// brokerages, referrals, follow-up tasks).
-const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  {
-    label: "Overview",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/calendar", label: "Calendar", icon: CalendarDays },
-    ],
-  },
-  {
-    label: "Inspections",
-    items: [
-      { href: "/inspections", label: "Inspections", icon: MapPin },
-      { href: "/services", label: "Services & Packages", icon: Package },
-      { href: "/report-templates", label: "Report Templates", icon: LayoutTemplate },
-      { href: "/narratives", label: "Narratives", icon: BookOpen },
-      { href: "/invoices", label: "Invoices", icon: Receipt, requires: "financial:read" },
-    ],
-  },
-  {
-    label: "Relationships",
-    items: [
-      { href: "/realtors", label: "Realtors", icon: Contact },
-      { href: "/brokerages", label: "Brokerages", icon: Building2 },
-      { href: "/referral-sources", label: "Referral sources", icon: Star },
-      { href: "/tasks", label: "Tasks", icon: CheckSquare },
-    ],
-  },
-  {
-    label: "Clients & deals",
-    items: [
-      { href: "/leads", label: "Leads", icon: UserPlus },
-      { href: "/customers", label: "Customers", icon: Users },
-      { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
-      { href: "/properties", label: "Properties", icon: Home },
-    ],
-  },
-  {
-    label: "Communication",
-    items: [
-      { href: "/email", label: "Email", icon: Send },
-      { href: "/communications", label: "Communications", icon: Mail },
-      { href: "/documents", label: "Documents", icon: FileText },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [
-      { href: "/reports", label: "Reports", icon: BarChart3, requires: "report-builder:use" },
-      { href: "/settings/users", label: "Users", icon: UserCog, requires: "user:manage" },
-    ],
-  },
-];
-
-function isActivePath(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+import { NAV_GROUPS, groupForPath, isActivePath, visibleGroups } from "./navigation";
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
-// Labels of the nav groups folded shut, as a JSON array (per browser).
-const CLOSED_GROUPS_STORAGE_KEY = "sidebar-closed-groups";
 // The nav groups' labels in the order this browser arranged them.
 const GROUP_ORDER_STORAGE_KEY = "sidebar-group-order";
 
@@ -120,16 +36,6 @@ export function orderGroups<T extends { label: string }>(groups: T[], order: str
   return groups.map((g, i) => ({ g, r: rank(g, i) })).sort((a, b) => a.r - b.r).map(({ g }) => g);
 }
 
-function activeGroupLabel(pathname: string): string | undefined {
-  return NAV_GROUPS.find((g) => g.items.some((i) => isActivePath(pathname, i.href)))?.label;
-}
-
-function groupListId(label: string): string {
-  return `nav-group-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-}
-
-// Which groups are folded shut. The group holding the current page is
-// opened on load and on every navigation, so the active link never hides.
 // A JSON array of group labels saved under `key`, or [] when it's missing,
 // malformed, or storage is blocked.
 function readStoredLabels(key: string): string[] {
@@ -139,55 +45,6 @@ function readStoredLabels(key: string): string[] {
   } catch {
     return [];
   }
-}
-
-function useClosedGroups(pathname: string) {
-  const [closed, setClosed] = useState<string[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [seenPath, setSeenPath] = useState(pathname);
-
-  useEffect(() => {
-    // Same reason as the sidebar collapse below: localStorage only exists
-    // after mount.
-    const stored = readStoredLabels(CLOSED_GROUPS_STORAGE_KEY);
-    const active = activeGroupLabel(pathname);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setClosed(stored.filter((label) => label !== active));
-    setLoaded(true);
-    // Mount only; navigation is handled below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (pathname !== seenPath) {
-    setSeenPath(pathname);
-    const active = activeGroupLabel(pathname);
-    if (active && closed.includes(active)) setClosed(closed.filter((label) => label !== active));
-  }
-
-  useEffect(() => {
-    if (!loaded) return;
-    try {
-      localStorage.setItem(CLOSED_GROUPS_STORAGE_KEY, JSON.stringify(closed));
-    } catch {
-      // Ignore — folding still works for this page view, just won't persist.
-    }
-  }, [closed, loaded]);
-
-  // Folding animates only once the saved state has been applied, so groups
-  // folded in an earlier visit don't visibly fold shut on every page load
-  // (or every time the mobile menu opens).
-  const [animate, setAnimate] = useState(false);
-  useEffect(() => {
-    if (!loaded) return;
-    const frame = requestAnimationFrame(() => setAnimate(true));
-    return () => cancelAnimationFrame(frame);
-  }, [loaded]);
-
-  function toggle(label: string) {
-    setClosed((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]));
-  }
-
-  return { isOpen: (label: string) => !closed.includes(label), toggle, animate };
 }
 
 // `dragged` taken out and put in `target`'s place: coming from above, it
@@ -451,18 +308,25 @@ export function AppSidebar({
               aria-hidden="true"
             />
           </button>
-          {/* Every page but the dashboard gets a way home without opening the
-              menu; on phones it takes the place of the app name. */}
+          {/* A way up without opening the menu: a page goes back to its
+              section's board, a board (or anything else) to Overview. On
+              phones it takes the place of the app name. */}
           {isActivePath(pathname, "/dashboard") ? (
             <p className="text-sm font-bold uppercase tracking-wide text-foreground lg:hidden">Inspection CRM</p>
           ) : (
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-neutral-100 hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only sm:not-sr-only">Dashboard</span>
-            </Link>
+            (() => {
+              const section = groupForPath(pathname);
+              const up = section && !isActivePath(pathname, section.href) ? section : NAV_GROUPS[0];
+              return (
+                <Link
+                  href={up.href}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-neutral-100 hover:text-foreground"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only sm:not-sr-only">{up.label}</span>
+                </Link>
+              );
+            })()
           )}
           {actions}
         </div>
@@ -550,9 +414,8 @@ function SidebarRail({
 }) {
   const { order } = useGroupOrder();
   const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
-  const groups = orderGroups(NAV_GROUPS, order)
-    .map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) }))
-    .filter((g) => g.items.length > 0);
+  const groups = orderGroups(visibleGroups(granted), order);
+  const current = groupForPath(pathname)?.board;
 
   const tipProps = (label: string) => ({
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => showTip(e.currentTarget, label),
@@ -575,27 +438,21 @@ function SidebarRail({
       </div>
 
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-3" onScroll={() => setTip(null)}>
-        {groups.map((group, index) => (
-          <ul key={group.label} aria-label={group.label} className={`space-y-1 ${index > 0 ? "mt-2 border-t border-sidebar-border pt-2" : ""}`}>
-            {group.items.map((item) => {
-              const active = isActivePath(pathname, item.href);
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-label={item.label}
-                    aria-current={active ? "page" : undefined}
-                    {...tipProps(item.label)}
-                    className={`${iconButton} ${active ? "bg-sidebar-active text-sidebar-active-foreground" : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-strong"}`}
-                  >
-                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ))}
+        <ul className="space-y-1">
+          {groups.map((group) => (
+            <li key={group.label}>
+              <Link
+                href={group.href}
+                aria-label={group.label}
+                aria-current={current === group.board ? "page" : undefined}
+                {...tipProps(group.label)}
+                className={`${iconButton} ${current === group.board ? "bg-sidebar-active text-sidebar-active-foreground" : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-strong"}`}
+              >
+                <group.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       <div className="flex flex-col items-center gap-1 border-t border-sidebar-border py-3">
@@ -645,7 +502,6 @@ function SidebarContent({
   signOutAction: () => Promise<void>;
   onNavigate: () => void;
 }) {
-  const { isOpen, toggle, animate: animateFolding } = useClosedGroups(pathname);
   const { order, save: saveOrder } = useGroupOrder();
   // Arrange mode: headings become drag handles with move buttons, and the
   // links are tucked away so the whole list fits.
@@ -658,7 +514,8 @@ function SidebarContent({
   // pointer doesn't immediately swap back.
   const settleUntil = useRef(0);
   const navRef = useRef<HTMLElement>(null);
-  const allowed = orderGroups(NAV_GROUPS, order).map((g) => ({ ...g, items: g.items.filter((i) => !i.requires || granted.includes(i.requires)) })).filter((g) => g.items.length > 0);
+  const allowed = orderGroups(visibleGroups(granted), order);
+  const current = groupForPath(pathname)?.board;
   const groups = preview ? orderGroups(allowed, preview) : allowed;
   const snapshot = useReorderMotion(navRef, groups.map((g) => g.label).join("|"), arranging);
   // Moves happen within the groups this role sees; the rest keep their
@@ -728,7 +585,7 @@ function SidebarContent({
           endDrag();
           requestAnimationFrame(() => flashGroup(navRef.current, label));
         }}
-        className={`relative flex-1 overflow-y-auto px-3 py-4 ${arranging ? "space-y-1.5" : "space-y-3"}`}
+        className={`relative flex-1 overflow-y-auto px-3 py-4 ${arranging ? "space-y-1.5" : "space-y-1"}`}
       >
         {groups.map((group, index) => (
           <div
@@ -784,51 +641,20 @@ function SidebarContent({
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => toggle(group.label)}
-                aria-expanded={isOpen(group.label)}
-                aria-controls={groupListId(group.label)}
-                className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+              // One link per section: it opens the section's board, and is
+              // current on the board and on every page in the section.
+              <Link
+                href={group.href}
+                onClick={onNavigate}
+                aria-current={current === group.board ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
+                  current === group.board ? "bg-sidebar-active text-sidebar-active-foreground" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-strong"
+                }`}
               >
+                <group.icon className={`h-[18px] w-[18px] shrink-0 ${current === group.board ? "text-sidebar-active-foreground" : "text-sidebar-muted"}`} aria-hidden="true" />
                 {group.label}
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${isOpen(group.label) ? "" : "-rotate-90"}`} aria-hidden="true" />
-              </button>
+              </Link>
             )}
-            {/* Folds by animating the row height between 0 and the content's own
-                height; closed content is inert, so it can't be tabbed to or read. */}
-            <div
-              id={groupListId(group.label)}
-              inert={arranging || !isOpen(group.label)}
-              aria-hidden={arranging || !isOpen(group.label)}
-              className={`grid ${animateFolding ? "transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none" : ""} ${
-                arranging || !isOpen(group.label) ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-              }`}
-            >
-              {/* Side padding keeps the links' focus outlines clear of the clip. */}
-              <div className="-mx-1 min-h-0 overflow-hidden px-1">
-                <div className="space-y-0.5 pb-0.5 pt-1">
-                  {group.items.map((item) => {
-                    const active = isActivePath(pathname, item.href);
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={onNavigate}
-                        aria-current={active ? "page" : undefined}
-                        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium ${
-                          active ? "bg-sidebar-active text-sidebar-active-foreground" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-strong"
-                        }`}
-                      >
-                        <Icon className={`h-4 w-4 shrink-0 ${active ? "text-sidebar-active-foreground" : "text-sidebar-muted"}`} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
           </div>
         ))}
 

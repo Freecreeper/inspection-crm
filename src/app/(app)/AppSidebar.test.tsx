@@ -44,7 +44,8 @@ describe("mobile sidebar", () => {
     const menu = screen.getByRole("dialog", { name: "Main menu" });
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Close menu" }));
     expect(document.body.style.overflow).toBe("hidden");
-    expect(menu.querySelector('a[aria-current="page"]')?.textContent).toBe("Realtors");
+    // A page's section is the current title.
+    expect(menu.querySelector('a[aria-current="page"]')?.textContent).toBe("Relationships");
 
     await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(menu.contains(document.activeElement)).toBe(true);
@@ -64,7 +65,7 @@ describe("mobile sidebar", () => {
     const user = userEvent.setup();
     const { rerender } = renderSidebar();
     await user.click(screen.getByRole("button", { name: "Open menu" }));
-    await user.click(screen.getByRole("dialog", { name: "Main menu" }).querySelector<HTMLAnchorElement>('a[href="/brokerages"]')!);
+    await user.click(screen.getByRole("dialog", { name: "Main menu" }).querySelector<HTMLAnchorElement>('a[href="/boards/clients"]')!);
     expect(screen.queryByRole("dialog", { name: "Main menu" })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Open menu" }));
@@ -80,18 +81,28 @@ describe("mobile sidebar", () => {
   });
 });
 
-describe("back to dashboard", () => {
+describe("the way up", () => {
   const topBar = () => screen.getByRole("main").previousElementSibling as HTMLElement;
 
-  it("shows a Dashboard link in the top bar on every other page", () => {
+  it("goes from a page back to its section's board", () => {
     renderSidebar();
-    expect(within(topBar()).getByRole("link", { name: "Dashboard" }).getAttribute("href")).toBe("/dashboard");
+    expect(within(topBar()).getByRole("link", { name: "Relationships" }).getAttribute("href")).toBe("/boards/relationships");
   });
 
-  it("shows the app name instead on the dashboard itself", () => {
+  it("goes from a section board, or anything outside a section, to Overview", () => {
+    pathname = "/boards/relationships";
+    renderSidebar();
+    expect(within(topBar()).getByRole("link", { name: "Overview" }).getAttribute("href")).toBe("/dashboard");
+    cleanup();
+    pathname = "/settings/appearance";
+    renderSidebar();
+    expect(within(topBar()).getByRole("link", { name: "Overview" }).getAttribute("href")).toBe("/dashboard");
+  });
+
+  it("shows the app name instead on Overview itself", () => {
     pathname = "/dashboard";
     renderSidebar();
-    expect(within(topBar()).queryByRole("link", { name: "Dashboard" })).toBeNull();
+    expect(within(topBar()).queryByRole("link")).toBeNull();
     expect(within(topBar()).getByText("Inspection CRM")).toBeTruthy();
   });
 });
@@ -104,10 +115,10 @@ describe("desktop sidebar collapse", () => {
     const aside = container.querySelector("aside")!;
     expect(aside.className).toContain("w-16");
     expect(aside.className).not.toContain("transition-");
-    // Every page is still one click away, named for screen readers.
+    // Every section is still one click away, named for screen readers.
     const rail = within(aside).getByRole("navigation", { name: "Main" });
-    expect(within(rail).getByRole("link", { name: "Realtors" }).getAttribute("aria-current")).toBe("page");
-    expect(within(rail).getByRole("list", { name: "Clients & deals" })).toBeTruthy();
+    expect(within(rail).getByRole("link", { name: "Relationships" }).getAttribute("aria-current")).toBe("page");
+    expect(within(rail).getByRole("link", { name: "Clients & deals" }).getAttribute("href")).toBe("/boards/clients");
 
     await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
     // Nothing fades on load, only after a toggle.
@@ -128,104 +139,62 @@ describe("desktop sidebar collapse", () => {
     const user = userEvent.setup();
     const { container } = renderSidebar();
     const rail = within(container.querySelector("aside")!);
-    await user.hover(rail.getByRole("link", { name: "Brokerages" }));
-    expect(screen.getByText("Brokerages", { selector: "span[aria-hidden]" })).toBeTruthy();
-    await user.unhover(rail.getByRole("link", { name: "Brokerages" }));
-    expect(screen.queryByText("Brokerages", { selector: "span[aria-hidden]" })).toBeNull();
+    await user.hover(rail.getByRole("link", { name: "Communication" }));
+    expect(screen.getByText("Communication", { selector: "span[aria-hidden]" })).toBeTruthy();
+    await user.unhover(rail.getByRole("link", { name: "Communication" }));
+    expect(screen.queryByText("Communication", { selector: "span[aria-hidden]" })).toBeNull();
 
-    rail.getByRole("link", { name: "Tasks" }).focus();
+    rail.getByRole("link", { name: "Inspections" }).focus();
     await act(async () => {});
-    expect(screen.getByText("Tasks", { selector: "span[aria-hidden]" })).toBeTruthy();
+    expect(screen.getByText("Inspections", { selector: "span[aria-hidden]" })).toBeTruthy();
   });
 
-  it("hides rail links the role can't use", () => {
+  it("hides a section the role has no pages in", () => {
     localStorage.setItem("sidebar-collapsed", "true");
     const { container } = renderSidebar();
-    const rail = within(container.querySelector("aside")!);
-    expect(rail.queryByRole("link", { name: "Invoices" })).toBeNull();
-    expect(rail.queryByRole("list", { name: "Tools" })).toBeNull();
+    expect(within(container.querySelector("aside")!).queryByRole("link", { name: "Tools" })).toBeNull();
   });
 });
 
-describe("navigation groups", () => {
-  const groupLinks = (label: string) => {
-    const nav = screen.getAllByRole("navigation", { name: "Main" })[0];
-    const heading = within(nav).getByText(label, { selector: "button" });
-    return [...heading.parentElement!.querySelectorAll("a")].map((a) => a.textContent?.trim());
-  };
+describe("sections", () => {
+  const desktopNav = () => screen.getAllByRole("navigation", { name: "Main" })[0];
+  const titles = () => within(desktopNav()).getAllByRole("link").map((a) => [a.textContent?.trim(), a.getAttribute("href")]);
 
-  it("keeps the inspection side apart from the realtor/brokerage side", () => {
+  it("shows only the section titles, each opening its board", () => {
     render(
       <AppSidebar displayName="Admin Owner" roleLabel="Owner Admin" granted={["financial:read", "report-builder:use", "user:manage"]} signOutAction={async () => {}}>
         <p>Page content</p>
       </AppSidebar>
     );
-    expect(groupLinks("Inspections")).toEqual(["Inspections", "Services & Packages", "Report Templates", "Narratives", "Invoices"]);
-    expect(groupLinks("Relationships")).toEqual(["Realtors", "Brokerages", "Referral sources", "Tasks"]);
-    expect(groupLinks("Clients & deals")).toEqual(["Leads", "Customers", "Transactions", "Properties"]);
+    expect(titles()).toEqual([
+      ["Overview", "/dashboard"],
+      ["Inspections", "/boards/inspections"],
+      ["Relationships", "/boards/relationships"],
+      ["Clients & deals", "/boards/clients"],
+      ["Communication", "/boards/communication"],
+      ["Tools", "/boards/tools"],
+    ]);
   });
 
-  const desktopNav = () => screen.getAllByRole("navigation", { name: "Main" })[0];
-  const groupToggle = (label: string) => within(desktopNav()).getByRole("button", { name: label });
-  const linkVisible = (label: string) => within(desktopNav()).queryByRole("link", { name: label }) !== null;
-
-  it("folds a group shut from its heading and remembers it", async () => {
-    const user = userEvent.setup();
+  it("marks the current section on its board and on every page in it", () => {
+    pathname = "/boards/inspections";
     renderSidebar();
-    expect(groupToggle("Communication").getAttribute("aria-expanded")).toBe("true");
-    expect(linkVisible("Email")).toBe(true);
-
-    await user.click(groupToggle("Communication"));
-    expect(groupToggle("Communication").getAttribute("aria-expanded")).toBe("false");
-    expect(linkVisible("Email")).toBe(false);
-    expect(linkVisible("Leads")).toBe(true);
-
+    expect(within(desktopNav()).getByRole("link", { name: "Inspections" }).getAttribute("aria-current")).toBe("page");
     cleanup();
+    pathname = "/inspections/abc/report";
     renderSidebar();
-    expect(linkVisible("Email")).toBe(false);
-    await user.click(groupToggle("Communication"));
-    expect(linkVisible("Email")).toBe(true);
-    expect(JSON.parse(localStorage.getItem("sidebar-closed-groups")!)).toEqual([]);
-  });
-
-  it("animates folding, but not the folds restored on load", async () => {
-    localStorage.setItem("sidebar-closed-groups", JSON.stringify(["Communication"]));
-    const user = userEvent.setup();
+    expect(within(desktopNav()).getByRole("link", { name: "Inspections" }).getAttribute("aria-current")).toBe("page");
+    cleanup();
+    pathname = "/calendar";
     renderSidebar();
-    const list = (label: string) => desktopNav().querySelector<HTMLElement>(`#${groupToggle(label).getAttribute("aria-controls")}`)!;
-    expect(list("Communication").hasAttribute("inert")).toBe(true);
-    expect(list("Communication").className).not.toContain("transition-");
-
-    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
-    await user.click(groupToggle("Clients & deals"));
-    expect(list("Clients & deals").className).toContain("transition-");
-    expect(list("Clients & deals").className).toContain("grid-rows-[0fr]");
-    expect(list("Clients & deals").hasAttribute("inert")).toBe(true);
-  });
-
-  it("opens the group holding the current page, on load and on navigation", () => {
-    localStorage.setItem("sidebar-closed-groups", JSON.stringify(["Relationships", "Clients & deals"]));
-    const { rerender } = renderSidebar();
-    expect(linkVisible("Realtors")).toBe(true);
-    expect(linkVisible("Customers")).toBe(false);
-
-    pathname = "/customers";
-    act(() => {
-      rerender(
-        <AppSidebar displayName="Admin Owner" roleLabel="Owner Admin" signOutAction={async () => {}}>
-          <p>Page content</p>
-        </AppSidebar>
-      );
-    });
-    expect(linkVisible("Customers")).toBe(true);
-    expect(JSON.parse(localStorage.getItem("sidebar-closed-groups")!)).toEqual([]);
+    expect(within(desktopNav()).getByRole("link", { name: "Overview" }).getAttribute("aria-current")).toBe("page");
   });
 });
 
 describe("reordering groups", () => {
   const desktopNav = () => screen.getAllByRole("navigation", { name: "Main" })[0];
   const headingOrder = () =>
-    [...desktopNav().querySelectorAll(":scope > div[draggable]")].map((el) => el.querySelector("button[aria-expanded], span")?.textContent?.trim());
+    [...desktopNav().querySelectorAll(":scope > div[draggable]")].map((el) => el.querySelector("a, span")?.textContent?.trim());
   const DEFAULT = ["Overview", "Inspections", "Relationships", "Clients & deals", "Communication"];
 
   it("moves groups with the arrange-mode buttons, keeps focus on the moved group, and remembers the order", async () => {
@@ -235,7 +204,7 @@ describe("reordering groups", () => {
 
     await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
     // Links are tucked away while arranging.
-    expect(within(desktopNav()).queryByRole("link", { name: "Realtors" })).toBeNull();
+    expect(within(desktopNav()).queryByRole("link", { name: "Relationships" })).toBeNull();
     expect(within(desktopNav()).getByRole("button", { name: "Move Overview up" })).toHaveProperty("disabled", true);
 
     await user.click(within(desktopNav()).getByRole("button", { name: "Move Communication up" }));
@@ -245,7 +214,7 @@ describe("reordering groups", () => {
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Move Communication up");
 
     await user.click(within(desktopNav()).getByRole("button", { name: "Done" }));
-    expect(within(desktopNav()).getByRole("link", { name: "Realtors" })).toBeTruthy();
+    expect(within(desktopNav()).getByRole("link", { name: "Relationships" })).toBeTruthy();
 
     cleanup();
     renderSidebar();
