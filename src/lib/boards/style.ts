@@ -83,10 +83,22 @@ export function textOn(bg: Oklch): Oklch {
   return candidates.reduce((best, c) => (contrast(c, bg) > contrast(best, bg) ? c : best));
 }
 
-export function tilePaint(style: TileStyle): TilePaint {
+// "Automatic" tiles wear their urgency: overdue red, today amber, soon
+// blue (the fixed status colors), calm surface otherwise. Bold fill makes
+// that a solid status color.
+const STATUS_TOKEN = { overdue: "danger", today: "warning", soon: "info" } as const;
+
+export function tilePaint(style: TileStyle, severity?: "overdue" | "today" | "soon" | "info" | null): TilePaint {
   if (style.color === "auto") {
+    const status = severity && severity !== "info" ? STATUS_TOKEN[severity] : null;
+    if (status && style.fill === "bold") {
+      return { background: `var(--color-${status})`, color: `var(--color-${status}-foreground)`, border: "transparent", muted: `color-mix(in oklab, var(--color-${status}-foreground) 80%, transparent)` };
+    }
+    if (status && style.fill !== "outline") {
+      return { background: `var(--color-${status}-soft)`, color: "var(--color-foreground)", border: `var(--color-${status}-border)`, muted: "var(--color-muted-foreground)" };
+    }
     return style.fill === "outline"
-      ? { background: "transparent", color: "var(--color-foreground)", border: "var(--color-border)", muted: "var(--color-muted-foreground)" }
+      ? { background: "transparent", color: "var(--color-foreground)", border: status ? `var(--color-${status})` : "var(--color-border)", muted: "var(--color-muted-foreground)" }
       : { background: "var(--color-surface)", color: "var(--color-foreground)", border: "var(--color-border)", muted: "var(--color-muted-foreground)" };
   }
   if (style.color === "brand") {

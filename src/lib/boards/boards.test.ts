@@ -158,6 +158,15 @@ describe("tile styles", () => {
     }
   });
 
+  it("lets Automatic tiles wear their urgency in the fixed status colors", () => {
+    expect(tilePaint(DEFAULT_STYLE, "overdue").background).toBe("var(--color-danger-soft)");
+    expect(tilePaint({ ...DEFAULT_STYLE, fill: "bold" }, "today")).toMatchObject({ background: "var(--color-warning)", color: "var(--color-warning-foreground)" });
+    expect(tilePaint(DEFAULT_STYLE, "info").background).toBe("var(--color-surface)");
+    expect(tilePaint(DEFAULT_STYLE, null).background).toBe("var(--color-surface)");
+    // A chosen color is the viewer's choice; urgency stays in the badges.
+    expect(tilePaint({ ...DEFAULT_STYLE, color: "violet" }, "overdue").background).not.toContain("danger");
+  });
+
   it("paints every named color in every fill", () => {
     for (const color of TILE_COLORS) {
       for (const fill of ["bold", "tint", "outline", "glass"] as const) {
