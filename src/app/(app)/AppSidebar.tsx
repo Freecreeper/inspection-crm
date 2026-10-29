@@ -34,6 +34,7 @@ import {
   ArrowUpDown,
   Menu,
   X,
+  ArrowLeft,
 } from "lucide-react";
 
 // `requires` hides a link from roles that can't use the page (the page
@@ -416,7 +417,19 @@ export function AppSidebar({
               aria-hidden="true"
             />
           </button>
-          <p className="text-sm font-bold uppercase tracking-wide text-slate-900 lg:hidden">Inspection CRM</p>
+          {/* Every page but the dashboard gets a way home without opening the
+              menu; on phones it takes the place of the app name. */}
+          {isActivePath(pathname, "/dashboard") ? (
+            <p className="text-sm font-bold uppercase tracking-wide text-slate-900 lg:hidden">Inspection CRM</p>
+          ) : (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Dashboard
+            </Link>
+          )}
         </div>
         <main className="flex-1 overflow-x-hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
