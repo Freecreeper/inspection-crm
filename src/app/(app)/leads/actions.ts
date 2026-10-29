@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { assertCan } from "@/lib/rbac";
+import { logActivity } from "@/lib/activity";
+import { isSettableLeadStatus } from "@/lib/leads/pipeline";
 import type { Role } from "@prisma/client";
 
 export async function createLead(formData: FormData) {
@@ -24,6 +26,25 @@ export async function createLead(formData: FormData) {
   await prisma.lead.create({ data: { firstName, lastName, email, phone, notes } });
   revalidatePath("/leads");
   redirect("/leads");
+}
+
+// Moves a lead along the pipeline (bound to the lead id; the form posts
+// `status`). Only the statuses staff may set by hand are accepted —
+// Converted comes from convertLead — and a converted lead is never moved.
+export async function setLeadStatus(leadId: string, formData: FormData) {
+  const session = await auth();
+  assertCan(session?.user?.role as Role | undefined, "crm:write");
+  const status = formData.get("status");
+  if (!isSettableLeadStatus(status)) throw new Error("That isn't a status a lead can be moved to.");
+
+  await prisma.$transaction(async (tx) => {
+    const lead = await tx.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+    if (!lead || lead.status === "CONVERTED" || lead.status === status) return;
+    await tx.lead.update({ where: { id: leadId }, data: { status } });
+    await logActivity(tx, { actorId: session?.user?.id, action: "lead.status_changed", entityType: "Lead", entityId: leadId, before: { status: lead.status }, after: { status } });
+  });
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${leadId}`);
 }
 
 // Converting a lead never requires anything beyond the lead itself — property,

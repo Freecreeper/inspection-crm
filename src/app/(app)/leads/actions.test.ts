@@ -14,7 +14,7 @@ vi.mock("next/navigation", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { createLead, convertLead } from "./actions";
+import { createLead, convertLead, setLeadStatus } from "./actions";
 
 const mockAuth = vi.mocked(auth);
 const mockPrisma = prisma as unknown as {
@@ -74,5 +74,42 @@ describe("convertLead", () => {
       data: expect.objectContaining({ status: "CONVERTED" }),
     });
     expect(mockPrisma.lead.update).toHaveBeenCalledWith({ where: { id: "lead-1" }, data: { convertedCustomerId: "cust-1" } });
+  });
+});
+
+describe("setLeadStatus", () => {
+  const db = prisma as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
+  const form = (status: string) => {
+    const f = new FormData();
+    f.set("status", status);
+    return f;
+  };
+
+  it("rejects an unauthorized role", async () => {
+    mockAuth.mockResolvedValue({ user: { role: "INSPECTOR" } } as never);
+    await expect(setLeadStatus("l1", form("CONTACTED"))).rejects.toThrow();
+    expect(db.lead.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses Converted and unknown statuses", async () => {
+    await expect(setLeadStatus("l1", form("CONVERTED"))).rejects.toThrow();
+    await expect(setLeadStatus("l1", form("WON"))).rejects.toThrow();
+    expect(db.lead.update).not.toHaveBeenCalled();
+  });
+
+  it("moves the lead and records who did it", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u1", role: "OFFICE_STAFF" } } as never);
+    db.lead.findUnique.mockResolvedValue({ status: "NEW" });
+    await setLeadStatus("l1", form("CONTACTED"));
+    expect(db.lead.update).toHaveBeenCalledWith({ where: { id: "l1" }, data: { status: "CONTACTED" } });
+    expect(db.activityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorId: "u1", action: "lead.status_changed", entityId: "l1", before: { status: "NEW" }, after: { status: "CONTACTED" } }),
+    });
+  });
+
+  it("never moves a converted lead", async () => {
+    db.lead.findUnique.mockResolvedValue({ status: "CONVERTED" });
+    await setLeadStatus("l1", form("LOST"));
+    expect(db.lead.update).not.toHaveBeenCalled();
   });
 });
