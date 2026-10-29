@@ -257,6 +257,22 @@ describe("reordering groups", () => {
     expect(headingOrder()).toEqual(["Inspections", "Relationships", "Overview", "Clients & deals", "Communication"]);
   });
 
+  it("drags a picture of only the grabbed heading", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    await user.click(within(desktopNav()).getByRole("button", { name: "Reorder sections" }));
+    const inspections = [...desktopNav().querySelectorAll(":scope > div[draggable]")].find((el) => el.querySelector("span")?.textContent === "Inspections")!;
+    const setDragImage = vi.fn();
+    fireEvent.dragStart(inspections, { dataTransfer: { effectAllowed: "", setData: () => {}, getData: () => "", setDragImage } });
+
+    expect(setDragImage).toHaveBeenCalledTimes(1);
+    const ghost = setDragImage.mock.calls[0][0] as HTMLElement;
+    expect(ghost.textContent).toBe("Inspections");
+    expect(ghost.parentElement).toBe(document.body);
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(ghost.isConnected).toBe(false);
+  });
+
   it("moves a dragged label into the target's place", () => {
     expect(moveLabel(["A", "B", "C"], "A", "C")).toEqual(["B", "C", "A"]);
     expect(moveLabel(["A", "B", "C"], "C", "A")).toEqual(["C", "A", "B"]);

@@ -213,6 +213,29 @@ function currentTranslateY(el: HTMLElement): number {
   return transform && transform !== "none" ? new DOMMatrixReadOnly(transform).m42 : 0;
 }
 
+// The browser's own drag image is a picture of the dragged element's area,
+// which can take in the groups around it, so several titles seem to move at
+// once. Drag a detached copy of just this group's heading bar instead.
+function setBarDragImage(e: React.DragEvent, bar: Element | null) {
+  if (!(bar instanceof HTMLElement) || typeof e.dataTransfer.setDragImage !== "function") return;
+  const rect = bar.getBoundingClientRect();
+  const ghost = bar.cloneNode(true) as HTMLElement;
+  ghost.setAttribute("aria-hidden", "true");
+  Object.assign(ghost.style, {
+    position: "fixed",
+    top: "-1000px",
+    left: "0",
+    width: `${rect.width}px`,
+    pointerEvents: "none",
+    background: "white",
+    boxShadow: "0 8px 20px rgb(15 23 42 / 0.15)",
+  });
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, e.clientX - rect.left, e.clientY - rect.top);
+  // The browser has taken its picture by the next frame.
+  requestAnimationFrame(() => ghost.remove());
+}
+
 // A short highlight on a group that just moved, so the eye can find it.
 function flashGroup(nav: HTMLElement | null, label: string) {
   const bar = nav?.querySelector(`:scope > [data-group="${label}"]`)?.firstElementChild;
@@ -604,6 +627,7 @@ function SidebarContent({
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
               e.dataTransfer.setData("text/plain", group.label);
+              setBarDragImage(e, e.currentTarget.firstElementChild);
               settleUntil.current = 0;
               setDragging(group.label);
               setPreview(groups.map((g) => g.label));
