@@ -81,7 +81,7 @@ function SheetRow({ item, run, pending }: { item: BoardItem; run: (a: ItemAction
           <Link href={item.href} className="min-w-0 text-sm font-medium text-foreground hover:underline">
             {item.title}
           </Link>
-          <SeverityBadge severity={item.severity} />
+          {item.severity !== "info" && <SeverityBadge severity={item.severity} />}
         </div>
         {(item.dueLabel || item.subtitle) && <p className="mt-0.5 text-xs text-muted-foreground">{[item.dueLabel, item.subtitle].filter(Boolean).join(" · ")}</p>}
         {item.actions.length > 0 && (
@@ -121,7 +121,9 @@ export function QuickSheet({ def, data, onClose, run, pending }: { def: WidgetDe
             View all {data.total > data.items.length ? `${data.total} ` : ""}→
           </Link>
         </p>
-        <p className="px-4 pb-4 text-xs text-muted-foreground">On a phone, swipe a task right to complete it or left to move it to tomorrow.</p>
+        {sections.some((sec) => sec.items.some((i) => i.actions.some((a) => a.kind === "completeTask" || a.kind === "snoozeTask"))) && (
+          <p className="px-4 pb-4 text-xs text-muted-foreground">On a phone, swipe a task right to complete it or left to move it to tomorrow.</p>
+        )}
       </div>
     </Drawer>
   );
