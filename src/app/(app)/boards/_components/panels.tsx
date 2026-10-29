@@ -101,7 +101,7 @@ export function QuickSheet({ def, data, onClose, run, pending }: { def: WidgetDe
   const sections = data.stack ? data.stack : [data];
   return (
     <Drawer open onClose={onClose} title={def.label} titleId={titleId}>
-      <div className="-mx-4 -mt-2">
+      <div>
         {sections.map((section) => (
           <section key={section.tileId} className="border-b border-border last:border-0">
             {data.stack && <h3 className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{section.headline.label}</h3>}
@@ -139,7 +139,7 @@ export function Gallery({ board, widgets, onAdd, onClose }: { board: BoardId; wi
   ].filter((g) => g.items.length > 0);
   return (
     <Drawer open onClose={onClose} title="Add a widget" titleId={titleId}>
-      <div className="space-y-5">
+      <div className="space-y-5 px-5 py-4">
         {groups.map((g) => (
           <section key={g.label}>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</h3>
@@ -176,7 +176,7 @@ export function StyleEditor({ tile, def, defs, widgets, onChange, onRemove, onCl
   const paint = tilePaint(style);
   return (
     <Drawer open onClose={onClose} title={`${def.label} tile`} titleId={titleId}>
-      <div className="space-y-5">
+      <div className="space-y-5 px-5 py-4">
         <div className="flex h-24 flex-col justify-between border p-3" style={{ background: paint.background, color: paint.color, borderColor: paint.border, borderRadius: style.shape === "sharp" ? 4 : style.shape === "rounded" ? 12 : 22 }}>
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: paint.muted }}>
             {def.label}
@@ -298,7 +298,7 @@ export function LayoutsPanel({ boardLabel, onReset, onPreset, hideClear, onHideC
   );
   return (
     <Drawer open onClose={onClose} title="Layouts" titleId={titleId}>
-      <div className="space-y-5">
+      <div className="space-y-5 px-5 py-4">
         <ul className="space-y-2">
           {option("reset", `${boardLabel} default`, "This board's own starting layout, on every device.", onReset)}
           {LAYOUT_PRESETS.map((p) => option(p.id, p.label, p.description, () => onPreset(p.id)))}
