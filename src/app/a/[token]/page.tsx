@@ -7,7 +7,9 @@ import { SignForm } from "./SignForm";
 import { getBrand } from "@/lib/brand/service";
 import { PublicBrandHeader, toBrandProps } from "@/components/brand/PublicBrandHeader";
 
-export const metadata: Metadata = { title: "Inspection agreement", robots: { index: false, follow: false } };
+// The link itself is the credential: never send it on as a referrer (set in
+// the page too, since the server in front of the app rewrites the header).
+export const metadata: Metadata = { title: "Inspection agreement", referrer: "no-referrer", robots: { index: false, follow: false } };
 
 // Public, signed-token page (no staff session, outside the (app) layout).
 // Viewing never changes anything; signing needs the box ticked, a typed
