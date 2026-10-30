@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { formatBusinessDate } from "@/lib/businessTime";
 import { notFound } from "next/navigation";
 import { resolveDeliveryByToken, markDeliveryViewed } from "@/lib/delivery";
 import type { ReportSnapshot } from "@/lib/reportEngine";
 import { getBrand } from "@/lib/brand/service";
 import { PublicBrandHeader } from "@/components/brand/PublicBrandHeader";
+
+// The link itself is the credential: never send it on as a referrer (set in
+// the page too, since the server in front of the app rewrites the header).
+export const metadata: Metadata = { title: "Inspection report", referrer: "no-referrer", robots: { index: false, follow: false } };
 
 // Public, signed-token page — no staff session, no sidebar nav (outside the
 // (app) route group's layout). Only customer-facing fields are shown here;

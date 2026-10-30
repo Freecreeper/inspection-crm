@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { verifyUnsubscribeToken } from "@/lib/email/unsubscribe";
 import { PreferenceToggles } from "./PreferenceToggles";
 import { PublicBrandHeader } from "@/components/brand/PublicBrandHeader";
 
-export const metadata = { title: "Email preferences" };
+// The link itself is the credential: never send it on as a referrer (set in
+// the page too, since the server in front of the app rewrites the header).
+export const metadata: Metadata = { title: "Email preferences", referrer: "no-referrer", robots: { index: false, follow: false } };
 
 // Reached from the link in a relationship or marketing email. GET only
 // displays — changes need a button press, so link scanners can't

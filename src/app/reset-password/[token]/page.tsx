@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { findResetToken } from "@/lib/security/passwordReset";
 import { ResetForm } from "./ResetForm";
 import { SignInBrand } from "@/components/brand/PublicBrandHeader";
+
+// The link itself is the credential: never send it on as a referrer (set in
+// the page too, since the server in front of the app rewrites the header).
+export const metadata: Metadata = { title: "Choose a new password", referrer: "no-referrer", robots: { index: false, follow: false } };
 
 // Public, opened from the emailed link. Shows the form only for a link
 // that's still usable.
