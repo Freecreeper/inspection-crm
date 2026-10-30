@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { clientIp } from "@/lib/security/loginThrottle";
 import { requestPasswordReset } from "@/lib/security/passwordReset";
+import { SignInBrand } from "@/components/brand/PublicBrandHeader";
 
 // Public. Always answers the same way, so it can't be used to find out
 // which emails have accounts.
@@ -18,7 +19,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <SignInBrand />
         <h1 className="mt-1 text-xl font-semibold text-foreground">Reset your password</h1>
         {sent ? (
           <div role="status" className="mt-4 space-y-3 text-sm text-neutral-700">

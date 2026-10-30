@@ -3,8 +3,9 @@ import { connection } from "next/server";
 import { cookies } from "next/headers";
 import { businessTimeZone } from "@/lib/businessTime";
 import { auth } from "@/lib/auth";
-import { CUSTOM_THEME_STYLE_ID, THEME_COOKIE, pickTheme } from "@/lib/theme";
+import { CUSTOM_THEME_STYLE_ID, THEME_COOKIE, pickThemeOrCompany } from "@/lib/theme";
 import { customThemeCss } from "@/lib/theme/custom";
+import { getBrand } from "@/lib/brand/service";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,10 +22,15 @@ const geistMono = Geist_Mono({
 // The business time zone is published to the browser as a meta tag, so
 // client components format dates in the same zone as the server
 // (src/lib/businessTime.ts) instead of whatever zone the browser is in.
+// The tab title and icon are the company's (Settings → Branding); the icon
+// is the uploaded one or the placeholder mark in the brand color.
 export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrand();
+  const icon = brand.icon?.url ?? `/brand/icon?c=${brand.brandColor.slice(1)}`;
   return {
-    title: "Inspection CRM",
-    description: "Home inspection CRM — Version 1 foundation.",
+    title: { default: brand.companyName, template: `%s · ${brand.companyName}` },
+    description: `${brand.companyName} — inspections, customers and reports.`,
+    icons: { icon, apple: icon },
     other: { "app-timezone": businessTimeZone() },
   };
 }
@@ -39,8 +45,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // device) or this browser's cookie, whichever is newer. "System" is
   // resolved by the stylesheet's prefers-color-scheme; a custom theme's
   // colors are inlined.
+  // Someone who has never picked colors gets the company's (Settings →
+  // Branding), when it has chosen a brand color.
   const session = await auth();
-  const theme = pickTheme(session?.user?.theme, (await cookies()).get(THEME_COOKIE)?.value);
+  const brand = await getBrand();
+  const theme = pickThemeOrCompany(session?.user?.theme, (await cookies()).get(THEME_COOKIE)?.value, brand.theme);
   return (
     <html
       lang="en"

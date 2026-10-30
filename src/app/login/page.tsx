@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { AuthError, CredentialsSignin } from "next-auth";
 import { safeRedirectPath } from "@/lib/security/redirects";
+import { SignInBrand } from "@/components/brand/PublicBrandHeader";
 
 const MESSAGES: Record<string, { tone: "error" | "info"; text: string }> = {
   "1": { tone: "error", text: "Incorrect email or password." },
@@ -42,7 +43,7 @@ export default async function LoginPage({
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <SignInBrand />
         <h1 className="mt-1 text-xl font-semibold text-foreground">Staff sign in</h1>
 
         {message && (

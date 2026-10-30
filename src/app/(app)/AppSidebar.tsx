@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { trapTabKey } from "@/components/focusTrap";
 import type { Permission } from "@/lib/rbac";
 import {
-  Home,
   KeyRound,
   ChevronDown,
   ChevronUp,
@@ -20,6 +19,14 @@ import {
 } from "lucide-react";
 
 import { NAV_GROUPS, groupForPath, isActivePath, visibleGroups } from "./navigation";
+import { BrandMark, PlaceholderMark, type BrandProps } from "@/components/brand/BrandMark";
+import { DEFAULT_BRAND_COLOR } from "@/lib/brand/shared";
+
+// The company branding (Settings → Branding), for the sidebar header, the
+// collapsed rail's mark and the phone top bar.
+export type SidebarBrand = BrandProps & { iconUrl: string | null };
+const DEFAULT_SIDEBAR_BRAND: SidebarBrand = { companyName: "Inspection CRM", brandColor: DEFAULT_BRAND_COLOR, logo: null, iconUrl: null };
+const BrandContext = createContext<SidebarBrand>(DEFAULT_SIDEBAR_BRAND);
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
 // The nav groups' labels in the order this browser arranged them.
@@ -181,8 +188,10 @@ export function AppSidebar({
   granted = [],
   signOutAction,
   actions,
+  brand = DEFAULT_SIDEBAR_BRAND,
   children,
 }: {
+  brand?: SidebarBrand;
   displayName: string;
   roleLabel: string;
   // The permissions the signed-in role has (decided on the server).
@@ -246,7 +255,7 @@ export function AppSidebar({
   );
 
   return (
-    <>
+    <BrandContext.Provider value={brand}>
       {/* Desktop: in the layout, remembered per browser. Collapsed, it eases
           down to an icon rail (every page still one click away, names in
           tooltips) instead of disappearing; the new contents fade in. */}
@@ -312,7 +321,7 @@ export function AppSidebar({
               section's board, a board (or anything else) to Overview. On
               phones it takes the place of the app name. */}
           {isActivePath(pathname, "/dashboard") ? (
-            <p className="text-sm font-bold uppercase tracking-wide text-foreground lg:hidden">Inspection CRM</p>
+            <p className="truncate text-sm font-bold uppercase tracking-wide text-foreground lg:hidden">{brand.companyName}</p>
           ) : (
             (() => {
               const section = groupForPath(pathname);
@@ -332,7 +341,7 @@ export function AppSidebar({
         </div>
         <main className="flex-1 overflow-x-hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
-    </>
+    </BrandContext.Provider>
   );
 }
 
@@ -412,6 +421,7 @@ function SidebarRail({
   granted: Permission[];
   signOutAction: () => Promise<void>;
 }) {
+  const brand = useContext(BrandContext);
   const { order } = useGroupOrder();
   const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
   const groups = orderGroups(visibleGroups(granted), order);
@@ -432,8 +442,13 @@ function SidebarRail({
   return (
     <>
       <div className="flex justify-center border-b border-sidebar-border py-5">
-        <Link href="/dashboard" aria-label="Dashboard" {...tipProps("Inspection CRM")} className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent">
-          <Home className="h-5 w-5 text-white" strokeWidth={2.25} aria-hidden="true" />
+        <Link href="/dashboard" aria-label="Dashboard" {...tipProps(brand.companyName)} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg">
+          {brand.iconUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- the uploaded square icon, served by this app
+            <img src={brand.iconUrl} alt="" width={36} height={36} className="h-9 w-9 object-cover" />
+          ) : (
+            <PlaceholderMark color={brand.brandColor} size={36} />
+          )}
         </Link>
       </div>
 
@@ -502,6 +517,7 @@ function SidebarContent({
   signOutAction: () => Promise<void>;
   onNavigate: () => void;
 }) {
+  const brand = useContext(BrandContext);
   const { order, save: saveOrder } = useGroupOrder();
   // Arrange mode: headings become drag handles with move buttons, and the
   // links are tucked away so the whole list fits.
@@ -558,15 +574,21 @@ function SidebarContent({
   return (
     <>
       <div className="flex items-center gap-2.5 border-b border-sidebar-border px-5 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
-          <Home className="h-5 w-5 text-white" strokeWidth={2.25} />
-        </div>
-        <div className="min-w-0 pr-8 lg:pr-0">
-          <p className="truncate text-sm font-bold uppercase tracking-wide text-sidebar-strong">Inspection CRM</p>
-          <p className="truncate text-[10px] font-medium uppercase tracking-wider text-sidebar-muted">
-            People &bull; Properties &bull; Progress
-          </p>
-        </div>
+        {brand.logo ? (
+          <div className="min-w-0 pr-8 lg:pr-0">
+            <BrandMark brand={brand} height={32} tile />
+          </div>
+        ) : (
+          <>
+            <PlaceholderMark color={brand.brandColor} size={36} />
+            <div className="min-w-0 pr-8 lg:pr-0">
+              <p className="truncate text-sm font-bold uppercase tracking-wide text-sidebar-strong">{brand.companyName}</p>
+              <p className="truncate text-[10px] font-medium uppercase tracking-wider text-sidebar-muted">
+                People &bull; Properties &bull; Progress
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       <nav

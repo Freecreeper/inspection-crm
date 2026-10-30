@@ -56,13 +56,14 @@ export function BrandingForm({ brand, neutralLabels, sidebarLabels }: { brand: F
           Preview
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-md border border-neutral-200 bg-white p-4">
-            <BrandMark brand={preview} nameClassName="text-base font-semibold text-neutral-900" />
-            <p className="mt-2 text-xs text-neutral-500">On light backgrounds (reports, emails, pages)</p>
+          {/* Fixed colors, not theme tokens: these samples must look the same in light or dark mode. */}
+          <div className="rounded-md border border-border p-4" style={{ background: "#ffffff" }}>
+            <BrandMark brand={preview} nameClassName="text-base font-semibold [color:#0f172a]" />
+            <p className="mt-2 text-xs [color:#64748b]">On light backgrounds (reports, emails, pages)</p>
           </div>
-          <div className="rounded-md bg-neutral-900 p-4">
-            <BrandMark brand={preview} tile nameClassName="text-base font-semibold text-white" />
-            <p className="mt-2 text-xs text-neutral-400">On dark backgrounds{brand.logo ? " (shown on a white tile)" : ""}</p>
+          <div className="rounded-md p-4" style={{ background: "#18181b" }}>
+            <BrandMark brand={preview} tile nameClassName="text-base font-semibold [color:#ffffff]" />
+            <p className="mt-2 text-xs [color:#a1a1aa]">On dark backgrounds{brand.logo ? " (shown on a white tile)" : ""}</p>
           </div>
         </div>
         {!brand.logo && <p className="mt-3 text-xs text-muted-foreground">No logo yet: the house mark in your brand color, next to the company name, stands in for it everywhere.</p>}
@@ -196,12 +197,12 @@ function ImageUpload({
       <h2 id={`${id}-title`} className="text-sm font-semibold text-foreground">
         {title}
       </h2>
-      <div className="mt-3 flex h-20 items-center justify-center rounded-md border border-dashed border-input bg-white p-2">
+      <div className="mt-3 flex h-20 items-center justify-center rounded-md border border-dashed border-input p-2" style={{ background: "#ffffff" }}>
         {asset ? (
           // eslint-disable-next-line @next/next/no-img-element -- preview of the uploaded image
           <img src={asset.url} alt={`Current ${title.toLowerCase()}`} className="max-h-16 max-w-full object-contain" />
         ) : (
-          (fallback ?? <span className="text-xs text-neutral-500">No {title.toLowerCase()} yet: placeholder in use</span>)
+          (fallback ?? <span className="text-xs [color:#64748b]">No {title.toLowerCase()} yet: placeholder in use</span>)
         )}
       </div>
       {asset && (

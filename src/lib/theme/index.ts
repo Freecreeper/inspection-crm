@@ -96,6 +96,15 @@ export function pickTheme(sessionValue: string | undefined, cookieValue: string 
   return (fromCookie.savedAt ?? 0) > (fromSession.savedAt ?? 0) ? fromCookie : fromSession;
 }
 
+// The theme to render: the viewer's own choice (pickTheme), or — for
+// someone who has never chosen — the company's colors from Settings →
+// Branding, when it has some.
+export function pickThemeOrCompany(sessionValue: string | undefined, cookieValue: string | undefined, company: CustomTheme | null): ThemePreference {
+  const chosen = pickTheme(sessionValue, cookieValue);
+  if (sessionValue || cookieValue || !company) return chosen;
+  return { ...chosen, palette: "custom", custom: company };
+}
+
 export function themeCookie(pref: ThemePreference): string {
   return `${THEME_COOKIE}=${encodeTheme(pref)}; Path=/; Max-Age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
 }
