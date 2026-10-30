@@ -29,6 +29,7 @@ import {
   Wrench,
   SlidersHorizontal,
   FileSignature,
+  Palette,
 } from "lucide-react";
 import type { Permission } from "@/lib/rbac";
 import { BOARD_HREF, type BoardId } from "@/lib/boards/catalog";
@@ -105,6 +106,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/settings/users", label: "Users", icon: UserCog, requires: "user:manage" },
       { href: "/settings/custom-fields", label: "Custom fields", icon: SlidersHorizontal, requires: "custom-field:manage" },
       { href: "/settings/agreement", label: "Agreement", icon: FileSignature, requires: "agreement:manage" },
+      { href: "/settings/branding", label: "Branding", icon: Palette, requires: "branding:manage" },
     ],
   },
 ];

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { getEmailSettings } from "@/lib/email/settings";
 import { verifyUnsubscribeToken } from "@/lib/email/unsubscribe";
 import { PreferenceToggles } from "./PreferenceToggles";
+import { PublicBrandHeader } from "@/components/brand/PublicBrandHeader";
 
 export const metadata = { title: "Email preferences" };
 
@@ -12,12 +12,11 @@ export default async function EmailPreferencesPage({ params }: { params: Promise
   const { token } = await params;
   const verified = verifyUnsubscribeToken(token);
   const realtor = verified ? await prisma.realtor.findUnique({ where: { id: verified.realtorId } }) : null;
-  const settings = await getEmailSettings();
 
   return (
     <main className="mx-auto max-w-md px-4 py-16">
+      <PublicBrandHeader />
       <h1 className="text-xl font-semibold text-foreground">Email preferences</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{settings.companyName}</p>
       {!realtor ? (
         <p className="mt-6 text-sm text-neutral-700">This link isn&apos;t valid. If you&apos;d like to change the emails you receive, reply to any of our emails.</p>
       ) : (

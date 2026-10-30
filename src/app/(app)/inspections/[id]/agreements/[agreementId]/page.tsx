@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getEmailSettings } from "@/lib/email/settings";
+import { getBrand } from "@/lib/brand/service";
+import { toBrandProps } from "@/components/brand/PublicBrandHeader";
 import { AgreementDocument } from "@/components/agreements/AgreementDocument";
 
 // The staff copy of an agreement request: the exact text that was sent and,
@@ -9,7 +10,7 @@ import { AgreementDocument } from "@/components/agreements/AgreementDocument";
 // a PDF.
 export default async function AgreementCopyPage({ params }: { params: Promise<{ id: string; agreementId: string }> }) {
   const { id, agreementId } = await params;
-  const [agreement, settings] = await Promise.all([prisma.inspectionAgreement.findFirst({ where: { id: agreementId, inspectionId: id } }), getEmailSettings()]);
+  const [agreement, brand] = await Promise.all([prisma.inspectionAgreement.findFirst({ where: { id: agreementId, inspectionId: id } }), getBrand()]);
   if (!agreement) notFound();
 
   return (
@@ -22,7 +23,7 @@ export default async function AgreementCopyPage({ params }: { params: Promise<{ 
         {agreement.signerEmail ? ` (${agreement.signerEmail})` : ""}. Use your browser&apos;s Print to save a PDF.
       </p>
       <AgreementDocument
-        companyName={settings.companyName}
+        brand={toBrandProps(brand)}
         title={agreement.title}
         body={agreement.body}
         signature={

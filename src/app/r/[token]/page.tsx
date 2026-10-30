@@ -2,6 +2,8 @@ import { formatBusinessDate } from "@/lib/businessTime";
 import { notFound } from "next/navigation";
 import { resolveDeliveryByToken, markDeliveryViewed } from "@/lib/delivery";
 import type { ReportSnapshot } from "@/lib/reportEngine";
+import { getBrand } from "@/lib/brand/service";
+import { PublicBrandHeader } from "@/components/brand/PublicBrandHeader";
 
 // Public, signed-token page — no staff session, no sidebar nav (outside the
 // (app) route group's layout). Only customer-facing fields are shown here;
@@ -21,9 +23,11 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
 
   await markDeliveryViewed(delivery.id);
   const snapshot = delivery.version.snapshot as unknown as ReportSnapshot;
+  const brand = await getBrand();
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
+      <PublicBrandHeader />
       <div className="rounded-lg border border-border bg-surface p-8 shadow-sm">
         <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{snapshot.reportNumber}</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">{snapshot.title || "Property Inspection Report"}</h1>
@@ -47,7 +51,7 @@ export default async function DeliveredReportPage({ params }: { params: Promise<
           Download report (PDF)
         </a>
         <p className="mt-6 text-xs text-subtle">
-          This link was sent to {delivery.recipientName}. Prepared by Inspection CRM — not an engineering, legal, or
+          This link was sent to {delivery.recipientName}. Prepared by {brand.companyName} — not an engineering, legal, or
           code-compliance determination.
         </p>
       </div>

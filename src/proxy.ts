@@ -20,6 +20,7 @@ export default auth((req) => {
     pathname.startsWith("/r/") || // signed report-delivery links
     pathname.startsWith("/u/") || // signed email-preference links
     pathname.startsWith("/a/") || // signed agreement-signing links
+    pathname.startsWith("/brand/") || // company logo and icon (emails, public pages, favicon)
     pathname === "/api/email/unsubscribe" || // one-click unsubscribe (signed token)
     pathname === "/api/webhooks/postmark" || // Basic-auth verified in the route
     pathname === "/api/cron/email"; // bearer-secret verified in the route

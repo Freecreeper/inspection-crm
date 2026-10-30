@@ -30,7 +30,9 @@ beforeEach(() => {
   vi.stubEnv("EMAIL_FROM", "noreply@crm.example.com");
   db.loginAttempt.findMany.mockResolvedValue([]);
   db.loginAttempt.findUnique.mockResolvedValue(null);
-  db.emailSettings.findUnique.mockResolvedValue({ id: "default", fromName: "Acme Inspections", fromEmail: null, replyTo: null });
+  db.emailSettings.findUnique.mockResolvedValue({ id: "default", companyName: "Acme Inspections", fromName: "Acme Inspections", fromEmail: null, replyTo: null });
+  db.brandSettings.findUnique.mockResolvedValue(null);
+  db.brandAsset.findMany.mockResolvedValue([]);
   db.activityLog.create.mockResolvedValue({});
 });
 

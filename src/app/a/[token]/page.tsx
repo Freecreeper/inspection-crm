@@ -4,6 +4,8 @@ import { formatBusinessDate } from "@/lib/businessTime";
 import { loadForSigning } from "@/lib/agreements/service";
 import { AgreementDocument } from "@/components/agreements/AgreementDocument";
 import { SignForm } from "./SignForm";
+import { getBrand } from "@/lib/brand/service";
+import { PublicBrandHeader, toBrandProps } from "@/components/brand/PublicBrandHeader";
 
 export const metadata: Metadata = { title: "Inspection agreement", robots: { index: false, follow: false } };
 
@@ -12,10 +14,11 @@ export const metadata: Metadata = { title: "Inspection agreement", robots: { ind
 // name and a button press, so link scanners can't sign.
 export default async function SignAgreementPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const [view, settings] = await Promise.all([loadForSigning(token), getEmailSettings()]);
+  const [view, settings, brand] = await Promise.all([loadForSigning(token), getEmailSettings(), getBrand()]);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:py-16">
+      <PublicBrandHeader />
       {view.state === "invalid" ? (
         <Notice title="This link isn't valid">Check that you opened the whole link from your email, or contact {settings.companyName} for a new one.</Notice>
       ) : (
@@ -28,7 +31,7 @@ export default async function SignAgreementPage({ params }: { params: Promise<{ 
           {view.state === "cancelled" && <Notice title="This link is no longer active">It was cancelled or replaced by a newer one. Contact {settings.companyName} for the current link.</Notice>}
           {view.state === "expired" && <Notice title="This link has expired">It expired on {formatBusinessDate(view.expiresAt)}. Contact {settings.companyName} for a new one.</Notice>}
           <AgreementDocument
-            companyName={settings.companyName}
+            brand={toBrandProps(brand)}
             title={view.title}
             body={view.body}
             signature={view.state === "signed" && view.signedAt && view.signedName ? { signedName: view.signedName, signedAt: view.signedAt, textHash: view.textHash } : null}
