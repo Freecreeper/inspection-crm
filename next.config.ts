@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  // Browsers and bookmark tools that ask for /favicon.ico directly get the
+  // company icon (Settings → Branding) the pages link to.
+  async redirects() {
+    return [{ source: "/favicon.ico", destination: "/brand/icon", permanent: false }];
+  },
   // The Content-Security-Policy (with a per-request nonce) is set in
   // src/proxy.ts; these are the static ones.
   async headers() {
@@ -23,6 +28,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: [...SECURITY_HEADERS, ...(production ? [HSTS_HEADER] : [])] },
       { source: "/r/:path*", headers: TOKEN_PAGE_HEADERS },
       { source: "/u/:path*", headers: TOKEN_PAGE_HEADERS },
+      { source: "/a/:path*", headers: TOKEN_PAGE_HEADERS },
       { source: "/reset-password/:path*", headers: TOKEN_PAGE_HEADERS },
     ];
   },
