@@ -31,6 +31,7 @@ import { EmailButton } from "@/components/email/EmailComposer";
 import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 import { RecordPaymentForm } from "../../invoices/RecordPaymentForm";
 import { CreateInvoiceButton } from "../../invoices/CreateInvoiceButton";
+import { CustomFieldsSection } from "@/components/customFields/CustomFieldsSection";
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,10 +104,13 @@ export default async function TransactionDetailPage({ params }: { params: Promis
       <section className="rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-foreground">Property</h2>
         {transaction.property ? (
-          <p className="mt-2 text-sm text-neutral-700">
-            {transaction.property.addressLine1}, {transaction.property.city}, {transaction.property.state}{" "}
-            {transaction.property.zip}
-          </p>
+          <>
+            <p className="mt-2 text-sm text-neutral-700">
+              {transaction.property.addressLine1}, {transaction.property.city}, {transaction.property.state}{" "}
+              {transaction.property.zip}
+            </p>
+            <CustomFieldsSection entityType="PROPERTY" entityId={transaction.property.id} title="Property details" bare />
+          </>
         ) : (
           <>
             <p className="mt-1 text-sm text-subtle">Not set — this never blocks other work on the transaction (§7).</p>
@@ -124,6 +128,8 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           </>
         )}
       </section>
+
+      <CustomFieldsSection entityType="TRANSACTION" entityId={transaction.id} />
 
       <section className="rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-foreground">Key dates</h2>
