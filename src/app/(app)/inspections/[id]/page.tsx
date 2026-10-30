@@ -16,6 +16,10 @@ import { Combobox } from "@/components/Combobox";
 import { INVOICE_STATUS_LABELS } from "@/lib/invoices";
 import { CreateInvoiceButton } from "../../invoices/CreateInvoiceButton";
 import { CustomFieldsSection } from "@/components/customFields/CustomFieldsSection";
+import { AgreementPanel } from "@/components/agreements/AgreementPanel";
+import { getAgreementWording } from "@/lib/agreements/service";
+import { agreementUrl } from "@/lib/agreements/token";
+import { formatBusinessDate, formatBusinessDateTime } from "@/lib/businessTime";
 
 export default async function InspectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,7 +29,8 @@ export default async function InspectionDetailPage({ params }: { params: Promise
       include: {
         property: true,
         inspector: true,
-        transaction: { include: { customers: { include: { customer: true } } } },
+        transaction: { include: { customers: { include: { customer: true }, orderBy: { createdAt: "asc" } } } },
+        agreements: { orderBy: { createdAt: "desc" }, take: 1 },
         reports: { orderBy: { createdAt: "desc" } },
         invoices: { where: { status: { not: "VOID" } }, orderBy: { createdAt: "asc" }, take: 1, select: { id: true, invoiceNumber: true, status: true } },
       },
@@ -59,6 +64,11 @@ export default async function InspectionDetailPage({ params }: { params: Promise
   const createReportAction = createReportFromTemplate.bind(null, inspection.id);
   const report = inspection.reports[0];
   const invoice = inspection.invoices[0];
+  const agreement = inspection.agreements[0] ?? null;
+  const wording = await getAgreementWording();
+  const now = new Date();
+  // Primary contact first: that's who signs unless staff pick someone else.
+  const signers = [...inspection.transaction.customers].sort((a, b) => Number(b.primaryContact) - Number(a.primaryContact));
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -84,6 +94,32 @@ export default async function InspectionDetailPage({ params }: { params: Promise
           ) : null}
         </div>
       </div>
+
+      {inspection.status !== "CANCELLED" || agreement ? (
+        <AgreementPanel
+          inspectionId={inspection.id}
+          latest={
+            agreement
+              ? {
+                  id: agreement.id,
+                  status: agreement.status,
+                  signerName: agreement.signerName,
+                  signerEmail: agreement.signerEmail,
+                  url: agreement.status === "PENDING" && agreement.expiresAt > now ? agreementUrl(agreement.id) : null,
+                  expires: formatBusinessDate(agreement.expiresAt),
+                  expired: agreement.expiresAt <= now,
+                  signedName: agreement.signedName,
+                  signed: agreement.signedAt ? formatBusinessDateTime(agreement.signedAt) : null,
+                }
+              : null
+          }
+          customers={signers.map((tc) => ({ id: tc.customer.id, name: `${tc.customer.firstName} ${tc.customer.lastName}`, hasEmail: Boolean(tc.customer.email) }))}
+          markedSigned={inspection.agreementSignedAt && agreement?.status !== "SIGNED" ? formatBusinessDate(inspection.agreementSignedAt) : null}
+          canRequest={can(role, "crm:write") && inspection.status !== "CANCELLED"}
+          canEmail={canEmail}
+          usesPlaceholder={wording.isDefault}
+        />
+      ) : null}
 
       <section className="rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-foreground">Status</h2>

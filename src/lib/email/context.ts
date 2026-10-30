@@ -1,7 +1,8 @@
-import type { EmailSettings, Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, type EmailSettings, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatMoney, invoiceTotals } from "@/lib/invoices";
 import { realtorDisplayName } from "@/lib/realtors/display";
+import { agreementUrl } from "@/lib/agreements/token";
 import { getEmailConfig } from "./config";
 import { getEmailSettings } from "./settings";
 import type { EmailVariables } from "./variables";
@@ -114,6 +115,17 @@ export async function loadEmailVariables(refs: EmailRefs, opts: { now?: Date; db
     const services = inspection.inspectionServices.map((s) => s.service.name);
     vars["inspection.type"] = services.length ? services.join(", ") : null;
     vars["inspector.name"] = inspection.inspector?.name ?? null;
+    if (inspection.inspectionServices.length) vars["inspection.fee"] = formatMoney(inspection.inspectionServices.reduce((sum, s) => sum.plus(s.price), new Prisma.Decimal(0)));
+    // The open signing request for this inspection — only in an email to the
+    // customer it was made for, never to anyone else on the deal.
+    if (refs.customerId) {
+      const agreement = await db.inspectionAgreement.findFirst({
+        where: { inspectionId: inspection.id, customerId: refs.customerId, status: "PENDING", expiresAt: { gt: now } },
+        orderBy: [{ createdAt: "desc" }],
+        select: { id: true },
+      });
+      if (agreement) vars["agreement.link"] = agreementUrl(agreement.id);
+    }
   }
 
   const transactionId = refs.transactionId ?? inspection?.transactionId ?? invoice?.transactionId ?? null;
