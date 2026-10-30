@@ -8,6 +8,7 @@ import { can } from "@/lib/rbac";
 import { EmailButton } from "@/components/email/EmailComposer";
 import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 import { CustomerContactFields } from "../CustomerContactFields";
+import { CustomFieldsSection } from "@/components/customFields/CustomFieldsSection";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,6 +44,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         ) : null}
       </div>
       <CustomerContactFields customerId={customer.id} email={customer.email} phone={customer.phone} canEdit={can(session?.user?.role as Role | undefined, "crm:write")} />
+      <div className="mt-4">
+        <CustomFieldsSection entityType="CUSTOMER" entityId={customer.id} />
+      </div>
 
       <div className="mt-6 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Transactions</h2>

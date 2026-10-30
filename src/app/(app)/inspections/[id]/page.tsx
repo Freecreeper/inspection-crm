@@ -15,6 +15,7 @@ import { createReportFromTemplate } from "../report-actions";
 import { Combobox } from "@/components/Combobox";
 import { INVOICE_STATUS_LABELS } from "@/lib/invoices";
 import { CreateInvoiceButton } from "../../invoices/CreateInvoiceButton";
+import { CustomFieldsSection } from "@/components/customFields/CustomFieldsSection";
 
 export default async function InspectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -203,6 +204,9 @@ export default async function InspectionDetailPage({ params }: { params: Promise
           </SubmitButton>
         </form>
       </section>
+
+      <CustomFieldsSection entityType="INSPECTION" entityId={inspection.id} />
+      <CustomFieldsSection entityType="PROPERTY" entityId={inspection.propertyId} title="Property details" />
 
       <section className="rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-foreground">Inspection report</h2>
