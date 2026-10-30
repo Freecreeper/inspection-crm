@@ -114,6 +114,11 @@ SQL from user-controlled field names. The safe path is one of:
 Whichever of these is chosen should be proposed and reviewed before implementation — this section
 exists so the limitation isn't silently rediscovered later, not to prescribe the final design.
 
+The first path now covers the most-asked questions: **Revenue by Realtor**, **Revenue by Brokerage**
+and **Revenue by Referral Source** (with lead conversion) are fixed Standard Reports
+(`src/lib/reports/crossEntity.ts` for the attribution rules, `crossEntityData.ts` for the typed
+queries), with a period picker and CSV export. The generic builder still can't group across a relation.
+
 ## Stack
 
 Next.js (App Router) + TypeScript, PostgreSQL via Prisma, Auth.js (credentials + JWT sessions),
