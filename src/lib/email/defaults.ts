@@ -149,6 +149,24 @@ The inspection at {{property.address}} has been cancelled.
 ${SIGN_OFF}`,
   },
   {
+    key: "agreement_request",
+    name: "Agreement signature request",
+    description: "Asks the customer to read and sign the inspection agreement online.",
+    category: "TRANSACTIONAL",
+    recipientType: "CUSTOMER",
+    automationEligible: false,
+    subject: 'Please sign your inspection agreement for {{property.street | "your inspection"}}',
+    body: `Hi {{customer.firstName}},
+
+Before your inspection on {{inspection.date | "the scheduled date"}}, please read and sign the inspection agreement:
+
+{{agreement.link}}
+
+It takes about a minute and works on your phone.
+
+${SIGN_OFF}`,
+  },
+  {
     key: "invoice",
     name: "Invoice",
     description: "Sends an issued invoice to the customer responsible for payment.",

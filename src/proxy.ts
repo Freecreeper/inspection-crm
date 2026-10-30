@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { contentSecurityPolicy, newNonce } from "@/lib/security/headers";
 
 // Everything requires a staff session except the login page, the NextAuth API
-// routes, and the customer/realtor report-delivery links (§13, §16) — those
-// carry their own signed token, not a staff session. Runs on the Node.js
+// routes, and the customer/realtor report-delivery and agreement-signing
+// links (§13, §16) — those carry their own signed token, not a staff session. Runs on the Node.js
 // runtime (Next.js 16's `proxy` convention), which is what lets this safely
 // import the Prisma-backed auth config below.
 //
@@ -19,6 +19,7 @@ export default auth((req) => {
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/r/") || // signed report-delivery links
     pathname.startsWith("/u/") || // signed email-preference links
+    pathname.startsWith("/a/") || // signed agreement-signing links
     pathname === "/api/email/unsubscribe" || // one-click unsubscribe (signed token)
     pathname === "/api/webhooks/postmark" || // Basic-auth verified in the route
     pathname === "/api/cron/email"; // bearer-secret verified in the route

@@ -10,6 +10,8 @@ export const PERMISSIONS = {
   "invoice:void": ["OWNER_ADMIN", "OFFICE_STAFF"],
   "invoice:create": ["OWNER_ADMIN", "OFFICE_STAFF"],
   "custom-field:manage": ["OWNER_ADMIN"],
+  // The wording of the pre-inspection agreement customers sign online.
+  "agreement:manage": ["OWNER_ADMIN"],
   "automation:manage": ["OWNER_ADMIN"],
   "report-builder:use": ["OWNER_ADMIN", "OFFICE_STAFF", "REPORTING_ANALYST"],
   "crm:write": ["OWNER_ADMIN", "OFFICE_STAFF"],

@@ -37,6 +37,8 @@ export const TEMPLATE_VARIABLES: VariableDefinition[] = [
   { key: "inspection.previousDate", label: "Previous inspection date (reschedules)", sample: "Wednesday, October 2, 2026" },
   { key: "inspection.previousTime", label: "Previous inspection time (reschedules)", sample: "1:00 PM" },
   { key: "inspector.name", label: "Inspector name", sample: "Jordan Inspector" },
+  { key: "inspection.fee", label: "Inspection fee (its services added up)", sample: "$600.00" },
+  { key: "agreement.link", label: "Link to sign the inspection agreement", sample: "https://example.com/a/•••" },
 
   { key: "transaction.number", label: "Transaction reference", sample: "T-4F2A9C" },
 

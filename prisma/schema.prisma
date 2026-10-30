@@ -198,6 +198,12 @@ enum DeliveryStatus {
   FAILED
 }
 
+enum AgreementStatus {
+  PENDING
+  SIGNED
+  REVOKED
+}
+
 enum CustomFieldDataType {
   TEXT
   NUMBER
@@ -260,18 +266,18 @@ model User {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  inspectionsAsInspector  Inspection[]       @relation("InspectorUser")
+  inspectionsAsInspector  Inspection[]         @relation("InspectorUser")
   tasksAssigned           Task[]
-  calendarBlocks          Appointment[]      @relation("CalendarBlockUser")
+  calendarBlocks          Appointment[]        @relation("CalendarBlockUser")
   activityLogs            ActivityLog[]
-  automationEvents        AutomationEvent[]  @relation("TriggeredByUser")
+  automationEvents        AutomationEvent[]    @relation("TriggeredByUser")
   reportDefinitions       ReportDefinition[]
   narrativesCreated       Narrative[]
-  reportVersionsFinalized ReportVersion[]    @relation("FinalizedByUser")
+  reportVersionsFinalized ReportVersion[]      @relation("FinalizedByUser")
   passwordResetTokens     PasswordResetToken[]
   emailMessagesCreated    EmailMessage[]
-  campaignsCreated        EmailCampaign[]    @relation("CampaignCreatedBy")
-  campaignsApproved       EmailCampaign[]    @relation("CampaignApprovedBy")
+  campaignsCreated        EmailCampaign[]      @relation("CampaignCreatedBy")
+  campaignsApproved       EmailCampaign[]      @relation("CampaignApprovedBy")
 
   @@map("users")
 }
@@ -313,6 +319,7 @@ model Customer {
   updatedAt  DateTime  @updatedAt
 
   leadOrigin     Lead?                 @relation("LeadConversion")
+  agreements     InspectionAgreement[]
   transactions   TransactionCustomer[]
   communications Communication[]
   emailMessages  EmailMessage[]
@@ -711,6 +718,7 @@ model Inspection {
   updatedAt         DateTime         @updatedAt
 
   inspectionServices InspectionService[]
+  agreements         InspectionAgreement[]
   reports            InspectionReport[]
   invoices           Invoice[]
   media              Media[]
@@ -1426,4 +1434,50 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// The pre-inspection agreement's wording (one row, like EmailSettings).
+// Editable by owners; {{placeholders}} are filled in per inspection when a
+// signature is requested. Null body = the built-in placeholder wording.
+model AgreementSettings {
+  id          String   @id @default("default")
+  title       String   @default("Pre-Inspection Agreement")
+  body        String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("agreement_settings")
+}
+
+// One request for a customer to sign the agreement for an inspection.
+// title/body are the exact filled-in text they were shown, frozen when the
+// request was made; textHash fingerprints it. The signing link is an HMAC
+// of the id (src/lib/agreements/token.ts), so no raw token is stored. At
+// most one PENDING request per inspection; signing stamps
+// Inspection.agreementSignedAt.
+model InspectionAgreement {
+  id              String          @id @default(cuid())
+  inspectionId    String
+  inspection      Inspection      @relation(fields: [inspectionId], references: [id])
+  customerId      String?
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  signerName      String
+  signerEmail     String?
+  title           String
+  body            String
+  textHash        String
+  status          AgreementStatus @default(PENDING)
+  expiresAt       DateTime
+  signedAt        DateTime?
+  signedName      String?
+  signedIp        String?
+  signedUserAgent String?
+  revokedAt       DateTime?
+  createdById     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([inspectionId, status])
+  @@index([customerId])
+  @@map("inspection_agreements")
 }

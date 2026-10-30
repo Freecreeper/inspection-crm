@@ -194,7 +194,8 @@ export async function cancelInspectionAction(inspectionId: string, input: { noti
   return result;
 }
 
-// No e-signature system yet: staff record that the agreement is signed.
+// Staff record an agreement signed outside the app (paper, another
+// service). Online signing (lib/agreements) sets the same flag.
 export async function setAgreementSigned(inspectionId: string, signed: boolean): Promise<Result> {
   const { userId } = await requireSession("crm:write");
   const current = await prisma.inspection.findUnique({ where: { id: inspectionId }, select: { agreementSignedAt: true } });
