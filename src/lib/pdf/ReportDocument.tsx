@@ -1,11 +1,13 @@
 import { formatBusinessDate, formatBusinessDateTimeWithZone } from "@/lib/businessTime";
-import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet, Svg, Rect, Path, G } from "@react-pdf/renderer";
 import type { ReportSnapshot } from "@/lib/reportEngine";
+import { HOUSE_PATHS, textOnBrand } from "@/lib/brand/shared";
 
 // Deliberately not a design system — this is a functional cover +
 // section/finding/summary layout for Version 1 (§ "Professional PDF
-// Generation"). Company branding/logo is a future customization point, not
-// wired to any settings UI yet.
+// Generation"), branded from Settings → Branding: the logo (or the
+// placeholder mark) and contact details on the cover, the company name at
+// the top of every later page and in the footer.
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#1e293b" },
   coverTitle: { fontSize: 22, marginBottom: 8, fontFamily: "Helvetica-Bold" },
@@ -21,7 +23,54 @@ const styles = StyleSheet.create({
   photo: { width: 140, height: 105, marginRight: 6, marginBottom: 6, objectFit: "cover" },
   footer: { position: "absolute", bottom: 20, left: 36, right: 36, fontSize: 8, color: "#94a3b8", textAlign: "center" },
   pageNumber: { position: "absolute", bottom: 20, right: 36, fontSize: 8, color: "#94a3b8" },
+  brandRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 14, marginBottom: 18, borderBottomWidth: 2 },
+  brandName: { fontSize: 14, fontFamily: "Helvetica-Bold", marginLeft: 8 },
+  brandContact: { fontSize: 8.5, color: "#475569", textAlign: "right", lineHeight: 1.4 },
+  runningHeader: { position: "absolute", top: 16, left: 36, right: 36, fontSize: 8, color: "#94a3b8" },
 });
+
+// What the PDF needs to brand a report; built in renderReportPdf.ts.
+export interface PdfBrand {
+  companyName: string;
+  phone: string | null;
+  website: string | null;
+  mailingAddress: string | null;
+  brandColor: string;
+  logo: { dataUri: string; width: number; height: number } | null;
+}
+
+function BrandHeader({ brand }: { brand: PdfBrand }) {
+  const contact = [brand.phone, brand.website?.replace(/^https?:\/\//, ""), brand.mailingAddress].filter(Boolean);
+  const logoHeight = 40;
+  return (
+    <View style={[styles.brandRow, { borderBottomColor: brand.brandColor }]}>
+      {brand.logo ? (
+        // eslint-disable-next-line jsx-a11y/alt-text -- a react-pdf Image (no alt attribute exists); the company name is printed beside it
+        <Image src={brand.logo.dataUri} style={{ height: logoHeight, width: Math.min(220, (brand.logo.width / brand.logo.height) * logoHeight), objectFit: "contain" }} />
+      ) : (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Svg width={32} height={32} viewBox="0 0 32 32">
+            <Rect width={32} height={32} rx={7} fill={brand.brandColor} />
+            <G transform="translate(5.6 5.6) scale(0.867)">
+              {HOUSE_PATHS.map((d) => (
+                <Path key={d} d={d} fill="none" stroke={textOnBrand(brand.brandColor)} strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+            </G>
+          </Svg>
+          <Text style={styles.brandName}>{brand.companyName}</Text>
+        </View>
+      )}
+      <View>
+        {brand.logo && <Text style={[styles.brandContact, { fontFamily: "Helvetica-Bold", color: "#1e293b" }]}>{brand.companyName}</Text>}
+        {contact.map((line) => (
+          <Text key={line} style={styles.brandContact}>
+            {line}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export interface FindingPhoto {
   findingKey: string; // matches "sectionIndex-componentIndex-findingIndex"
@@ -29,12 +78,13 @@ export interface FindingPhoto {
   caption: string | null;
 }
 
-export function ReportDocument({ snapshot, photosByFinding }: { snapshot: ReportSnapshot; photosByFinding: Map<string, FindingPhoto[]> }) {
+export function ReportDocument({ snapshot, photosByFinding, brand }: { snapshot: ReportSnapshot; photosByFinding: Map<string, FindingPhoto[]>; brand: PdfBrand }) {
   const inspectionDate = snapshot.inspectionDate ? formatBusinessDate(snapshot.inspectionDate) : "Not recorded";
 
   return (
-    <Document title={`${snapshot.reportNumber} — Inspection Report`}>
+    <Document title={`${snapshot.reportNumber} — Inspection Report`} author={brand.companyName}>
       <Page size="LETTER" style={styles.page}>
+        <BrandHeader brand={brand} />
         <Text style={styles.coverTitle}>{snapshot.title || "Property Inspection Report"}</Text>
         <Text style={styles.coverMeta}>Report Number: {snapshot.reportNumber}</Text>
         <Text style={styles.coverMeta}>
@@ -71,12 +121,15 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
           </>
         )}
 
-        <Text style={styles.footer}>{snapshot.footer || "Generated by Inspection CRM — not an engineering, legal, or code-compliance determination."}</Text>
+        <Text style={styles.footer}>{snapshot.footer || `Prepared by ${brand.companyName} — not an engineering, legal, or code-compliance determination.`}</Text>
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
       </Page>
 
       {snapshot.summary.length > 0 && (
         <Page size="LETTER" style={styles.page}>
+          <Text style={styles.runningHeader} fixed>
+            {brand.companyName} · {snapshot.reportNumber}
+          </Text>
           <Text style={styles.h1}>Summary</Text>
           {Object.entries(groupBy(snapshot.summary, (s) => s.groupLabel)).map(([group, items]) => (
             <View key={group}>
@@ -98,6 +151,9 @@ export function ReportDocument({ snapshot, photosByFinding }: { snapshot: Report
 
       {snapshot.sections.map((section, sIdx) => (
         <Page key={sIdx} size="LETTER" style={styles.page} wrap>
+          <Text style={styles.runningHeader} fixed>
+            {brand.companyName} · {snapshot.reportNumber}
+          </Text>
           <Text style={styles.h1}>{section.name}</Text>
           {section.notApplicable ? (
             <Text style={styles.p}>Not applicable to this property.</Text>

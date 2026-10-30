@@ -1481,3 +1481,35 @@ model InspectionAgreement {
   @@index([customerId])
   @@map("inspection_agreements")
 }
+
+// Company branding (one row). The colors are a custom theme — brand color,
+// neutral tone, sidebar style — run through the same contrast-checked
+// roles as the built-in palettes; null brandColor = the built-in palette.
+// Company name and contact details live on EmailSettings.
+model BrandSettings {
+  id          String   @id @default("default")
+  brandColor  String?
+  neutral     String?
+  sidebar     String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("brand_settings")
+}
+
+// The uploaded logo and browser icon, kept in the database (they're small)
+// so they're backed up with everything else. PNG or JPEG only, checked by
+// content: the PDF renderer can't draw other formats, and SVG can carry
+// script. Served publicly at /brand/<kind> for emails and public pages.
+model BrandAsset {
+  kind        String   @id // "logo" | "icon"
+  contentType String
+  data        Bytes
+  width       Int
+  height      Int
+  sha256      String
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("brand_assets")
+}

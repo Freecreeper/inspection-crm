@@ -7,7 +7,8 @@ import { checkEligibility, normalizeEmail } from "./eligibility";
 import { evaluateGuard, parseGuard } from "./guards";
 import { getEmailProvider, type EmailProvider } from "./providers";
 import { describeVariables } from "./queue";
-import { renderSubjectAndBody, textToHtml } from "./render";
+import { brandedEmailHtml, renderSubjectAndBody } from "./render";
+import { loadEmailBrand } from "@/lib/brand/service";
 import { getEmailSettings } from "./settings";
 import { oneClickUnsubscribeUrl, unsubscribeUrl } from "./unsubscribe";
 
@@ -210,7 +211,7 @@ export async function processClaimedMessage(id: string, provider: EmailProvider,
     replyTo: settings.replyTo,
     subject: redirected ? `[Redirected from ${recipientEmail}] ${rendered.subject}` : rendered.subject,
     text,
-    html: textToHtml(text),
+    html: brandedEmailHtml(text, await loadEmailBrand(db)),
     stream,
     headers: footer.headers,
     metadata: { emailMessageId: message.id },

@@ -4,7 +4,8 @@ import path from "node:path";
 import { createElement, type ReactElement } from "react";
 import type { Media } from "@prisma/client";
 import type { ReportSnapshot } from "@/lib/reportEngine";
-import { ReportDocument, type FindingPhoto } from "./ReportDocument";
+import { ReportDocument, type FindingPhoto, type PdfBrand } from "./ReportDocument";
+import { brandAssetDataUri, loadBrand } from "@/lib/brand/service";
 
 const MEDIA_ROOT = path.join(process.cwd(), "storage", "media");
 
@@ -25,7 +26,23 @@ function extensionToMimeType(ext: string): string {
 // HTTP URL — @react-pdf/renderer renders server-side with no guarantee the
 // dev/prod server is reachable from wherever rendering happens, and a data
 // URI keeps the finished PDF self-contained.
-export async function renderReportPdf(snapshot: ReportSnapshot, media: Media[]): Promise<Buffer> {
+// The current branding, as the PDF draws it.
+export async function loadPdfBrand(): Promise<PdfBrand> {
+  const brand = await loadBrand();
+  const dataUri = brand.logo ? await brandAssetDataUri("logo") : null;
+  return {
+    companyName: brand.companyName,
+    phone: brand.phone,
+    website: brand.website,
+    mailingAddress: brand.mailingAddress,
+    brandColor: brand.brandColor,
+    logo: brand.logo && dataUri ? { dataUri, width: brand.logo.width, height: brand.logo.height } : null,
+  };
+}
+
+// `brand` defaults to the current branding; finalized PDFs keep the
+// branding they were made with.
+export async function renderReportPdf(snapshot: ReportSnapshot, media: Media[], brand?: PdfBrand): Promise<Buffer> {
   const keyByFindingId = new Map<string, string>();
   snapshot.sections.forEach((section, sIdx) => {
     section.components.forEach((component, cIdx) => {
@@ -60,6 +77,6 @@ export async function renderReportPdf(snapshot: ReportSnapshot, media: Media[]):
   // doesn't satisfy that at the type level even though it's exactly what
   // the library expects at runtime. The cast is narrow and only bridges
   // that known friction point, not a general escape hatch.
-  const element = createElement(ReportDocument, { snapshot, photosByFinding }) as unknown as ReactElement<DocumentProps>;
+  const element = createElement(ReportDocument, { snapshot, photosByFinding, brand: brand ?? (await loadPdfBrand()) }) as unknown as ReactElement<DocumentProps>;
   return renderToBuffer(element);
 }

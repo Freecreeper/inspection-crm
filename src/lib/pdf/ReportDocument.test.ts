@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { renderReportPdf } from "./renderReportPdf";
 import type { ReportSnapshot } from "@/lib/reportEngine";
+import type { PdfBrand } from "./ReportDocument";
+
+const BRAND: PdfBrand = { companyName: "Test Inspections", phone: "(828) 555-0100", website: "https://example.com", mailingAddress: null, brandColor: "#1f7a5a", logo: null };
 
 // Pages in a rendered PDF (each page object is "/Type /Page", not "/Pages").
 const pageCount = (pdf: Buffer) => (pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g) ?? []).length;
@@ -54,10 +57,10 @@ function snapshot(findings: number): ReportSnapshot {
 
 describe("report PDF page breaks", () => {
   it("a component taller than one page continues onto the next pages instead of overprinting", async () => {
-    const short = pageCount(await renderReportPdf(snapshot(1), []));
-    const tall = pageCount(await renderReportPdf(snapshot(25), []));
+    const short = pageCount(await renderReportPdf(snapshot(1), [], BRAND));
+    const tall = pageCount(await renderReportPdf(snapshot(25), [], BRAND));
     // 25 long findings can't fit on one page: the section must span several.
     expect(tall - short).toBeGreaterThanOrEqual(3);
-    if (process.env.PDF_SAMPLE_OUT) await (await import("node:fs/promises")).writeFile(process.env.PDF_SAMPLE_OUT, await renderReportPdf(snapshot(25), []));
+    if (process.env.PDF_SAMPLE_OUT) await (await import("node:fs/promises")).writeFile(process.env.PDF_SAMPLE_OUT, await renderReportPdf(snapshot(25), [], BRAND));
   }, 30_000);
 });

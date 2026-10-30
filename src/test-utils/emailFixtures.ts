@@ -63,6 +63,9 @@ export function primeEmailDb(db: MockDb, opts: { automations?: Partial<Record<ke
   db.emailSettings.findUnique.mockResolvedValue(DEFAULT_SETTINGS);
   db.emailSettings.upsert.mockResolvedValue(DEFAULT_SETTINGS);
   db.emailSuppression.findMany.mockResolvedValue([]);
+  // No branding set up: the built-in colors and placeholder mark.
+  db.brandSettings.findUnique.mockResolvedValue(null);
+  db.brandAsset.findMany.mockResolvedValue([]);
   db.emailTemplate.findUnique.mockImplementation(async ({ where }: { where: { id?: string; key?: string } }) =>
     TEMPLATES.find((t) => t.id === where.id || t.key === where.key) ?? null
   );

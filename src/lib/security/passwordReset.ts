@@ -4,7 +4,8 @@ import { logActivity } from "@/lib/activity";
 import { getEmailConfig } from "@/lib/email/config";
 import { getEmailSettings } from "@/lib/email/settings";
 import { getAccountMailer, getEmailProvider } from "@/lib/email/providers";
-import { textToHtml } from "@/lib/email/render";
+import { brandedEmailHtml } from "@/lib/email/render";
+import { loadEmailBrand } from "@/lib/brand/service";
 import { hashPassword, passwordProblem } from "./password";
 import { clearFailures, lockedUntil, recordFailure } from "./loginThrottle";
 
@@ -45,7 +46,7 @@ export async function requestPasswordReset(rawEmail: string, ip: string | null, 
   const text = [
     `Hi ${user.name.split(" ")[0] || user.name},`,
     "",
-    "Someone asked to reset the password for your Inspection CRM account. To choose a new password, open this link within the next hour:",
+    `Someone asked to reset the password for your ${settings.companyName} staff account. To choose a new password, open this link within the next hour:`,
     "",
     link,
     "",
@@ -67,9 +68,9 @@ export async function requestPasswordReset(rawEmail: string, ip: string | null, 
     from,
     to: user.email,
     replyTo: account ? account.replyTo : settings.replyTo,
-    subject: "Reset your Inspection CRM password",
+    subject: `Reset your ${settings.companyName} password`,
     text,
-    html: textToHtml(text),
+    html: brandedEmailHtml(text, await loadEmailBrand()),
     stream: "transactional",
     metadata: { emailMessageId: `password-reset-${user.id}` },
   });

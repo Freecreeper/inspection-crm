@@ -1,22 +1,23 @@
 import { formatBusinessDateTime } from "@/lib/businessTime";
+import { BrandMark, type BrandProps } from "@/components/brand/BrandMark";
 
 // The agreement as it was sent (frozen text), plus the signature record
 // once signed. Shared by the customer's signing page and the staff copy.
 export function AgreementDocument({
-  companyName,
+  brand,
   title,
   body,
   signature,
 }: {
-  companyName: string;
+  brand: BrandProps;
   title: string;
   body: string;
   signature?: { signedName: string; signedAt: Date; textHash: string; ip?: string | null; userAgent?: string | null } | null;
 }) {
   return (
     <article className="rounded-lg border border-border bg-surface p-6 sm:p-8">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{companyName}</p>
-      <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
+      <BrandMark brand={brand} height={32} tile nameClassName="text-sm font-semibold text-foreground" />
+      <h1 className="mt-4 text-2xl font-semibold text-foreground">{title}</h1>
       <div className="mt-6 whitespace-pre-wrap text-sm leading-6 text-neutral-800">{body}</div>
       {signature && (
         <section aria-label="Signature" className="mt-8 border-t border-border pt-4 text-sm">
