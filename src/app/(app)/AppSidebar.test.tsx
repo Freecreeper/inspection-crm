@@ -105,6 +105,18 @@ describe("the way up", () => {
     expect(within(topBar()).queryByRole("link")).toBeNull();
     expect(within(topBar()).getByText("Inspection CRM")).toBeTruthy();
   });
+
+  it("uses the company's name and logo when branding is set", () => {
+    pathname = "/dashboard";
+    render(
+      <AppSidebar brand={{ companyName: "Acme Inspections", brandColor: "#1f5a3d", logo: { url: "/brand/logo?v=abc", width: 800, height: 200 }, iconUrl: null }} displayName="Admin Owner" roleLabel="Owner Admin" signOutAction={async () => {}}>
+        <p>Page content</p>
+      </AppSidebar>
+    );
+    expect(within(topBar()).getByText("Acme Inspections")).toBeTruthy();
+    expect(screen.queryByText("Inspection CRM")).toBeNull();
+    expect(screen.getAllByRole("img", { name: "Acme Inspections" })[0].getAttribute("src")).toBe("/brand/logo?v=abc");
+  });
 });
 
 describe("desktop sidebar collapse", () => {

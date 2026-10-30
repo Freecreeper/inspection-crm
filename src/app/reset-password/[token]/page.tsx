@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { findResetToken } from "@/lib/security/passwordReset";
 import { ResetForm } from "./ResetForm";
+import { SignInBrand } from "@/components/brand/PublicBrandHeader";
 
 // Public, opened from the emailed link. Shows the form only for a link
 // that's still usable.
@@ -10,7 +11,7 @@ export default async function ResetPasswordPage({ params }: { params: Promise<{ 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-8 shadow-sm">
-        <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">Inspection CRM</p>
+        <SignInBrand />
         <h1 className="mt-1 text-xl font-semibold text-foreground">Choose a new password</h1>
         {valid ? (
           <ResetForm token={token} />

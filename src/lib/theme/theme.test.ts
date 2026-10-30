@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
-import { DEFAULT_THEME, PALETTES, parseThemeCookie, themeCookie } from ".";
+import { DEFAULT_THEME, PALETTES, parseThemeCookie, pickThemeOrCompany, themeCookie } from ".";
 
 describe("theme preference cookie", () => {
   it("reads both halves", () => {
@@ -88,5 +88,22 @@ describe("choosing between the account's theme and this browser's", () => {
     expect(pickTheme("dark:slate", "light:earth")).toMatchObject({ palette: "slate" });
     expect(pickTheme(undefined, "light%3Aearth%40100")).toMatchObject({ palette: "earth", savedAt: 100 });
     expect(pickTheme(undefined, undefined)).toEqual(DEFAULT_THEME);
+  });
+});
+
+describe("company default colors", () => {
+  const company = { brand: "#1f5a3d", neutral: "warm", sidebar: "dark" } as const;
+
+  it("apply to someone who has never chosen", () => {
+    expect(pickThemeOrCompany(undefined, undefined, company)).toMatchObject({ appearance: "system", palette: "custom", custom: company });
+  });
+
+  it("never override a choice, from the account or this browser", () => {
+    expect(pickThemeOrCompany("dark:coastal@5", undefined, company)).toMatchObject({ appearance: "dark", palette: "coastal" });
+    expect(pickThemeOrCompany(undefined, "light:forest@5", company)).toMatchObject({ palette: "forest" });
+  });
+
+  it("leave the built-in default when the company has no colors", () => {
+    expect(pickThemeOrCompany(undefined, undefined, null)).toMatchObject({ palette: "forest" });
   });
 });

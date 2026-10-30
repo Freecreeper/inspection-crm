@@ -36,7 +36,9 @@ const card = (selected: boolean) =>
 // Every change shows at once and is saved to the account a moment later
 // (one save per pause, so dragging the color picker doesn't flood the
 // server). The server validates again; what it saved is what's kept.
-export function AppearancePicker({ initial }: { initial: ThemePreference }) {
+// `company` is the company's colors (Settings → Branding), when set: the
+// default for anyone who hasn't picked, and one click away for those who have.
+export function AppearancePicker({ initial, company = null }: { initial: ThemePreference; company?: CustomTheme | null }) {
   const [pref, setPref] = useState(initial);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -139,11 +141,15 @@ export function AppearancePicker({ initial }: { initial: ThemePreference }) {
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => choose({ ...DEFAULT_THEME, ...(pref.custom ? { custom: pref.custom } : {}) })}
-          disabled={pref.appearance === DEFAULT_THEME.appearance && pref.palette === DEFAULT_THEME.palette}
+          onClick={() => choose(company ? { ...DEFAULT_THEME, palette: "custom", custom: company } : { ...DEFAULT_THEME, ...(pref.custom ? { custom: pref.custom } : {}) })}
+          disabled={
+            company
+              ? pref.appearance === DEFAULT_THEME.appearance && pref.palette === "custom" && pref.custom?.brand === company.brand && pref.custom?.neutral === company.neutral && pref.custom?.sidebar === company.sidebar
+              : pref.appearance === DEFAULT_THEME.appearance && pref.palette === DEFAULT_THEME.palette
+          }
           className="inline-flex items-center gap-1.5 rounded-md border border-input bg-surface px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-hover disabled:opacity-50"
         >
-          <RotateCcw className="h-4 w-4" aria-hidden="true" /> Reset to default
+          <RotateCcw className="h-4 w-4" aria-hidden="true" /> {company ? "Use company colors" : "Reset to default"}
         </button>
         <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
           {status === "saving" ? "Saving…" : status === "saved" ? "Saved to your account." : status === "error" ? <span className="text-danger-strong">Couldn&apos;t save. Your choice still applies here.</span> : null}

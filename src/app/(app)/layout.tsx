@@ -7,6 +7,8 @@ import type { Role } from "@prisma/client";
 import { getCalendarConfig } from "@/lib/calendar/config";
 import { toDayKey } from "@/lib/calendar/time";
 import { ShellActions } from "./_shell/ShellActions";
+import { getBrand } from "@/lib/brand/service";
+import { toBrandProps } from "@/components/brand/PublicBrandHeader";
 
 function humanizeRole(role: string): string {
   if (!role) return "";
@@ -25,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const role = session.user.role as Role;
   const granted = (Object.keys(PERMISSIONS) as Permission[]).filter((p) => can(role, p));
   const calendar = getCalendarConfig();
+  const brand = await getBrand();
   // Search and "+ New" in the top bar of every page; each control is shown
   // only to roles that may use it, and the server actions check again.
   const shellActions = (
@@ -45,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-background">
-      <AppSidebar displayName={displayName} roleLabel={humanizeRole(session.user.role ?? "")} granted={granted} signOutAction={signOutAction} actions={shellActions}>
+      <AppSidebar brand={{ ...toBrandProps(brand), iconUrl: brand.icon?.url ?? null }} displayName={displayName} roleLabel={humanizeRole(session.user.role ?? "")} granted={granted} signOutAction={signOutAction} actions={shellActions}>
         {children}
       </AppSidebar>
     </div>
