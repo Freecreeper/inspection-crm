@@ -66,7 +66,8 @@ function AgendaCard({ event: e, timeZone, onClick }: { event: CalendarEvent; tim
   const start = e.start ? new Date(e.start) : null;
   const end = e.end ? new Date(e.end) : null;
   const minutes = start && end ? Math.round((end.getTime() - start.getTime()) / 60_000) : null;
-  const accent = e.type === "inspection" ? "border-l-accent-600" : e.priority === "high" ? "border-l-amber-500" : "border-l-neutral-300";
+  const isTask = e.type === "task" || e.type === "realtorFollowUp";
+  const accent = e.type === "inspection" ? "border-l-accent-600" : e.priority === "high" ? "border-l-amber-500" : isTask ? "border-l-violet-500" : "border-l-neutral-300";
   return (
     <li className={`rounded-lg border border-l-4 border-border bg-surface ${accent}`}>
       <button type="button" onClick={onClick} className="flex w-full items-start gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-ring">

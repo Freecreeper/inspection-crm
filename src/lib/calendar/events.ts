@@ -182,20 +182,17 @@ const loadAppointments: Loader = async (q, ctx) => {
 };
 
 // ---------------------------------------------------------------------------
-// Tasks and Realtor follow-ups (both are Task records; a follow-up is a task
-// linked to a Realtor, so it lives on the Realtor layer instead)
+// Tasks, including Realtor follow-ups (a follow-up is a task linked to a
+// Realtor): all on the Tasks layer, so every open task shows on its day.
 // ---------------------------------------------------------------------------
 
-const loadTasks =
-  (which: "tasks" | "realtors"): Loader =>
-  async (q, ctx) => {
+const loadTasks: Loader = async (q, ctx) => {
     // Task due dates are calendar days (anchored at noon), so pad a day
     // either side of the range and bucket by business day.
     const rows = await prisma.task.findMany({
       where: {
         completedAt: null,
         dueAt: { gte: startOfDayUtc(addDays(q.start, -1), ctx.config.timeZone), lt: startOfDayUtc(addDays(q.end, 1), ctx.config.timeZone) },
-        realtorId: which === "realtors" ? { not: null } : null,
         ...(q.assigneeId ? { assigneeId: q.assigneeId } : {}),
       },
       orderBy: { dueAt: "asc" },
@@ -213,7 +210,7 @@ const loadTasks =
         base({
           id: `task:${t.id}`,
           type: t.realtor ? "realtorFollowUp" : "task",
-          layer: which,
+          layer: "tasks",
           sourceType: "Task",
           sourceId: t.id,
           title: t.title,
@@ -418,10 +415,10 @@ const loadBilling: Loader = async (q, ctx) => {
 const LOADERS: Record<CalendarLayer, Loader> = {
   inspections: loadInspections,
   appointments: loadAppointments,
-  tasks: loadTasks("tasks"),
+  tasks: loadTasks,
   reports: loadReportDeadlines,
   transactions: loadTransactionDates,
-  realtors: async (q, ctx) => [...(await loadTasks("realtors")(q, ctx)), ...(await loadRealtorDates(q, ctx))],
+  realtors: loadRealtorDates,
   billing: loadBilling,
 };
 
