@@ -44,6 +44,7 @@ export const TEMPLATE_VARIABLES: VariableDefinition[] = [
   { key: "invoice.total", label: "Invoice total", sample: "$450.00" },
   { key: "invoice.balanceDue", label: "Balance due", sample: "$450.00" },
   { key: "invoice.dueDate", label: "Invoice due date", sample: "October 10, 2026" },
+  { key: "invoice.lineItems", label: "Invoice lines (one per line)", sample: "General Home Inspection — $450.00\nRadon Test — $150.00" },
 
   { key: "report.number", label: "Report number", sample: "RPT-2026-0142" },
   { key: "report.version", label: "Report version number", sample: "1" },

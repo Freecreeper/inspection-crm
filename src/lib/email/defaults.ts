@@ -149,6 +149,28 @@ The inspection at {{property.address}} has been cancelled.
 ${SIGN_OFF}`,
   },
   {
+    key: "invoice",
+    name: "Invoice",
+    description: "Sends an issued invoice to the customer responsible for payment.",
+    category: "TRANSACTIONAL",
+    recipientType: "CUSTOMER",
+    automationEligible: false,
+    subject: 'Invoice {{invoice.number}} for {{property.address | "your inspection"}}',
+    body: `Hi {{customer.firstName}},
+
+Here is invoice {{invoice.number}} for your inspection at {{property.address | "your property"}}.
+
+{{invoice.lineItems}}
+
+Total: {{invoice.total}}
+Balance due: {{invoice.balanceDue}}
+Due: {{invoice.dueDate | "upon receipt"}}
+
+Reply to this email with any questions.
+
+${SIGN_OFF}`,
+  },
+  {
     key: "payment_reminder",
     name: "Payment reminder",
     description: "Reminds the customer of a balance due on an issued invoice.",

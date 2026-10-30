@@ -13,6 +13,8 @@ import { EmailButton } from "@/components/email/EmailComposer";
 import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 import { createReportFromTemplate } from "../report-actions";
 import { Combobox } from "@/components/Combobox";
+import { INVOICE_STATUS_LABELS } from "@/lib/invoices";
+import { CreateInvoiceButton } from "../../invoices/CreateInvoiceButton";
 
 export default async function InspectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,6 +26,7 @@ export default async function InspectionDetailPage({ params }: { params: Promise
         inspector: true,
         transaction: { include: { customers: { include: { customer: true } } } },
         reports: { orderBy: { createdAt: "desc" } },
+        invoices: { where: { status: { not: "VOID" } }, orderBy: { createdAt: "asc" }, take: 1, select: { id: true, invoiceNumber: true, status: true } },
       },
     }),
     prisma.user.findMany({ where: { active: true, role: "INSPECTOR" }, orderBy: { name: "asc" } }),
@@ -54,6 +57,7 @@ export default async function InspectionDetailPage({ params }: { params: Promise
   const assignAction = assignInspector.bind(null, inspection.id);
   const createReportAction = createReportFromTemplate.bind(null, inspection.id);
   const report = inspection.reports[0];
+  const invoice = inspection.invoices[0];
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -68,9 +72,16 @@ export default async function InspectionDetailPage({ params }: { params: Promise
             {primaryCustomer ? `${primaryCustomer.firstName} ${primaryCustomer.lastName}` : "No customer yet"}
           </Link>
         </p>
-        <span className="mt-1 inline-block rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">
-          {inspection.status}
-        </span>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <span className="inline-block rounded-full bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-600">{inspection.status}</span>
+          {invoice && can(role, "financial:read") ? (
+            <Link href={`/invoices/${invoice.id}`} className="text-sm text-info-strong hover:underline">
+              Invoice {invoice.invoiceNumber} · {INVOICE_STATUS_LABELS[invoice.status]}
+            </Link>
+          ) : !invoice && inspection.status !== "CANCELLED" && can(role, "invoice:create") ? (
+            <CreateInvoiceButton transactionId={inspection.transactionId} inspectionId={inspection.id} />
+          ) : null}
+        </div>
       </div>
 
       <section className="rounded-lg border border-border bg-surface p-4">
