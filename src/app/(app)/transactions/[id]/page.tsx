@@ -26,10 +26,11 @@ import { Combobox } from "@/components/Combobox";
 import type { Role } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
-import { formatMoney, invoiceTotals, isInvoiceCollectible } from "@/lib/invoices";
+import { formatMoney, INVOICE_STATUS_LABELS, invoiceTotals, isInvoiceCollectible } from "@/lib/invoices";
 import { EmailButton } from "@/components/email/EmailComposer";
 import { EmailStatusBadge } from "@/components/email/EmailStatusBadge";
 import { RecordPaymentForm } from "../../invoices/RecordPaymentForm";
+import { CreateInvoiceButton } from "../../invoices/CreateInvoiceButton";
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,6 +65,10 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const canRecordPayment = can(role, "invoice:create");
 
   const inspectors = users.filter((u) => u.role === "INSPECTOR");
+  // Inspections that still need billing: not cancelled, and no live invoice.
+  const uninvoicedInspections = transaction.inspections.filter(
+    (i) => i.status !== "CANCELLED" && !transaction.invoices.some((inv) => inv.inspectionId === i.id && inv.status !== "VOID")
+  );
   const primaryCustomer = getPrimaryCustomer(transaction.customers);
   const setPropertyAction = setTransactionProperty.bind(null, transaction.id);
   const addCustomerAction = addCustomerToTransaction.bind(null, transaction.id);
@@ -347,9 +352,25 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         </form>
       </section>
 
-      {transaction.invoices.length > 0 && (
+      {(transaction.invoices.length > 0 || canRecordPayment) && (
         <section className="rounded-lg border border-border bg-surface p-4">
-          <h2 className="text-sm font-semibold text-foreground">Invoices</h2>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 className="text-sm font-semibold text-foreground">Invoices</h2>
+            {canRecordPayment && (
+              <div className="flex flex-wrap justify-end gap-2">
+                {uninvoicedInspections.map((i) => (
+                  <CreateInvoiceButton
+                    key={i.id}
+                    transactionId={transaction.id}
+                    inspectionId={i.id}
+                    label={`Invoice the ${i.scheduledAt ? formatBusinessDate(i.scheduledAt, { month: "short", day: "numeric" }) : "unscheduled"} inspection`}
+                  />
+                ))}
+                <CreateInvoiceButton transactionId={transaction.id} label={uninvoicedInspections.length ? "Blank invoice" : "+ Create invoice"} />
+              </div>
+            )}
+          </div>
+          {transaction.invoices.length === 0 && <p className="mt-2 text-sm text-subtle">No invoices yet.</p>}
           <ul className="mt-2 space-y-2 text-sm">
             {transaction.invoices.map((inv) => {
               const totals = invoiceTotals(inv);
@@ -357,8 +378,10 @@ export default async function TransactionDetailPage({ params }: { params: Promis
               return (
                 <li key={inv.id} className="rounded-md bg-surface-secondary px-3 py-2">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-medium text-neutral-800">{inv.invoiceNumber}</span>
-                    <span className="font-mono text-[11px] text-muted-foreground">{inv.status}</span>
+                    <Link href={`/invoices/${inv.id}`} className="font-medium text-neutral-800 hover:underline">
+                      {inv.invoiceNumber}
+                    </Link>
+                    <span className="text-xs text-muted-foreground">{INVOICE_STATUS_LABELS[inv.status]}</span>
                   </div>
                   <p className="mt-0.5 text-xs tabular-nums text-neutral-600">
                     Total {formatMoney(totals.total)} · Paid {formatMoney(totals.paid)} · Balance {formatMoney(totals.balance)}

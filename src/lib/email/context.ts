@@ -68,7 +68,7 @@ export async function loadEmailVariables(refs: EmailRefs, opts: { now?: Date; db
           include: { property: true, inspector: true, inspectionServices: { include: { service: true } } },
         })
       : null,
-    refs.invoiceId ? db.invoice.findUnique({ where: { id: refs.invoiceId }, include: { items: true, payments: true } }) : null,
+    refs.invoiceId ? db.invoice.findUnique({ where: { id: refs.invoiceId }, include: { items: { orderBy: { createdAt: "asc" } }, payments: true } }) : null,
     refs.reportDeliveryId
       ? db.reportDelivery.findUnique({ where: { id: refs.reportDeliveryId }, include: { report: true, version: true } })
       : null,
@@ -125,6 +125,7 @@ export async function loadEmailVariables(refs: EmailRefs, opts: { now?: Date; db
     vars["invoice.total"] = formatMoney(totals.total);
     vars["invoice.balanceDue"] = formatMoney(totals.balance);
     vars["invoice.dueDate"] = invoice.dueAt ? formatDateShort(invoice.dueAt) : null;
+    vars["invoice.lineItems"] = invoice.items.length ? invoice.items.map((i) => `${i.description} — ${formatMoney(i.amount)}`).join("\n") : null;
   }
 
   if (delivery) {

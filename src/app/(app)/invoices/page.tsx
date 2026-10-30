@@ -5,13 +5,14 @@ import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { getCalendarConfig } from "@/lib/calendar/config";
 import { formatDay, formatMonth, startOfMonth, toDayKey } from "@/lib/calendar/time";
-import { formatMoney, invoiceTotals, isInvoiceCollectible } from "@/lib/invoices";
+import { formatMoney, INVOICE_STATUS_LABELS, invoiceTotals, isInvoiceCollectible } from "@/lib/invoices";
 import { billedInvoiceWhere, monthPeriod } from "@/lib/dashboard/metrics";
 import { COLLECTIBLE_INVOICE_STATUSES } from "@/lib/dashboard/sources";
 
-// A read-only invoice list: what's owed, and what was billed this month —
-// the same definitions the Dashboard's financial KPIs use, so a number on
-// the Dashboard always has a list behind it. Financial roles only.
+// The invoice list: what's owed, what was billed this month (the same
+// definitions the Dashboard's financial KPIs use, so a number on the
+// Dashboard always has a list behind it), and drafts not yet issued.
+// Financial roles only.
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const session = await auth();
   const role = session?.user?.role as Role | undefined;
@@ -19,13 +20,14 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     return <p className="text-sm text-neutral-600">You don&apos;t have access to invoices.</p>;
   }
   const { view: rawView } = await searchParams;
-  const view = rawView === "billed" ? "billed" : "outstanding";
+  const view = rawView === "billed" ? "billed" : rawView === "drafts" ? "drafts" : "outstanding";
   const { timeZone } = getCalendarConfig();
   const today = toDayKey(new Date(), timeZone);
 
   const rows = await prisma.invoice.findMany({
-    where: view === "billed" ? billedInvoiceWhere(monthPeriod(today, timeZone)) : { status: { in: [...COLLECTIBLE_INVOICE_STATUSES] } },
-    orderBy: view === "billed" ? [{ issuedAt: "desc" }, { createdAt: "desc" }] : [{ dueAt: "asc" }, { createdAt: "asc" }],
+    where:
+      view === "billed" ? billedInvoiceWhere(monthPeriod(today, timeZone)) : view === "drafts" ? { status: "DRAFT" } : { status: { in: [...COLLECTIBLE_INVOICE_STATUSES] } },
+    orderBy: view === "billed" ? [{ issuedAt: "desc" }, { createdAt: "desc" }] : view === "drafts" ? [{ createdAt: "desc" }] : [{ dueAt: "asc" }, { createdAt: "asc" }],
     take: 200,
     include: {
       items: { select: { amount: true } },
@@ -47,9 +49,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       const due = inv.dueAt ? toDayKey(inv.dueAt, timeZone) : null;
       return { inv, totals, customer: c ? `${c.firstName} ${c.lastName}` : null, due, overdue: due !== null && due < today && isInvoiceCollectible(inv.status, totals.balance) };
     })
-    .filter((r) => view === "billed" || isInvoiceCollectible(r.inv.status, r.totals.balance));
+    .filter((r) => view !== "outstanding" || isInvoiceCollectible(r.inv.status, r.totals.balance));
 
-  const sum = invoices.reduce((n, r) => n + Number((view === "billed" ? r.totals.total : r.totals.balance).toString()), 0);
+  const sum = invoices.reduce((n, r) => n + Number((view === "outstanding" ? r.totals.balance : r.totals.total).toString()), 0);
   const tab = (key: string, label: string) => (
     <Link
       href={key === "outstanding" ? "/invoices" : `/invoices?view=${key}`}
@@ -67,9 +69,10 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         <nav aria-label="Invoice views" className="flex gap-1">
           {tab("outstanding", "Outstanding")}
           {tab("billed", `Billed in ${formatMonth(startOfMonth(today))}`)}
+          {tab("drafts", "Drafts")}
         </nav>
         <p className="text-sm text-neutral-600">
-          {invoices.length} invoice{invoices.length === 1 ? "" : "s"} · <span className="font-semibold text-foreground">{formatMoney(sum)}</span> {view === "billed" ? "billed" : "due"}
+          {invoices.length} invoice{invoices.length === 1 ? "" : "s"} · <span className="font-semibold text-foreground">{formatMoney(sum)}</span> {view === "billed" ? "billed" : view === "drafts" ? "in drafts" : "due"}
           {view === "billed" && invoices.length > 0 && <> · average {formatMoney(sum / invoices.length)}</>}
         </p>
       </div>
@@ -94,13 +97,13 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
             {invoices.map(({ inv, totals, customer, due, overdue }) => (
               <tr key={inv.id} className="border-t border-neutral-100 hover:bg-hover">
                 <td className="px-4 py-2">
-                  <Link href={`/transactions/${inv.transaction.id}`} className="font-medium text-foreground hover:underline">
+                  <Link href={`/invoices/${inv.id}`} className="font-medium text-foreground hover:underline">
                     {inv.invoiceNumber}
                   </Link>
                   {inv.transaction.property && <span className="block text-xs text-muted-foreground">{inv.transaction.property.addressLine1}, {inv.transaction.property.city}</span>}
                 </td>
                 <td className="px-4 py-2 text-neutral-600">{customer ?? <span className="text-subtle">No customer</span>}</td>
-                <td className="px-4 py-2 text-neutral-600">{inv.status.toLowerCase().replace(/_/g, " ")}</td>
+                <td className="px-4 py-2 text-neutral-600">{INVOICE_STATUS_LABELS[inv.status]}</td>
                 <td className={`px-4 py-2 tabular-nums ${overdue ? "font-medium text-warning-strong" : "text-neutral-600"}`}>
                   {due ? formatDay(due, "short") : <span className="text-subtle">—</span>}
                   {overdue && <span className="ml-1 text-xs">(overdue)</span>}
@@ -112,7 +115,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
             {invoices.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                  {view === "billed" ? "Nothing billed this month yet." : "No balances due."}
+                  {view === "billed" ? "Nothing billed this month yet." : view === "drafts" ? "No draft invoices." : "No balances due."}
                 </td>
               </tr>
             )}
