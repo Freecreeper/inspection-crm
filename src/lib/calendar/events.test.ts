@@ -104,18 +104,18 @@ describe("tasks and realtor events", () => {
   });
 
   it("a task appears only when the Tasks layer is on, as an all-day item on its due day", async () => {
-    db.task.findMany.mockImplementation(async ({ where }: { where: { realtorId: unknown } }) => (where.realtorId === null ? [task({})] : []));
+    db.task.findMany.mockResolvedValue([task({})]);
     expect(await load(["inspections"])).toEqual([]);
     const [e] = await load(["tasks"]);
     expect(e).toMatchObject({ type: "task", layer: "tasks", allDay: true, day: "2026-09-30", href: "/tasks" });
   });
 
-  it("a realtor follow-up appears on the Realtor layer (not Tasks) and opens the realtor", async () => {
+  it("a realtor follow-up is a task: it shows on the Tasks layer (not Realtor events) and opens the realtor", async () => {
     const followUp = task({ id: "t2", title: "Send market update", realtor: { id: "r1", firstName: "Sarah", lastName: "Jones", preferredName: "Sally", brokerage: { name: "Keller Williams" } } });
-    db.task.findMany.mockImplementation(async ({ where }: { where: { realtorId: unknown } }) => (where.realtorId === null ? [] : [followUp]));
-    expect(await load(["tasks"])).toEqual([]);
-    const [e] = await load(["realtors"]);
-    expect(e).toMatchObject({ type: "realtorFollowUp", layer: "realtors", subtitle: "Sally Jones · Keller Williams", href: "/realtors/r1" });
+    db.task.findMany.mockResolvedValue([followUp]);
+    const [e] = await load(["tasks"]);
+    expect(e).toMatchObject({ type: "realtorFollowUp", layer: "tasks", subtitle: "Sally Jones · Keller Williams", href: "/realtors/r1" });
+    expect(await load(["realtors"])).toEqual([]);
   });
 
   it("a realtor with no birthday on file produces no event; a valid one lands on its day", async () => {

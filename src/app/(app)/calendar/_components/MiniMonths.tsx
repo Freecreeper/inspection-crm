@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckSquare } from "lucide-react";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { addDays, addMonths, eachDay, formatDay, formatMonth, startOfWeek, type DayKey } from "@/lib/calendar/time";
 
@@ -23,10 +24,11 @@ export function MiniMonths({
   onOpenMonth?: (firstOfMonth: DayKey) => void;
   columns: 1 | 2;
 }) {
-  const byDay = new Map<DayKey, { inspections: number; other: number; urgent: boolean; titles: string[] }>();
+  const byDay = new Map<DayKey, { inspections: number; tasks: number; other: number; urgent: boolean; titles: string[] }>();
   for (const e of events) {
-    const entry = byDay.get(e.day) ?? { inspections: 0, other: 0, urgent: false, titles: [] };
+    const entry = byDay.get(e.day) ?? { inspections: 0, tasks: 0, other: 0, urgent: false, titles: [] };
     if (e.type === "inspection") entry.inspections++;
+    else if (e.type === "task" || e.type === "realtorFollowUp") entry.tasks++;
     else entry.other++;
     if (e.priority === "high" || e.warnings.length > 0) entry.urgent = true;
     entry.titles.push(e.title);
@@ -70,6 +72,7 @@ export function MiniMonths({
                 const label = [
                   formatDay(day, "long"),
                   info?.inspections ? `${info.inspections} inspection${info.inspections === 1 ? "" : "s"}` : null,
+                  info?.tasks ? `${info.tasks} task${info.tasks === 1 ? "" : "s"}` : null,
                   info?.other ? `${info.other} other event${info.other === 1 ? "" : "s"}` : null,
                   info?.urgent ? "needs attention" : null,
                 ]
@@ -92,7 +95,13 @@ export function MiniMonths({
                         {info.inspections}
                       </span>
                     ) : null}
-                    {info?.other ? <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${info.urgent ? "bg-warning" : "bg-neutral-400"}`} /> : null}
+                    {info?.tasks ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 text-[10px] font-semibold leading-4 text-violet-800" aria-hidden="true">
+                        <CheckSquare className="h-2.5 w-2.5" />
+                        {info.tasks}
+                      </span>
+                    ) : null}
+                    {info?.other || info?.urgent ? <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${info.urgent ? "bg-warning" : "bg-neutral-400"}`} /> : null}
                   </button>
                 );
               })}
@@ -102,6 +111,10 @@ export function MiniMonths({
       })}
       <p className="text-xs text-muted-foreground lg:col-span-2">
         <span className="mr-1 inline-block rounded-full bg-accent-100 px-1.5 text-[10px] font-semibold text-accent-800">2</span> inspections that day
+        <span className="ml-3 mr-1 inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 align-middle text-[10px] font-semibold text-violet-800">
+          <CheckSquare className="h-2.5 w-2.5" aria-hidden="true" />1
+        </span>{" "}
+        tasks
         <span className="ml-3 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-neutral-400 align-middle" /> other events
         <span className="ml-3 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-warning align-middle" /> needs attention. Tap a day to open it.
       </p>
