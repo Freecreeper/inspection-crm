@@ -6,6 +6,9 @@ const STANDARD_REPORTS = [
   { href: "/reports/standard/transactions-by-status", label: "Transactions by Status" },
   { href: "/reports/standard/inspections-by-city", label: "Inspections by City" },
   { href: "/reports/standard/findings-by-category", label: "Findings by Category" },
+  { href: "/reports/standard/revenue-by-realtor", label: "Revenue by Realtor" },
+  { href: "/reports/standard/revenue-by-brokerage", label: "Revenue by Brokerage" },
+  { href: "/reports/standard/revenue-by-referral-source", label: "Revenue by Referral Source" },
 ];
 
 export default async function ReportsDashboardPage() {
